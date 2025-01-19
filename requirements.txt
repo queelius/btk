@@ -1,0 +1,8 @@
+bs4
+requests
+colorama
+rich
+networkx
+matplotlib
+pyvis
+tqdm

@@ -333,11 +333,32 @@ def main():
     purge_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to purge')
     purge_parser.add_argument('--confirm', action='store_true', help='Ask for confirmation before purging')
     
-    # Cloud command and others..
+    # Export command
+    export_parser = subparsers.add_parser('export', help='Export bookmarks to a different format')
+    export_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to export')
+    export_parser.add_argument('format', type=str, help='Export format (e.g., html, csv, zip)')
+    export_parser.add_argument('output', type=str, help='Path to save the exported directory or file')
 
     args = parser.parse_args()
 
-    if args.command == 'import':
+    if args.command == 'export':
+        lib_dir = args.lib_dir
+        if not os.path.isdir(lib_dir):
+            logging.error(f"The specified library directory '{lib_dir}' does not exist or is not a directory.")
+            sys.exit(1)
+        bookmarks = utils.load_bookmarks(lib_dir)
+        export_format = args.format
+        output = args.output
+        if export_format == 'html':
+            utils.export_to_html(bookmarks, output)
+        elif export_format == 'csv':
+            utils.export_to_csv(bookmarks, output)
+        elif export_format == 'zip':
+            utils.export_to_zip(bookmarks, output)
+        else:
+            logging.error(f"Unknown export format '{export_format}'.")
+
+    elif args.command == 'import':
         lib_dir = args.lib_dir
         utils.ensure_dir(lib_dir)
         utils.ensure_dir(os.path.join(lib_dir, utils.FAVICON_DIR_NAME))
