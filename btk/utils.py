@@ -3,11 +3,12 @@ import json
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlparse
-from tqdm import tqdm  # Optional: For progress bar
+from tqdm import tqdm
 import logging
 import hashlib
 import shutil
 from datetime import datetime, timezone
+import jmespath
 
 
 # Configure logging
@@ -22,30 +23,91 @@ BOOKMARKS_JSON = 'bookmarks.json'
 def ensure_dir(path):
     os.makedirs(path, exist_ok=True)
 
-ensure_dir(DEFAULT_LIB_DIR)
-ensure_dir(os.path.join(DEFAULT_LIB_DIR, FAVICON_DIR_NAME))
+def is_bookmark_json(obj):
+    """Check if an object is a valid bookmark dictionary."""
+
+    if not isinstance(obj, list):
+        return False 
+    
+    def check_item(item):
+        return isinstance(item, dict) and 'id' in item and 'url' in item and \
+            'title' in item and 'unique_id' in item and 'visit_count' in item
+
+    return all(check_item(item) for item in obj)
+
+def jmespath_query(bookmarks, query):
+    """Apply a JMESPath query to a list of bookmarks."""
+    
+    if not query:
+        return bookmarks
+
+    try:
+        bookmarks_json = json.loads(json.dumps(bookmarks))
+        result = jmespath.search(query, bookmarks_json)
+        if is_bookmark_json(result):
+            return result, "filter"
+        else:
+            return result, "transform"
+
+    except jmespath.exceptions.JMESPathError as e:
+        logging.error(f"JMESPath query error: {e}")
+        return [], "error"
+    
+    except Exception as e:
+        logging.error(f"Error applying JMESPath query: {e}")
+        return [], "error"  
+
 
 def load_bookmarks(lib_dir):
     """Load bookmarks from a JSON file within the specified library directory."""
     json_file = os.path.join(lib_dir, BOOKMARKS_JSON)
     if not os.path.exists(json_file):
-        logging.info(f"No existing {json_file} found. Starting with an empty bookmark list.")
+        logging.debug(f"No existing {json_file} found. Starting with an empty bookmark list.")
         return []
     with open(json_file, 'r', encoding='utf-8') as file:
         try:
             bookmarks = json.load(file)
-            logging.info(f"Loaded {len(bookmarks)} bookmarks from {json_file}.")
+            logging.debug(f"Loaded {len(bookmarks)} bookmarks from {json_file}.")
             return bookmarks
         except json.JSONDecodeError:
             logging.error(f"Error decoding JSON from {json_file}. Starting with an empty list.")
             return []
 
-def save_bookmarks(bookmarks, lib_dir):
+def save_bookmarks(bookmarks, src_dir, targ_dir):
     """Save bookmarks to a JSON file within the specified library directory."""
-    json_file = os.path.join(lib_dir, BOOKMARKS_JSON)
+    if not bookmarks:
+        logging.warning("No bookmarks to save.")
+        return
+    
+    if not targ_dir:
+        logging.error("No target directory provided. Cannot save bookmarks.")
+        return
+    
+    if src_dir is not None and src_dir == targ_dir:
+        logging.error("Source and target directories are the same. Cannot save bookmarks.")
+        return
+    
+    if not os.path.exists(src_dir):
+        logging.error(f"Source directory '{src_dir}' does not exist. Cannot save bookmarks.")
+        return
+    
+    json_file = os.path.join(targ_dir, BOOKMARKS_JSON)
+
+    # make lib_dir if it doesn't exist
+    ensure_dir(targ_dir)
+
+    # iterate over favicons and save them to the favicons directory
+    if src_dir is not None:
+        for b in bookmarks:
+            if 'favicon' in b:
+                favicon_path = b['favicon']
+                b['favicon'] = copy_local_favicon(favicon_path, src_dir, targ_dir)
+
+    # we save the bookmarks to the json file in the lib_dir
     with open(json_file, 'w', encoding='utf-8') as file:
-        json.dump(bookmarks, file, indent=4)
-    logging.info(f"Saved {len(bookmarks)} bookmarks to {json_file}.")
+        json.dump(bookmarks, file, ensure_ascii=False, indent=2)
+
+    logging.debug(f"Saved {len(bookmarks)} bookmarks to {json_file}.")
 
 def get_next_id(bookmarks):
     """Get the next unique integer ID for a new bookmark."""
@@ -96,7 +158,7 @@ def download_favicon(favicon_url, lib_dir):
         with open(filepath, 'wb') as f:
             f.write(response.content)
         relative_path = os.path.relpath(filepath, lib_dir)
-        logging.info(f"Downloaded favicon: {favicon_url} -> {filepath}")
+        logging.debug(f"Downloaded favicon: {favicon_url} -> {filepath}")
         return relative_path
     except requests.RequestException as e:
         logging.error(f"Failed to download favicon from {favicon_url}: {e}")
@@ -118,7 +180,7 @@ def copy_local_favicon(favicon_path, source_dir, lib_dir):
         destination_path = os.path.join(favicon_dir, filename)
         shutil.copy2(source_favicon_abs, destination_path)
         relative_path = os.path.relpath(destination_path, lib_dir)
-        logging.info(f"Copied local favicon: {source_favicon_abs} -> {destination_path}")
+        logging.debug(f"Copied local favicon: {source_favicon_abs} -> {destination_path}")
         return relative_path
     except Exception as e:
         logging.error(f"Failed to copy local favicon from {source_favicon_abs}: {e}")
@@ -142,8 +204,6 @@ def parse_date(date_str):
             continue
     logging.warning(f"Unrecognized date format: '{date_str}'. Using current UTC time.")
     return datetime.now(timezone.utc).isoformat()
-
-
 
 def is_valid_url(url):
     """Check if the URL has a valid scheme and netloc."""
@@ -192,7 +252,7 @@ def check_reachable(bookmarks_dir, timeout=10, concurrency=10):
                 logging.warning(f"Bookmark not reachable: {bookmark['url']}")
     
     if updated:
-        save_bookmarks(bookmarks_dir, bookmarks)
+        save_bookmarks(bookmarks, bookmarks_dir, bookmarks_dir)
         logging.info("Reachability status updated successfully.")
     else:
         logging.info("No updates were made to bookmarks.")
@@ -218,5 +278,5 @@ def purge_unreachable(bookmarks_dir, confirm=False):
     # Remove unreachable bookmarks
     bookmarks = [b for b in bookmarks if b.get('reachable') != False]
     
-    save_bookmarks(bookmarks_dir, bookmarks)
+    save_bookmarks(bookmarks, bookmarks_dir, bookmarks_dir)
     logging.info(f"Purged {total_unreachable} unreachable bookmarks successfully.")

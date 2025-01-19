@@ -1,22 +1,19 @@
 import json
 import argparse
-from datetime import datetime, timezone
-from bs4 import BeautifulSoup
 import os
-import requests
 import logging
 import sys
-import webbrowser
 from colorama import init as colorama_init, Fore, Style
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from rich.table import Table
 from rich.json import JSON
-import cloud
+import btk.cloud as cloud
 import networkx as nx
-import utils
-import merge
+import btk.utils as utils
+import btk.merge as merge
+import btk.tools as tools
 
 # Initialize colorama and rich console
 colorama_init(autoreset=True)
@@ -25,211 +22,8 @@ console = Console()
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
 
-def import_bookmarks(bookmarks, html_file, lib_dir):
-    """Import bookmarks from a Netscape Bookmark Format HTML file into the specified library directory."""
-    if not os.path.exists(html_file):
-        logging.error(f"HTML file '{html_file}' does not exist.")
-        return bookmarks
-
-    with open(html_file, 'r', encoding='utf-8') as file:
-        soup = BeautifulSoup(file, 'html.parser')
-
-    # Determine the directory of the HTML file to resolve relative favicon paths
-    html_dir = os.path.dirname(os.path.abspath(html_file))
-
-    # Iterate over each fieldset (representing a bookmark window/session)
-    fieldsets = soup.find_all('fieldset', class_='window')
-    logging.info(f"Found {len(fieldsets)} bookmark windows/sessions to import.")
-
-    for fieldset in fieldsets:
-        legend = fieldset.find('legend')
-        if legend:
-            date_str = legend.get_text(strip=True)
-            added = utils.parse_date(date_str)
-        else:
-            logging.warning("No <legend> tag found in fieldset. Using current UTC time.")
-            added = datetime.now(timezone.utc).isoformat()
-
-        # Iterate over each bookmark within the fieldset
-        for p in fieldset.find_all('p'):
-            a_tags = p.find_all('a', href=True)
-            img_tag = p.find('img', src=True)
-            favicon_url = img_tag['src'] if img_tag else None
-
-            # Handle favicon
-            if favicon_url:
-                if utils.is_remote_url(favicon_url):
-                    favicon_path = utils.download_favicon(favicon_url, lib_dir)
-                else:
-                    favicon_path = utils.copy_local_favicon(favicon_url, html_dir, lib_dir)
-            else:
-                favicon_path = None
-
-            if len(a_tags) >= 2:
-                # Assuming the second <a> tag contains the actual bookmark
-                url = a_tags[1]['href']
-                title = a_tags[1].get_text(strip=True)
-
-                # Check for duplicates based on unique_id
-                unique_id = utils.generate_unique_id(url, title)
-                if any(b['unique_id'] == unique_id for b in bookmarks):
-                    logging.info(f"Duplicate bookmark found for URL '{url}' and Title '{title}'. Skipping.")
-                    continue
-
-                # Assign a unique ID
-                bookmark_id = utils.get_next_id(bookmarks)
-
-                # Create bookmark entry with default values
-                bookmark = {
-                    'id': bookmark_id,
-                    'unique_id': unique_id,
-                    'title': title,
-                    'url': url,
-                    'added': added,
-                    'stars': False,
-                    'tags': [],
-                    'visit_count': 0,
-                    'description': "",
-                    'favicon': favicon_path,
-                    'last_visited': None
-                }
-
-                bookmarks.append(bookmark)
-                logging.info(f"Imported bookmark: ID {bookmark_id} - '{title}' - {url}")
-            else:
-                logging.warning("Insufficient <a> tags found in <p>. Skipping this entry.")
-
-    logging.info(f"Import complete. Total bookmarks: {len(bookmarks)}")
-    return bookmarks
-
-def search_bookmarks(bookmarks, query):
-    """Search bookmarks by title or URL containing the query (case-insensitive)."""
-    results = [b for b in bookmarks if query.lower() in b['title'].lower() or query.lower() in b['url'].lower()]
-    logging.info(f"Found {len(results)} bookmarks matching query '{query}'.")
-    return results
-
-def add_bookmark(bookmarks, title, url, stars=False, tags=None, description="", lib_dir=None):
-    """Add a new bookmark with optional stars, tags, and description."""
-    unique_id = utils.generate_unique_id(url, title)
-    if any(b['unique_id'] == unique_id for b in bookmarks):
-        logging.error(f"A bookmark with URL '{url}' and Title '{title}' already exists.")
-        return bookmarks
-
-    if tags is None:
-        tags = []
-
-    bookmark_id = utils.get_next_id(bookmarks)
-
-    bookmark = {
-        'id': bookmark_id,
-        'unique_id': unique_id,
-        'title': title,
-        'url': url,
-        'added': datetime.now(timezone.utc).isoformat(),
-        'stars': stars,
-        'tags': tags,
-        'visit_count': 0,
-        'description': description,
-        'favicon': None,  # Optional: Can be set manually later
-        'last_visited': None
-    }
-
-    bookmarks.append(bookmark)
-    logging.info(f"Added new bookmark: ID {bookmark_id} - '{title}' - {url}")
-    return bookmarks
-
-def remove_bookmark(bookmarks, bookmark_id):
-    """Remove a bookmark by its ID."""
-    initial_count = len(bookmarks)
-    bookmarks = [b for b in bookmarks if b['id'] != bookmark_id]
-    final_count = len(bookmarks)
-    if final_count < initial_count:
-        logging.info(f"Removed bookmark with ID {bookmark_id}.")
-    else:
-        logging.warning(f"No bookmark found with ID {bookmark_id}.")
-    return bookmarks
-
-def list_bookmarks(bookmarks):
-    """List all bookmarks with their IDs and unique IDs."""
-    if not bookmarks:
-        console.print(f"[red]No bookmarks available.[/red]")
-        return
-    table = Table(title="List of Bookmarks", show_header=True, header_style="bold magenta")
-    table.add_column("ID", style="cyan", justify="right")
-    table.add_column("Unique ID", style="green")
-    table.add_column("Title", style="bold")
-    table.add_column("URL", style="underline blue")
-    table.add_column("Tags", style="yellow")
-    table.add_column("Stars", style="#FFD700")  # Using hex code for gold
-    table.add_column("Visits", style="magenta")
-    table.add_column("Last Visited", style="dim")
-    
-    for b in bookmarks:
-        stars = "⭐" if b.get('stars') else ""
-        tags = ", ".join(b.get('tags', []))
-        last_visited = b.get('last_visited') or "-"
-        table.add_row(
-            str(b['id']),
-            b['unique_id'],
-            b['title'],
-            b['url'],
-            tags,
-            stars,
-            str(b.get('visit_count', 0)),
-            last_visited
-        )
-    
-    console.print(table)
-
-def visit_bookmark(bookmarks, bookmark_id, method='browser', lib_dir=None):
-    """
-    Visit a bookmark either through the browser or console.
-    - method: 'browser' or 'console'
-    """
-    for bookmark in bookmarks:
-        if bookmark['id'] == bookmark_id:
-            if method == 'browser':
-                try:
-                    webbrowser.open(bookmark['url'])
-                    logging.info(f"Opened '{bookmark['title']}' in the default browser.")
-                except Exception as e:
-                    logging.error(f"Failed to open URL '{bookmark['url']}' in browser: {e}")
-            elif method == 'console':
-                try:
-                    headers = {
-                        'User-Agent': 'Mozilla/5.0 (compatible; BookmarkTool/1.0)'
-                    }
-                    response = requests.get(bookmark['url'], headers=headers, timeout=10)
-                    response.raise_for_status()
-                    soup = BeautifulSoup(response.text, 'html.parser')
-                    text = soup.get_text(separator='\n')
-                    # Use rich to display content
-                    content = Text(text[:1000] + "...", style="dim")
-                    panel = Panel.fit(
-                        content,
-                        title=bookmark['title'],
-                        subtitle=bookmark['url'],
-                        border_style="green"
-                    )
-                    console.print(panel)
-                except requests.RequestException as e:
-                    logging.error(f"Failed to retrieve content from '{bookmark['url']}': {e}")
-                except Exception as e:
-                    logging.error(f"Error processing content from '{bookmark['url']}': {e}")
-            else:
-                logging.error(f"Unknown visit method '{method}'.")
-                return bookmarks
-            # Increment visit_count and update last_visited
-            bookmark['visit_count'] += 1
-            bookmark['last_visited'] = datetime.now(timezone.utc).isoformat()
-            logging.info(f"Updated visit_count for '{bookmark['title']}' to {bookmark['visit_count']}.")
-            return bookmarks
-    logging.warning(f"No bookmark found with ID {bookmark_id}.")
-    return bookmarks
-
-
 def main():
-    parser = argparse.ArgumentParser(description='Bookmark Management Tool')
+    parser = argparse.ArgumentParser(description='Bookmark Toolkit (btk) - Manage and analyze bookmarks')
     subparsers = parser.add_subparsers(dest='command', required=True, help='Available commands')
 
     # Import command
@@ -320,8 +114,21 @@ def main():
         action='store_true',
         help='Ignore SSL certificate verification (not recommended)')
     cloud_parser.add_argument('--stats', action='store_true', help='Display graph statistics')
+    cloud_parser.add_argument('--links-url', action='store_true', default=True, help='Links are URL mentions')
+    cloud_parser.add_argument('--links-tag', action='store_true', default=False, help='Links are overlapping tags')
+    cloud_parser.add_argument('--links-creation-timestamp', action='store_true', default=False, help='Links are creation timestamps within a threshold')
 
+    cloud_parser.add_argument('--links-creation-timestamp-threshold', type=int, default=30, help='Threshold for links creation timestamp (in days)')
 
+    cloud_parser.add_argument('--links-visit-count', action='store_true', default=False, help='Links are visit counts within a threshold')
+    cloud_parser.add_argument('--links-visit-count-threshold', type=int, default=5, help='Threshold for links visit count')
+
+    cloud_parser.add_argument('--links-last-visited', action='store_true', default=False, help='Links are last visited timestamps within a threshold')
+    cloud_parser.add_argument('--links-last-visited-threshold', type=int, default=30, help='Threshold for links last visited timestamp (in days)')
+
+    cloud_parser.add_argument('--nodes-bookmarks', action='store_true', default=True, help='Nodes are bookmarks')
+    cloud_parser.add_argument('--nodes-tags', action='store_true', default=False, help='Nodes are tags')
+ 
     # Reachable command
     reachable_parser = subparsers.add_parser('reachable', help='Check and mark bookmarks as reachable or not')
     reachable_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to analyze')
@@ -338,6 +145,13 @@ def main():
     export_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to export')
     export_parser.add_argument('format', type=str, help='Export format (e.g., html, csv, zip)')
     export_parser.add_argument('output', type=str, help='Path to save the exported directory or file')
+
+    # JMESPath command
+    jmespath_parser = subparsers.add_parser('jmespath', help='Query bookmarks using JMESPath')
+    jmespath_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to query')
+    jmespath_parser.add_argument('query', type=str, help='JMESPath query string')
+    jmespath_parser.add_argument('--json', action='store_true', help='Output in JSON format')
+    jmespath_parser.add_argument('--output', type=str, help='Directory to save the output bookmarks')
 
     args = parser.parse_args()
 
@@ -363,8 +177,51 @@ def main():
         utils.ensure_dir(lib_dir)
         utils.ensure_dir(os.path.join(lib_dir, utils.FAVICON_DIR_NAME))
         bookmarks = utils.load_bookmarks(lib_dir)
-        bookmarks = import_bookmarks(bookmarks, args.html_file, lib_dir)
-        utils.save_bookmarks(bookmarks, lib_dir)
+        bookmarks = tools.import_bookmarks(bookmarks, args.html_file, lib_dir)
+        utils.save_bookmarks(bookmarks, None, lib_dir)
+
+
+    elif args.command == 'jmespath':
+        lib_dir = args.lib_dir
+        if not os.path.isdir(lib_dir):
+            logging.error(f"The specified library directory '{lib_dir}' does not exist or is not a directory.")
+            sys.exit(1)
+
+        bookmarks = utils.load_bookmarks(lib_dir)
+        results, type = utils.jmespath_query(bookmarks, args.query)
+
+        if type == "filter":
+            if args.output:
+                utils.save_bookmarks(results, lib_dir, args.output)
+            elif args.json:
+                console.print(JSON(json.dumps(results, indent=2)))
+            else:
+                tools.list_bookmarks(results)
+
+        else: # type == "transform":
+            if args.output:
+                # save the transformed results as JSON
+                with open(args.output, 'w') as f:
+                    json.dump(results, f, indent=2)
+            elif args.json:
+                # dump the results as JSON
+                console.print(JSON(json.dumps(results, indent=2)))
+            elif isinstance(results, list):
+                # let's transform the json into a table
+                table = Table(title="Transformed Results", show_header=True, header_style="bold magenta")
+                for key in results[0].keys():
+                    table.add_column(key, style="bold")
+                for item in results:
+                    table.add_row(*[str(value) for value in item.values()])
+                console.print(table)
+            elif isinstance(results, dict):
+                table = Table(title="Transformed Results", show_header=True, header_style="bold magenta")
+                for key in results.keys():
+                    table.add_column(key, style="bold")
+                table.add_row(*[str(value) for value in results.values()])
+                console.print(table)
+            else:
+                console.print(results)
 
     elif args.command == 'search':
         lib_dir = args.lib_dir
@@ -372,7 +229,7 @@ def main():
             logging.error(f"The specified library directory '{lib_dir}' does not exist or is not a directory.")
             sys.exit(1)
         bookmarks = utils.load_bookmarks(lib_dir)
-        results = search_bookmarks(bookmarks, args.query)
+        results = tools.search_bookmarks(bookmarks, args.query)
         if args.json:
             console.print(JSON(bookmarks))
         if results:
@@ -414,7 +271,7 @@ def main():
         utils.ensure_dir(os.path.join(lib_dir, utils.FAVICON_DIR_NAME))
         bookmarks = utils.load_bookmarks(lib_dir)
         tags = [tag.strip() for tag in args.tags.split(',')] if args.tags else []
-        bookmarks = add_bookmark(
+        bookmarks = tools.add_bookmark(
             bookmarks,
             title=args.title,
             url=args.url,
@@ -423,7 +280,7 @@ def main():
             description=args.description or "",
             lib_dir=lib_dir
         )
-        utils.save_bookmarks(bookmarks, lib_dir)
+        utils.save_bookmarks(bookmarks, None, lib_dir)
 
     elif args.command == 'remove':
         lib_dir = args.lib_dir
@@ -431,8 +288,8 @@ def main():
             logging.error(f"The specified library directory '{lib_dir}' does not exist or is not a directory.")
             sys.exit(1)
         bookmarks = utils.load_bookmarks(lib_dir)
-        bookmarks = remove_bookmark(bookmarks, args.id)
-        utils.save_bookmarks(bookmarks, lib_dir)
+        bookmarks = tools.remove_bookmark(bookmarks, args.id)
+        utils.save_bookmarks(bookmarks, lib_dir, lib_dir)
 
     elif args.command == 'list':
         lib_dir = args.lib_dir
@@ -444,7 +301,7 @@ def main():
             json_data = json.dumps(bookmarks)
             console.print(JSON(json_data))
         else:
-            list_bookmarks(bookmarks)
+            tools.list_bookmarks(bookmarks)
 
     elif args.command == 'edit':
         lib_dir = args.lib_dir
@@ -453,8 +310,6 @@ def main():
             sys.exit(1)
         bookmarks = utils.load_bookmarks(lib_dir)
 
-        print(args.tags)
-        
         for b in bookmarks:
             if b['id'] == args.id:
                 if args.title is not None:
@@ -469,7 +324,7 @@ def main():
                     b['description'] = args.description
                 break
 
-        utils.save_bookmarks(bookmarks, lib_dir)
+        utils.save_bookmarks(bookmarks, None, lib_dir)
       
     elif args.command == 'list-index':
         lib_dir = args.lib_dir
@@ -482,7 +337,7 @@ def main():
             json_data = json.dumps(results)
             console.print(JSON(json_data))
         else:
-            list_bookmarks([b for b in bookmarks if b['id'] in args.indices])
+            tools.list_bookmarks([b for b in bookmarks if b['id'] in args.indices])
 
     elif args.command == 'visit':
         lib_dir = args.lib_dir
@@ -491,8 +346,8 @@ def main():
             sys.exit(1)
         method = 'browser' if not args.console else 'console'
         bookmarks = utils.load_bookmarks(lib_dir)
-        bookmarks = visit_bookmark(bookmarks, args.id, method=method, lib_dir=lib_dir)
-        utils.save_bookmarks(bookmarks, lib_dir)
+        bookmarks = tools.visit_bookmark(bookmarks, args.id, method=method, lib_dir=lib_dir)
+        utils.save_bookmarks(bookmarks, None, lib_dir)
 
     elif args.command == 'merge':
         merge_command = args.set_command
@@ -531,7 +386,7 @@ def main():
                 logging.error(f"The specified library directory '{lib_dir}' does not exist or is not a directory.")
                 sys.exit(1)
             
-            bookmarks = merge.load_bookmarks(lib_dir)
+            bookmarks = utils.load_bookmarks(lib_dir)
             if not bookmarks:
                 logging.error(f"No bookmarks found in '{lib_dir}'.")
                 sys.exit(1)
@@ -543,8 +398,7 @@ def main():
                 ignore_ssl=ignore_ssl)
             
             if stats:
-                from cloud import display_graph_stats
-                display_graph_stats(graph)
+                cloud.display_graph_stats(graph)
             # Optional: Visualize the graph
             if output_file:
                 if output_file.endswith('.html'):

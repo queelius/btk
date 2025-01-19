@@ -21,6 +21,3 @@ btk = "btk.cli:main"  # CLI entry point
 
 [tool.setuptools]
 packages = ["btk"]  # Ensure it finds your package
-
-[tool.setuptools.package-dir]
-"" = "btk"  # Tell setuptools that code is inside `btk/`

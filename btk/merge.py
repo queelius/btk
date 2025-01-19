@@ -1,5 +1,5 @@
 import logging
-import utils
+import btk.utils as utils
 
 logging.basicConfig(level=logging.INFO)
 
