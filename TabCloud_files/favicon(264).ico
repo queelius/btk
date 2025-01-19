@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="https://schema.org/Article">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="generator" content="Cinera 0.10.24">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="https://guide.handmade-seattle.com/assets/cinera.css?r=680d3457">
+        <link rel="stylesheet" type="text/css" href="https://guide.handmade-seattle.com/assets/cinera__hms.css?r=3263db7c">
+        <link rel="stylesheet" type="text/css" href="https://guide.handmade-seattle.com/assets/cinera_topics.css?r=cad8ac57">
+        <script type="text/javascript" src="https://guide.handmade-seattle.com/assets/cinera_pre.js?r=90d0c5f3"></script>
+        <script type="text/javascript" src="https://guide.handmade-seattle.com/assets/cinera_search_pre.js?r=3346f176"></script>
+        <script type="text/javascript" src="https://guide.handmade-seattle.com/assets/cinera_search_post.js?r=dbb4751c" defer></script>
+
+        <meta property="cinera:type" content="instance">
+        <meta property="cinera:title" content="Handmade Seattle Conference Guide">
+
+                                    <title>Conference Guide &#8226; Handmade Seattle</title>
+        <meta property="og:title" content="Conference Guide &#8226; Handmade Seattle">
+        <meta property="og:type" content="article">
+        <meta property="og:url" content="https://guide.handmade-seattle.com">
+        <meta property="og:image" content="https://guide.handmade-seattle.com/assets/space_needle.png?r=06c5709c">
+
+        <link rel="icon" type="image/png" href="https://guide.handmade-seattle.com/assets/logo_32.png?r=9fdb7e3d">
+        <link rel="stylesheet" type="text/css" href="https://guide.handmade-seattle.com/assets/main.css?r=8355d4f8">
+    </head>
+
+    <body class="preload">
+        <header id="home">
+            <nav class="navbar">
+                <section class="container">
+                    <a class="brand" href="https://handmade-seattle.com">
+                        <img width="120" height="47" src="https://guide.handmade-seattle.com/assets/hms.png?r=4c910547" alt="Handmade Seattle">
+                    </a>
+                    <button id="navbar-toggler">
+                        <span class="bi bi-list"></span> 
+                    </button>
+                    <section id="navigation" class="collapse">
+                        <ul>
+                            <li><a href="https://handmade-seattle.com">Home</a></li>
+                            <li><a href="https://guide.handmade-seattle.com">Guide</a></li>
+                            <li><a href="https://media.handmade-seattle.com/subscribe/">Newsletter</a></li>
+                            <li><a href="https://handmade-seattle.com/faq">FAQ</a></li>
+                            <li><a href="https://handmade-seattle.com/about">About</a></li>
+                        </ul>
+                        <a class="btn" href="https://handmade-seattle.com/members">Member</a>
+                    </section>
+                </section>
+            </nav>
+        </header>
+        <header id="titler">
+            <section class="container">
+                <h1>Conference Guide</h1>
+                <div class="divider"></div>
+                <ul class="lineage">
+                    <li><a href="https://handmade-seattle.com">Home</a> /</li>
+                    <li><a href="https://guide.handmade-seattle.com">Conference Guide</a></li>
+                </ul>
+            </section>
+        </header>
+
+        <section id="main">
+            <header>
+                <nav>
+                    <ul class="cineraNavHorizontal hms">
+    <li><a href="https://guide.handmade-seattle.com/c/">Handmade Seattle</a>
+        <ul>
+            <li><a href="https://guide.handmade-seattle.com/c/2019/">2019</a>
+                <ul>
+                    <li><a href="https://guide.handmade-seattle.com/c/2019/talks/">Talks</a></li>
+                    <li><a href="https://guide.handmade-seattle.com/c/2019/devon/">Devon's Journey</a></li>
+                </ul>
+            </li>
+            <li><a href="https://guide.handmade-seattle.com/c/2020/">2020</a></li>
+            <li><a href="https://guide.handmade-seattle.com/c/2021/">2021</a></li>
+            <li><a href="https://guide.handmade-seattle.com/c/2022/">2022</a></li>
+        </ul>
+    </li>
+    <li><a href="https://guide.handmade-seattle.com/s/">Handmade Dev Show</a>
+        <ul>
+            <li><a href="https://guide.handmade-seattle.com/s/classic/">Classic</a></li>
+            <li><a href="https://guide.handmade-seattle.com/s/2022/">2022</a></li>
+        </ul>
+    </li>
+</ul>
+                </nav>
+            </header>
+
+            <section>
+                
+        <div id="cineraIndex" class="hms"><div id="cineraIndexControl">
+                <div class="cineraMenu cineraMenuTitle ViewSettings">
+                    <span>Settings
+                    </span>
+                    <div class="cineraMenuContainer">
+                        <div class="cineraMenuItem sort">Sort: Old to New &#9206;</div>
+                        <div class="cineraMenuItem view">View: List</div>
+                        <div class="cineraMenuItem anim">Animations: ✔</div>
+                        <div class="cineraMenuItem save">Save Settings: ✔</div>
+                    </div>
+                </div>
+                <div class="cineraMenu cineraMenuTitle IndexFilter">
+                    <span><img src="https://guide.handmade-seattle.com/assets/cinera_icon_filter.png?r=3d831e54"></span>
+                    <div class="cineraMenuContainer">
+                <div class="cineraMenuItem cineraFilterProject" data-baseURL="https://guide.handmade-seattle.com/c" data-searchLocation="" data-playerLocation="">
+                    <span class="cineraText">Handmade Seattle</span>
+                    <div class="cineraMenuItem cineraFilterProject" data-baseURL="https://guide.handmade-seattle.com/c/2019" data-searchLocation="" data-playerLocation="">
+                        <span class="cineraText">2019</span>
+                        <div class="cineraMenuItem cineraFilterProject" data-baseURL="https://guide.handmade-seattle.com/c/2019/talks" data-searchLocation="" data-playerLocation="">
+                            <span class="cineraText">Talks</span>
+                        </div>
+                        <div class="cineraMenuItem cineraFilterProject" data-baseURL="https://guide.handmade-seattle.com/c/2019/devon" data-searchLocation="" data-playerLocation="">
+                            <span class="cineraText">Devon's Journey</span>
+                        </div>
+                    </div>
+                    <div class="cineraMenuItem cineraFilterProject" data-baseURL="https://guide.handmade-seattle.com/c/2020" data-searchLocation="" data-playerLocation="">
+                        <span class="cineraText">2020</span>
+                    </div>
+                    <div class="cineraMenuItem cineraFilterProject" data-baseURL="https://guide.handmade-seattle.com/c/2021" data-searchLocation="" data-playerLocation="">
+                        <span class="cineraText">2021</span>
+                    </div>
+                    <div class="cineraMenuItem cineraFilterProject" data-baseURL="https://guide.handmade-seattle.com/c/2022" data-searchLocation="" data-playerLocation="">
+                        <span class="cineraText">2022</span>
+                    </div>
+                </div>
+                <div class="cineraMenuItem cineraFilterProject" data-baseURL="https://guide.handmade-seattle.com/s" data-searchLocation="" data-playerLocation="">
+                    <span class="cineraText">Handmade Dev Show</span>
+                    <div class="cineraMenuItem cineraFilterProject" data-baseURL="https://guide.handmade-seattle.com/s/classic" data-searchLocation="" data-playerLocation="">
+                        <span class="cineraText">Classic</span>
+                    </div>
+                    <div class="cineraMenuItem cineraFilterProject" data-baseURL="https://guide.handmade-seattle.com/s/2022" data-searchLocation="" data-playerLocation="">
+                        <span class="cineraText">2022</span>
+                    </div>
+                </div>
+                    </div>
+                </div>
+                <div class="cineraQueryContainer">
+                    <label for="query">Query:</label>
+                    <div class="inputContainer">
+                        <input type="text" autocomplete="off" id="query">
+                        <div class="spinner">
+                            Downloading data...
+                        </div>
+                    </div>
+                </div>
+                <div class="cineraHelp">
+                    <span>?</span>
+                    <div class="help_container">
+                        <span class="help_key">?</span><h1>Keyboard Navigation</h1><h2>Grid Traversal</h2>
+                        <span class="help_key">h</span> 
+                        <span class="help_text">Shift leftwards</span>
+
+                        <span class="help_key">k</span> 
+                        <span class="help_text">Ascend (zoom out)</span>
+
+                        <span class="help_key">l</span> 
+                        <span class="help_text">Shift rightwards</span>
+
+                        <br>
+                        <div class="help_paragraph">
+                            <div class="key_block">
+                                <div>
+                                    <span class="help_key">1</span><br>
+                                    <span class="help_key">q</span><br>
+                                    <span class="help_key">a</span><br>
+                                    <span class="help_key">z</span>
+                                </div>
+                                <div>
+                                    <span class="help_key">2</span><br>
+                                    <span class="help_key">w</span><br>
+                                    <span class="help_key">s</span><br>
+                                    <span class="help_key">x</span>
+                                </div>
+                                <div>
+                                    <span class="help_key">3</span><br>
+                                    <span class="help_key">e</span><br>
+                                    <span class="help_key">d</span><br>
+                                    <span class="help_key">c</span>
+                                </div>
+                                <div>
+                                    <span class="help_key">4</span><br>
+                                    <span class="help_key">r</span><br>
+                                    <span class="help_key">f</span><br>
+                                    <span class="help_key">v</span>
+                                </div>
+                            </div>
+                        </div><h2>Settings</h2>
+                        <span class="help_key">t</span> 
+                        <span class="help_text">Toggle sort order</span>
+
+                        <span class="help_key">y</span> 
+                        <span class="help_text">Toggle view style</span>
+
+                        <span class="help_key">m</span> 
+                        <span class="help_text">Toggle animations</span>
+
+                    </div>
+                </div>
+            </div>
+            <div id="cineraResultsSummary">Found: 0 episodes, 0 markers, 0h 0m 0s total.</div>
+            <div id="cineraResults" data-single="0"></div>
+
+            <div id="cineraIndexList">
+                <script src="https://guide.handmade-seattle.com/assets/cinera_clear.js?r=e2eb3dec"></script>
+        <div class="cineraIndexProject hms" data-project="c" data-baseURL="https://guide.handmade-seattle.com/c" data-searchLocation="" data-playerLocation="" data-unit="Item">
+            <div class="cineraProjectTitle">Handmade Seattle</div>
+            <div class="cineraIndexProject hms" data-project="2019" data-baseURL="https://guide.handmade-seattle.com/c/2019" data-searchLocation="" data-playerLocation="" data-unit="Item">
+                <div class="cineraProjectTitle">2019</div>
+                <div class="cineraIndexProject hms" data-project="talks" data-baseURL="https://guide.handmade-seattle.com/c/2019/talks" data-searchLocation="" data-playerLocation="" data-unit="Item">
+                    <div class="cineraProjectTitle">Talks</div>
+                    <div class="cineraIndexEntries">
+                        <div><a href="https://guide.handmade-seattle.com/c/2019/talks/lets-talk-about-queues/">Item 2: Let&#39;s Talk About Queues</a></div>
+                        <div><a href="https://guide.handmade-seattle.com/c/2019/talks/lifecycle-of-an-instruction-set/">Item 3: The Lifecycle of an Instruction Set</a></div>
+                    </div>
+                </div>
+                <div class="cineraIndexProject hms" data-project="devon" data-baseURL="https://guide.handmade-seattle.com/c/2019/devon" data-searchLocation="" data-playerLocation="" data-unit="Leg">
+                    <div class="cineraProjectTitle">Devon's Journey</div>
+                    <div class="cineraIndexEntries">
+                        <div><a href="https://guide.handmade-seattle.com/c/2019/devon/handmade-seattle-2019/">Leg I: Handmade Seattle 2019</a></div>
+                        <div><a href="https://guide.handmade-seattle.com/c/2019/devon/melodist/">Leg II: The Melodist</a></div>
+                        <div><a href="https://guide.handmade-seattle.com/c/2019/devon/riscy-business/">Leg III: RISCY BUSINESS</a></div>
+                        <div><a href="https://guide.handmade-seattle.com/c/2019/devon/our-machinery/">Leg IV: Our Machinery</a></div>
+                        <div><a href="https://guide.handmade-seattle.com/c/2019/devon/odin-lang/">Leg V: Odin Lang</a></div>
+                    </div>
+                </div>
+            </div>
+            <div class="cineraIndexProject hms" data-project="2020" data-baseURL="https://guide.handmade-seattle.com/c/2020" data-searchLocation="" data-playerLocation="" data-unit="Item">
+                <div class="cineraProjectTitle">2020</div>
+                <div class="cineraIndexEntries">
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/developing-shader-expertise/">Item 1: Developing Shader Expertise</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/ripcord/">Item 2: Ripcord</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/modern-cpu-optimizations/">Item 3: Modern CPU Optimizations</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/verco-pepper/">Item 4: Verco &amp; Pepper</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/learn-opengl/">Item 5: Learn OpenGL</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/wormaid/">Item 6: Wormaid</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/handmade-mindset-for-raylib/">Item 7: Developing a Handmade Mindset for raylib</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/whitebox/">Item 8: WhiteBox</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/new-paradigms/">Item 9: You CAN teach an old programmer new paradigms!</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/race-to-replace-c-and-cpp/">Item 10: The Race to Replace C and C++</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/linux-kernel-adventures/">Item 11: Linux Kernel Adventures</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/low-level-academy/">Item 12: Low-Level Academy</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/syzygy/">Item 13: Syzygy</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/parallelisation-in-linux-kernel/">Item 14: Parallelisation in the Linux Kernel</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/cyan-inc/">Item 15: Cyan, Inc. - The Directors behind Myst VR</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/cute-framework/">Item 16: Cute Framework</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/simple-computer-company/">Item 17: Simple Computer Company</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/dion-systems-reinventing-wheel/">Item 18: Dion Systems - The How And Why Of Reinventing The Wheel</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2020/dion-systems-qa/">Item 19: Dion Systems - Q&amp;A</a></div>
+                </div>
+            </div>
+            <div class="cineraIndexProject hms" data-project="2021" data-baseURL="https://guide.handmade-seattle.com/c/2021" data-searchLocation="" data-playerLocation="" data-unit="Item">
+                <div class="cineraProjectTitle">2021</div>
+                <div class="cineraIndexEntries">
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/quality-in-software/">Item 1: Quality in Software</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/quality-in-software-qa/">Item 2: Quality in Software - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/low-level-emotional-programming/">Item 3: Low-Level Emotional Programming</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/emotional-programming-qa/">Item 4: Low-Level Emotional Programming - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/compiler-podcast-episode-2/">Item 5: Compiler Podcast - Episode 2</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/unexplored-2/">Item 6: Unexplored 2</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/serenityos/">Item 7: SerenityOS</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/nushell/">Item 8: Nushell</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/context-is-everything/">Item 9: Context is Everything</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/performant-processing/">Item 10: Profiling: Principles and Practices for Performant Processing</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/performant-processing-qa/">Item 11: Profiling: Principles and Practices for Performant Processing - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/zld/">Item 12: ZLD</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/zld-qa/">Item 13: ZLD - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/endbasic/">Item 14: EndBASIC</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/endbasic-qa/">Item 15: EndBASIC - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/future-of-low-level-programming/">Item 16: Future of Low-Level Programming</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/cute-framework/">Item 17: Cute Framework (Devilish Details)</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/cute-framework-qa/">Item 18: Cute Framework (Devilish Details) - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/oasis-in-curses/">Item 19: Oasis in Curses</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/oasis-in-curses-qa/">Item 20: Oasis in Curses - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/boksos/">Item 21: BoksOS</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/boksos-qa/">Item 22: BoksOS - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/practical-dod/">Item 23: Practical DOD</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/practical-dod-qa/">Item 24: Practical DOD - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/metadesk/">Item 25: Metadesk</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/metadesk-qa/">Item 26: Metadesk - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/zigs-vp-of-community/">Item 27: Zig&#39;s VP of Community</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/our-machinery/">Item 28: Our Machinery</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/essence/">Item 29: Essence</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/whitebox/">Item 30: WhiteBox</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/importc/">Item 31: ImportC</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/importc-qa/">Item 32: ImportC - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/visa-viz/">Item 33: Visa Viz</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/visa-viz-qa/">Item 34: Visa Viz - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/medc/">Item 35: medc</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/medc-qa/">Item 36: medc - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/cove-kid/">Item 37: Cove Kid</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/cove-kid-qa/">Item 38: Cove Kid - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/roc-lang/">Item 39: Roc Lang</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2021/roc-lang-qa/">Item 40: Roc Lang - Q&amp;A</a></div>
+                </div>
+            </div>
+            <div class="cineraIndexProject hms" data-project="2022" data-baseURL="https://guide.handmade-seattle.com/c/2022" data-searchLocation="" data-playerLocation="" data-unit="">
+                <div class="cineraProjectTitle">2022</div>
+                <div class="cineraIndexEntries">
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/opening-notes/">Opening Notes</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/behind-crafting-interpreters/">The Craft Behind Crafting Interpreters</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/weathering-software-winter/">Weathering Software Winter</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/weathering-software-winter-qa/">Weathering Software Winter - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/memory-strategies-merits-unsafe/">Memory Strategies – The Merits of (Un)safe</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/spall/">Spall</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/sprig/">Sprig</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/libquincy/">LibQuincy</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/optimism-in-design/">Optimism in Design</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/optimism-in-design-qa/">Optimism in Design - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/sdf-atlas/">SDF Atlas</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/todool/">Todool</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/magic-poser/">Magic Poser</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/embergen/">EmberGen</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/embergen-qa/">EmberGen - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/why-cant-make-simple-software/">Complexity: Why Can&#39;t We Make Simple Software?</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/why-cant-make-simple-software-qa/">Complexity: Why Can&#39;t We Make Simple Software? - Q&amp;A</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/talking-computers-humans/">Talking with Computers &amp; Humans</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/whitebox-2022/">WhiteBox (2022)</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/abbrv/">Abbrv</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/yucan/">Yucan</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/blinded-by-fear/">Blinded By Fear</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/its-not-survivorship-bias/">It&#39;s Not Survivorship Bias</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/c/2022/its-not-survivorship-bias-qa/">It&#39;s Not Survivorship Bias - Q&amp;A</a></div>
+                </div>
+            </div>
+        </div>
+        <div class="cineraIndexProject hms" data-project="s" data-baseURL="https://guide.handmade-seattle.com/s" data-searchLocation="" data-playerLocation="" data-unit="Episode">
+            <div class="cineraProjectTitle">Handmade Dev Show</div>
+            <div class="cineraIndexProject hms" data-project="classic" data-baseURL="https://guide.handmade-seattle.com/s/classic" data-searchLocation="" data-playerLocation="" data-unit="Canto">
+                <div class="cineraProjectTitle">Classic</div>
+                <div class="cineraIndexEntries">
+                    <div><a href="https://guide.handmade-seattle.com/s/classic/majora/">Canto I·: Majora</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/s/classic/muratori/">Canto I··: Muratori</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/s/classic/barrett/">Canto II: Barrett</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/s/classic/ryg-i/">Canto III·: Ryg, Part I</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/s/classic/ryg-ii/">Canto III··: Ryg, Part II</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/s/classic/blow/">Canto IV: Blow</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/s/classic/steenberg/">Canto V: Steenberg</a></div>
+                </div>
+            </div>
+            <div class="cineraIndexProject hms" data-project="2022" data-baseURL="https://guide.handmade-seattle.com/s/2022" data-searchLocation="" data-playerLocation="" data-unit="Episode">
+                <div class="cineraProjectTitle">2022</div>
+                <div class="cineraIndexEntries">
+                    <div><a href="https://guide.handmade-seattle.com/s/2022/allen-webster/">Episode 1: Allen Webster</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/s/2022/ryan-fleury/">Episode 2: Ryan Fleury</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/s/2022/martins-mozeiko/">Episode 3: Mārtiņš Možeiko</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/s/2022/ink-and-switch/">Episode 4: Ink &amp; Switch</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/s/2022/languages-are-banned/">Episode 5: Languages are Banned</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/s/2022/wheel-reinvention-jam/">Episode 6: Wheel Reinvention Jam</a></div>
+                    <div><a href="https://guide.handmade-seattle.com/s/2022/professor-rework/">Episode 7: Professor Rework</a></div>
+                </div>
+            </div>
+        </div>
+            </div>
+            <div class="cineraIndexGridContainer">
+                <div class="cineraTraversalContainer">
+                    <div class="cineraTraversal">
+                        <div class="cineraButton prev"><p>←</p></div>
+                        <div class="cineraButton ascension"><p>↑</p></div>
+                        <div class="cineraButton next"><p>→</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+            </section>
+        </section>
+
+		<footer>
+            <section class="container">
+                <section class="row">
+                    <section class="column">
+                        <nav class="socials">
+                            <ul>
+                                <li class="twitter"><a href="https://twitter.com/handmade_seattl"><span class="bi bi-twitter"></span></a></li>
+                                <li class="twitch"><a href="https://twitch.tv/abnercoimbre"><span class="bi bi-twitch"></span></a></li>
+                                <li class="mail"><a href="mailto:abner@handmade-seattle.com"><span class="bi bi-envelope-fill"></span></a></li>
+                            </ul>
+                        </nav>
+                    </section>
+                </section>
+                <section class="owner row">
+                    <p>© 2022 Handmade Seattle LLC</p>
+                </section>
+            </section>
+		</footer>
+        <script type="text/javascript" src="https://guide.handmade-seattle.com/assets/main.js?r=b63d1ed5"></script>
+    </body>
+</html>
