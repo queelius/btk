@@ -4,15 +4,15 @@ Bookmark Toolkit (btk) is a command-line tool for managing and analyzing bookmar
 
 ## Installation
 
-To install `btk`, you can use `pip`:
+To install `bookmark-tk`, you can use `pip`:
 
 ```sh
-pip install btk
+pip install bookmark-tk
 ```
 
 ## Usage
 
-To see how to use it, type:
+It installs a command-line took, `btk`. To see how to use it, type:
 
 ```sh
 btk --help

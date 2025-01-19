@@ -14,6 +14,7 @@ import networkx as nx
 import btk.utils as utils
 import btk.merge as merge
 import btk.tools as tools
+import btk.llm as llm
 
 # Initialize colorama and rich console
 colorama_init(autoreset=True)
@@ -153,9 +154,35 @@ def main():
     jmespath_parser.add_argument('--json', action='store_true', help='Output in JSON format')
     jmespath_parser.add_argument('--output', type=str, help='Directory to save the output bookmarks')
 
+    # LLM command
+    llm_parser = subparsers.add_parser('llm', help='Query the bookmark library using a Large Language Model')
+    llm_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to query')
+    llm_parser.add_argument('query', type=str, help='Query string')
+    llm_parser.add_argument('--json', action='store_true', help='Output in JSON format')
+
+    # Let's have a .btkrc file to store information about the toolkit. in particular, the LLM endpoint, OpenAI
+    # compatible.
+    
     args = parser.parse_args()
 
-    if args.command == 'export':
+    if args.command == 'llm':
+        lib_dir = args.lib_dir
+        if not os.path.isdir(lib_dir):
+            logging.error(f"The specified library directory '{lib_dir}' does not exist or is not a directory.")
+            sys.exit(1)
+        bookmarks = utils.load_bookmarks(lib_dir)
+
+        # let's get some context about the bookmarks, and things like jmespath queries, etc 
+
+        prompt = f"Query the bookmark library with the following prompt:\n\n{args.query}"
+
+        results = llm.query_llm(prompt)
+        if args.json:
+            console.print(JSON(json.dumps(results, indent=2)))
+        else:
+            console.print(results["response"])
+
+    elif args.command == 'export':
         lib_dir = args.lib_dir
         if not os.path.isdir(lib_dir):
             logging.error(f"The specified library directory '{lib_dir}' does not exist or is not a directory.")
