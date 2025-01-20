@@ -162,11 +162,12 @@ def list_bookmarks(bookmarks):
         stars = "⭐" if b.get('stars') else ""
         tags = ", ".join(b.get('tags', []))
         last_visited = b.get('last_visited') or "-"
+        link = f"[link={b['url']}]{b['url']}[/link]"
         table.add_row(
             str(b['id']),
      #       b['unique_id'],
             b['title'],
-            b['url'],
+            link,
             tags,
             stars,
             str(b.get('visit_count', 0)),
