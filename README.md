@@ -87,23 +87,50 @@ btk --help
 
 - **jmespath**: Query bookmarks using JMESPath.
   ```sh
-  btk jmespath mybookmarks "[?visit_count > \`0\`].title"
+  btk jmespath mybookmarks "[?visit_count > `0`].title"
+  ```
+
+- **stats**: Get statistics about bookmarks.
+  ```sh
+  btk stats mybookmarks
+  ```
+
+- **about**: Get information about the tool.
+  ```sh
+  btk about
+  ```
+
+- **version**: Get the version of the tool.
+  ```sh
+  btk version
+  ```
+
+- **llm**: Use a large language model (LLM) to automatically generate appropriate queries from natural language prompts.
+  ```sh
+  btk llm mybookmarks "Find bookmarks that are starred and have a visit count greater than 0."
+  ```
+
+  Or, more complex:
+  ```sh
+  btk llm bookmarks "search for bookmarks with chatgpt in the title and has been visited at least once or it also has awesome in the title in addition to chatgpt. or, finally, it was added after 2022"
   ```
 
 ## Example JMESPath Queries
 
 - Get all starred bookmarks:
   ```sh
-  btk jmespath mybookmarks "[?stars == \`true\`].title"
+  btk jmespath mybookmarks "[?stars == `true`].title"
   ```
 - Get URLs of frequently visited bookmarks:
   ```sh
-  btk jmespath mybookmarks "[?visit_count > \`5\`].url"
+  btk jmespath mybookmarks "[?visit_count > `5`].url"
   ```
 - Get bookmarks that contain 'wikipedia' in the URL:
   ```sh
   btk jmespath mybookmarks "[?contains(url, 'wikipedia')].{title: title, url: url}"
   ```
+
+
 
 ## License
 

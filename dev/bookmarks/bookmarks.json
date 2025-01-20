@@ -201,7 +201,7 @@
   {
     "id": 15,
     "unique_id": "022d7254",
-    "title": "R Manuals :: Writing R Extensions - 7\u00a0 Generic functions and methods",
+    "title": "R Manuals :: Writing R Extensions - 7  Generic functions and methods",
     "url": "https://rstudio.github.io/r-manuals/r-exts/Generic-functions-and-methods.html",
     "added": "2023-02-24T13:59:56+00:00",
     "stars": false,
@@ -621,7 +621,7 @@
   {
     "id": 45,
     "unique_id": "0827d3c4",
-    "title": "DeepMind\u2019s latest research at NeurIPS 2022",
+    "title": "DeepMind’s latest research at NeurIPS 2022",
     "url": "https://www.deepmind.com/blog/deepminds-latest-research-at-neurips-2022",
     "added": "2023-02-22T09:23:12+00:00",
     "stars": false,
@@ -775,7 +775,7 @@
   {
     "id": 56,
     "unique_id": "0bfa8711",
-    "title": "An unaligned benchmark. What an unaligned AI might look like\u2026 | by Paul Christiano | AI Alignment",
+    "title": "An unaligned benchmark. What an unaligned AI might look like… | by Paul Christiano | AI Alignment",
     "url": "https://ai-alignment.com/an-unaligned-benchmark-b49ad992940b",
     "added": "2023-02-22T09:23:12+00:00",
     "stars": false,
@@ -831,7 +831,7 @@
   {
     "id": 60,
     "unique_id": "43a26480",
-    "title": "Getting Started \u2014 \ud83e\udd9c\ud83d\udd17 LangChain 0.0.90",
+    "title": "Getting Started — 🦜🔗 LangChain 0.0.90",
     "url": "https://langchain.readthedocs.io/en/latest/modules/agents/getting_started.html",
     "added": "2023-02-20T17:47:35+00:00",
     "stars": false,
@@ -1181,7 +1181,7 @@
   {
     "id": 85,
     "unique_id": "2f04f13d",
-    "title": "The Scaling Hypothesis \u00b7 Gwern.net",
+    "title": "The Scaling Hypothesis · Gwern.net",
     "url": "https://gwern.net/scaling-hypothesis",
     "added": "2023-02-20T17:47:35+00:00",
     "stars": false,
@@ -1209,7 +1209,7 @@
   {
     "id": 87,
     "unique_id": "8dbce0ca",
-    "title": "Foundation Models. In August 2021 Stanford announced\u2026 | by Grigory Sapunov | Intento",
+    "title": "Foundation Models. In August 2021 Stanford announced… | by Grigory Sapunov | Intento",
     "url": "https://blog.inten.to/foundation-models-b89e7610057",
     "added": "2023-02-20T17:47:35+00:00",
     "stars": false,
@@ -1265,7 +1265,7 @@
   {
     "id": 91,
     "unique_id": "98657b8d",
-    "title": "Collective Intelligence for Deep Learning: A Survey of Recent Developments | \u5927\u30c8\u30ed",
+    "title": "Collective Intelligence for Deep Learning: A Survey of Recent Developments | 大トロ",
     "url": "https://blog.otoro.net/2022/10/01/collectiveintelligence/",
     "added": "2023-02-08T10:26:16+00:00",
     "stars": false,
@@ -1279,7 +1279,7 @@
   {
     "id": 92,
     "unique_id": "75f0c3f6",
-    "title": "Google Research, 2022 & beyond: Algorithms for efficient deep learning \u2013 Google AI Blog",
+    "title": "Google Research, 2022 & beyond: Algorithms for efficient deep learning – Google AI Blog",
     "url": "https://ai.googleblog.com/2023/02/google-research-2022-beyond-algorithms.html",
     "added": "2023-02-08T10:26:16+00:00",
     "stars": false,
@@ -1391,7 +1391,7 @@
   {
     "id": 100,
     "unique_id": "1ac8edfd",
-    "title": "cppyy: Automatic Python-C++ bindings \u2014 cppyy 2.4.0 documentation",
+    "title": "cppyy: Automatic Python-C++ bindings — cppyy 2.4.0 documentation",
     "url": "https://cppyy.readthedocs.io/en/latest/",
     "added": "2023-02-08T10:26:16+00:00",
     "stars": false,
@@ -1676,16 +1676,16 @@
     "added": "2023-02-06T21:12:54+00:00",
     "stars": false,
     "tags": [],
-    "visit_count": 0,
+    "visit_count": 1,
     "description": "",
     "favicon": "favicons/f8c16de116ae22588e3dd9b8727cf9cc.ico",
-    "last_visited": null,
+    "last_visited": "2025-01-20T08:55:25.041604+00:00",
     "reachable": true
   },
   {
     "id": 121,
     "unique_id": "86afac1e",
-    "title": "Anderson\u2013Darling test - Wikipedia",
+    "title": "Anderson–Darling test - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Anderson%E2%80%93Darling_test",
     "added": "2023-02-06T21:12:54+00:00",
     "stars": false,
@@ -1713,7 +1713,7 @@
   {
     "id": 123,
     "unique_id": "37645177",
-    "title": "\ud83d\ude0e App Showcase \u2014 GPT Index documentation",
+    "title": "😎 App Showcase — GPT Index documentation",
     "url": "https://gpt-index.readthedocs.io/en/latest/gallery/app_showcase.html",
     "added": "2023-02-03T08:54:28+00:00",
     "stars": false,
@@ -1755,7 +1755,7 @@
   {
     "id": 126,
     "unique_id": "d95b5f22",
-    "title": "Welcome to GPT Index! \u2014 GPT Index documentation",
+    "title": "Welcome to GPT Index! — GPT Index documentation",
     "url": "https://gpt-index.readthedocs.io/en/latest/",
     "added": "2023-02-03T08:54:28+00:00",
     "stars": false,
@@ -1769,7 +1769,7 @@
   {
     "id": 127,
     "unique_id": "e4e54d1c",
-    "title": "Using with Langchain \ud83e\udd9c\ud83d\udd17 \u2014 GPT Index documentation",
+    "title": "Using with Langchain 🦜🔗 — GPT Index documentation",
     "url": "https://gpt-index.readthedocs.io/en/latest/how_to/using_with_langchain.html",
     "added": "2023-02-03T08:54:28+00:00",
     "stars": false,
@@ -1783,7 +1783,7 @@
   {
     "id": 128,
     "unique_id": "0817617b",
-    "title": "LLMs \u2014 \ud83e\udd9c\ud83d\udd17 LangChain 0.0.76",
+    "title": "LLMs — 🦜🔗 LangChain 0.0.76",
     "url": "https://langchain.readthedocs.io/en/latest/modules/llms.html",
     "added": "2023-02-03T08:54:28+00:00",
     "stars": false,
@@ -1797,7 +1797,7 @@
   {
     "id": 129,
     "unique_id": "29331c11",
-    "title": "gpt_index/LangchainDemo.ipynb at main \u00b7 jerryjliu/gpt_index",
+    "title": "gpt_index/LangchainDemo.ipynb at main · jerryjliu/gpt_index",
     "url": "https://github.com/jerryjliu/gpt_index/blob/main/examples/langchain_demo/LangchainDemo.ipynb",
     "added": "2023-02-03T08:54:28+00:00",
     "stars": false,
@@ -1811,7 +1811,7 @@
   {
     "id": 130,
     "unique_id": "64c1c4f5",
-    "title": "hwchase17/langchain: \u26a1 Building applications with LLMs through composability \u26a1",
+    "title": "hwchase17/langchain: ⚡ Building applications with LLMs through composability ⚡",
     "url": "https://github.com/hwchase17/langchain/",
     "added": "2023-02-03T08:54:28+00:00",
     "stars": false,
@@ -1867,7 +1867,7 @@
   {
     "id": 134,
     "unique_id": "248afa0e",
-    "title": "fka/awesome-chatgpt-prompts \u00b7 Datasets at Hugging Face",
+    "title": "fka/awesome-chatgpt-prompts · Datasets at Hugging Face",
     "url": "https://huggingface.co/datasets/fka/awesome-chatgpt-prompts",
     "added": "2023-02-02T22:42:02+00:00",
     "stars": false,
@@ -1993,7 +1993,7 @@
   {
     "id": 143,
     "unique_id": "11abfc16",
-    "title": "A Foundation Models Primer. The latest additions in the universe of\u2026 | by Shubhi Asthana | Code Like A Girl",
+    "title": "A Foundation Models Primer. The latest additions in the universe of… | by Shubhi Asthana | Code Like A Girl",
     "url": "https://code.likeagirl.io/a-foundation-models-primer-5fec6a1974c9",
     "added": "2023-02-02T22:42:02+00:00",
     "stars": false,
@@ -2623,7 +2623,7 @@
   {
     "id": 188,
     "unique_id": "e3b8eed5",
-    "title": "\u201cWhy is symbolic AI being overshadowed by statistical AI?\u201d by Dr. Bas van der Raadt - YouTube",
+    "title": "“Why is symbolic AI being overshadowed by statistical AI?” by Dr. Bas van der Raadt - YouTube",
     "url": "https://www.youtube.com/watch?v=au-kNF-dYKc",
     "added": "2023-01-26T22:34:35+00:00",
     "stars": false,
@@ -2651,7 +2651,7 @@
   {
     "id": 190,
     "unique_id": "14155631",
-    "title": "Doing Maths Symbolically: R as a Computer Algebra System (CAS) \u2013 Learning Machines",
+    "title": "Doing Maths Symbolically: R as a Computer Algebra System (CAS) – Learning Machines",
     "url": "https://blog.ephorie.de/doing-maths-symbolically-r-as-a-computer-algebra-system-cas",
     "added": "2023-01-26T22:34:35+00:00",
     "stars": false,
@@ -2707,7 +2707,7 @@
   {
     "id": 194,
     "unique_id": "01bacc4e",
-    "title": "LISP \u2014 Mecrisp Stellaris Unofficial 1.0 documentation",
+    "title": "LISP — Mecrisp Stellaris Unofficial 1.0 documentation",
     "url": "https://mecrisp-stellaris-folkdoc.sourceforge.io/lisp.html",
     "added": "2023-01-26T15:31:42+00:00",
     "stars": false,
@@ -2749,7 +2749,7 @@
   {
     "id": 197,
     "unique_id": "7f154e69",
-    "title": "Help keep this book alive | Butterick\u2019s Practical Typography",
+    "title": "Help keep this book alive | Butterick’s Practical Typography",
     "url": "https://practicaltypography.com/graylist.html",
     "added": "2023-01-26T15:31:42+00:00",
     "stars": false,
@@ -2791,7 +2791,7 @@
   {
     "id": 200,
     "unique_id": "9f34697f",
-    "title": "J\u00fcrgen Schmidhuber - Wikipedia",
+    "title": "Jürgen Schmidhuber - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/J%C3%BCrgen_Schmidhuber",
     "added": "2023-01-25T22:21:04+00:00",
     "stars": false,
@@ -3099,7 +3099,7 @@
   {
     "id": 222,
     "unique_id": "f917071a",
-    "title": "Critique of some recent philosophy of LLMs\u2019 minds - LessWrong",
+    "title": "Critique of some recent philosophy of LLMs’ minds - LessWrong",
     "url": "https://www.lesswrong.com/posts/ejEgaYSaefCevapPa/critique-of-some-recent-philosophy-of-llms-minds",
     "added": "2023-01-24T21:16:33+00:00",
     "stars": false,
@@ -3197,7 +3197,7 @@
   {
     "id": 229,
     "unique_id": "24486b83",
-    "title": "A deep dive into dispatching techniques - Jonathan M\u00fcller - Meeting C++ 2022 - YouTube",
+    "title": "A deep dive into dispatching techniques - Jonathan Müller - Meeting C++ 2022 - YouTube",
     "url": "https://www.youtube.com/watch?v=EIVZwHrJLLk",
     "added": "2023-01-24T21:16:33+00:00",
     "stars": false,
@@ -3253,7 +3253,7 @@
   {
     "id": 233,
     "unique_id": "78dff341",
-    "title": "Train and run machine learning models faster \u00a0|\u00a0 Cloud TPU \u00a0|\u00a0 Google Cloud",
+    "title": "Train and run machine learning models faster  |  Cloud TPU  |  Google Cloud",
     "url": "https://cloud.google.com/tpu?hl=en",
     "added": "2023-01-24T06:49:07+00:00",
     "stars": false,
@@ -3715,7 +3715,7 @@
   {
     "id": 266,
     "unique_id": "e051c7c4",
-    "title": "On Lisp in 15 minutes. A tour of theoretical foundations of\u2026 | by Iwo Herka | Makimo Tech Blog | Medium",
+    "title": "On Lisp in 15 minutes. A tour of theoretical foundations of… | by Iwo Herka | Makimo Tech Blog | Medium",
     "url": "https://medium.com/makimo-tech-blog/on-lisp-in-15-minutes-3286c179584f",
     "added": "2023-01-12T20:08:13+00:00",
     "stars": false,
@@ -3981,7 +3981,7 @@
   {
     "id": 285,
     "unique_id": "b47bd457",
-    "title": "06 \u2013 Classification, an energy perspective \u2013 Backprop and contrastive learning - YouTube",
+    "title": "06 – Classification, an energy perspective – Backprop and contrastive learning - YouTube",
     "url": "https://www.youtube.com/watch?v=SC6ljsFFVcY",
     "added": "2023-01-10T11:23:37+00:00",
     "stars": false,
@@ -3995,7 +3995,7 @@
   {
     "id": 286,
     "unique_id": "b0c1face",
-    "title": "DEEP LEARNING \u00b7 Deep Learning",
+    "title": "DEEP LEARNING · Deep Learning",
     "url": "https://atcold.github.io/NYU-DLFL22/",
     "added": "2023-01-10T11:23:37+00:00",
     "stars": false,
@@ -4009,7 +4009,7 @@
   {
     "id": 287,
     "unique_id": "6aefdc5b",
-    "title": "01L \u2013 Gradient descent and the backpropagation algorithm - YouTube",
+    "title": "01L – Gradient descent and the backpropagation algorithm - YouTube",
     "url": "https://www.youtube.com/watch?v=nTlCqaL7fCY",
     "added": "2023-01-10T11:23:37+00:00",
     "stars": false,
@@ -4177,7 +4177,7 @@
   {
     "id": 299,
     "unique_id": "1d32a2e2",
-    "title": "Beginners\u2019 Guide to Calculus with R",
+    "title": "Beginners’ Guide to Calculus with R",
     "url": "https://cran.r-project.org/web/packages/mosaicCalc/vignettes/Calculus_with_R.html",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -4303,7 +4303,7 @@
   {
     "id": 308,
     "unique_id": "ca61f22a",
-    "title": "10 Maximum Likelihood Estimation | CmdStan User\u2019s Guide",
+    "title": "10 Maximum Likelihood Estimation | CmdStan User’s Guide",
     "url": "https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -4359,7 +4359,7 @@
   {
     "id": 312,
     "unique_id": "89a0f799",
-    "title": "1 CmdStan Installation | CmdStan User\u2019s Guide",
+    "title": "1 CmdStan Installation | CmdStan User’s Guide",
     "url": "https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html#installation-from-github",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -4373,7 +4373,7 @@
   {
     "id": 313,
     "unique_id": "3b4b4098",
-    "title": "Getting started with CmdStanR \u2022 cmdstanr",
+    "title": "Getting started with CmdStanR • cmdstanr",
     "url": "https://mc-stan.org/cmdstanr/articles/cmdstanr.html",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -4387,7 +4387,7 @@
   {
     "id": 314,
     "unique_id": "a0b10235",
-    "title": "Run Stan's MCMC algorithms \u2014 model-method-sample \u2022 cmdstanr",
+    "title": "Run Stan's MCMC algorithms — model-method-sample • cmdstanr",
     "url": "https://mc-stan.org/cmdstanr/reference/model-method-sample.html",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -4401,7 +4401,7 @@
   {
     "id": 315,
     "unique_id": "b087918c",
-    "title": "stan-book/maximum-likelihood.Rmd at master \u00b7 malcolmbarrett/stan-book",
+    "title": "stan-book/maximum-likelihood.Rmd at master · malcolmbarrett/stan-book",
     "url": "https://github.com/malcolmbarrett/stan-book/blob/master/maximum-likelihood.Rmd",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -4471,7 +4471,7 @@
   {
     "id": 320,
     "unique_id": "5b399d12",
-    "title": "OO field guide \u00b7 Advanced R.",
+    "title": "OO field guide · Advanced R.",
     "url": "http://adv-r.had.co.nz/OO-essentials.html",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -4499,7 +4499,7 @@
   {
     "id": 322,
     "unique_id": "16aa7912",
-    "title": "R Packages (2e) - 18\u00a0 Vignettes",
+    "title": "R Packages (2e) - 18  Vignettes",
     "url": "https://r-pkgs.org/vignettes.html",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -4513,7 +4513,7 @@
   {
     "id": 323,
     "unique_id": "e8824068",
-    "title": "R Packages (2e) - 20\u00a0 Website",
+    "title": "R Packages (2e) - 20  Website",
     "url": "https://r-pkgs.org/website.html",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -4541,7 +4541,7 @@
   {
     "id": 325,
     "unique_id": "b32704f9",
-    "title": "Stan User\u2019s Guide",
+    "title": "Stan User’s Guide",
     "url": "https://mc-stan.org/docs/stan-users-guide/index.html",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -4863,7 +4863,7 @@
   {
     "id": 348,
     "unique_id": "179ba049",
-    "title": "Bias\u2013variance tradeoff - Wikipedia",
+    "title": "Bias–variance tradeoff - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Bias%E2%80%93variance_tradeoff",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -5129,7 +5129,7 @@
   {
     "id": 367,
     "unique_id": "8a7c0cd5",
-    "title": "Easily Create Presentation-Ready Display Tables \u2022 gt",
+    "title": "Easily Create Presentation-Ready Display Tables • gt",
     "url": "https://gt.rstudio.com/",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -5171,7 +5171,7 @@
   {
     "id": 370,
     "unique_id": "dce7f16c",
-    "title": "Coerce lists, matrices, and more to data frames \u2014 as_tibble \u2022 tibble",
+    "title": "Coerce lists, matrices, and more to data frames — as_tibble • tibble",
     "url": "https://tibble.tidyverse.org/reference/as_tibble.html",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -5185,7 +5185,7 @@
   {
     "id": 371,
     "unique_id": "6c7fac83",
-    "title": "A Grammar of Data Manipulation \u2022 dplyr",
+    "title": "A Grammar of Data Manipulation • dplyr",
     "url": "https://dplyr.tidyverse.org/index.html",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -5269,7 +5269,7 @@
   {
     "id": 377,
     "unique_id": "166bb457",
-    "title": "algebraic.mle/mle_numerical.R at master \u00b7 queelius/algebraic.mle",
+    "title": "algebraic.mle/mle_numerical.R at master · queelius/algebraic.mle",
     "url": "https://github.com/queelius/algebraic.mle/blob/master/R/mle_numerical.R",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -5577,7 +5577,7 @@
   {
     "id": 399,
     "unique_id": "3e6300ad",
-    "title": "Building a nice legend with R and ggplot2 \u2013 the R Graph Gallery",
+    "title": "Building a nice legend with R and ggplot2 – the R Graph Gallery",
     "url": "https://r-graph-gallery.com/239-custom-layout-legend-ggplot2.html#:~:text=Default%20legend%20with%20ggplot2,based%20on%20the%20mtcars%20dataset.",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -5605,7 +5605,7 @@
   {
     "id": 401,
     "unique_id": "6b8acfc1",
-    "title": "R Packages (2e) - 8\u00a0 Data",
+    "title": "R Packages (2e) - 8  Data",
     "url": "https://r-pkgs.org/data.html",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -5675,7 +5675,7 @@
   {
     "id": 406,
     "unique_id": "8f555b02",
-    "title": "Arbitrarily Accurate Computation with R\u2014The Rmpfr Package",
+    "title": "Arbitrarily Accurate Computation with R—The Rmpfr Package",
     "url": "https://cran.r-project.org/web/packages/Rmpfr/vignettes/Rmpfr-pkg.pdf",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -5745,7 +5745,7 @@
   {
     "id": 411,
     "unique_id": "4acdd210",
-    "title": "Build websites for R packages \u2022 pkgdown",
+    "title": "Build websites for R packages • pkgdown",
     "url": "https://pkgdown.r-lib.org/index.html",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -5759,7 +5759,7 @@
   {
     "id": 412,
     "unique_id": "67116980",
-    "title": "Customise your site \u2022 pkgdown",
+    "title": "Customise your site • pkgdown",
     "url": "https://pkgdown.r-lib.org/articles/customise.html#navbar",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -5773,7 +5773,7 @@
   {
     "id": 413,
     "unique_id": "c4763023",
-    "title": "2D contours of a 3D surface \u2014 geom_contour \u2022 ggplot2",
+    "title": "2D contours of a 3D surface — geom_contour • ggplot2",
     "url": "https://ggplot2.tidyverse.org/reference/geom_contour.html",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -5787,7 +5787,7 @@
   {
     "id": 414,
     "unique_id": "047c582d",
-    "title": "Plotting Surfaces with R \u00b7 R Views",
+    "title": "Plotting Surfaces with R · R Views",
     "url": "https://rviews.rstudio.com/2020/12/14/plotting-surfaces-with-r/",
     "added": "2023-01-09T18:08:10+00:00",
     "stars": false,
@@ -5983,7 +5983,7 @@
   {
     "id": 428,
     "unique_id": "e04fa2fe",
-    "title": "OpenAI has created bots that can play Dota 2 as a team \u2014 Quartz",
+    "title": "OpenAI has created bots that can play Dota 2 as a team — Quartz",
     "url": "https://www.gwern.net/docs/www/qz.com/dee0d5a1bf1131a00d2beb9acdc69b55e387178a.html",
     "added": "2022-12-22T21:05:38+00:00",
     "stars": false,
@@ -5997,7 +5997,7 @@
   {
     "id": 429,
     "unique_id": "40f3955d",
-    "title": "Can a Machine Learn to Write for\u00a0The New Yorker? | The New Yorker",
+    "title": "Can a Machine Learn to Write for The New Yorker? | The New Yorker",
     "url": "https://www.newyorker.com/magazine/2019/10/14/can-a-machine-learn-to-write-for-the-new-yorker",
     "added": "2022-12-22T21:05:38+00:00",
     "stars": false,
@@ -6053,7 +6053,7 @@
   {
     "id": 433,
     "unique_id": "d62c511b",
-    "title": "Understanding the generalization of \u2018lottery tickets\u2019 in neural networks",
+    "title": "Understanding the generalization of ‘lottery tickets’ in neural networks",
     "url": "https://ai.facebook.com/blog/understanding-the-generalization-of-lottery-tickets-in-neural-networks/",
     "added": "2022-12-22T21:05:38+00:00",
     "stars": false,
@@ -6137,7 +6137,7 @@
   {
     "id": 439,
     "unique_id": "a80fef0f",
-    "title": "The Scaling Hypothesis \u00b7 Gwern.net",
+    "title": "The Scaling Hypothesis · Gwern.net",
     "url": "https://www.gwern.net/Scaling-hypothesis#blessings-of-scale",
     "added": "2022-12-22T21:05:38+00:00",
     "stars": false,
@@ -6151,7 +6151,7 @@
   {
     "id": 440,
     "unique_id": "99416b44",
-    "title": "Evolution as Backstop for Reinforcement Learning \u00b7 Gwern.net",
+    "title": "Evolution as Backstop for Reinforcement Learning · Gwern.net",
     "url": "https://www.gwern.net/Backstop#deep-bayes",
     "added": "2022-12-22T21:05:38+00:00",
     "stars": false,
@@ -6179,7 +6179,7 @@
   {
     "id": 442,
     "unique_id": "1a1f851a",
-    "title": "The Scaling Hypothesis \u00b7 Gwern.net",
+    "title": "The Scaling Hypothesis · Gwern.net",
     "url": "https://www.gwern.net/Scaling-hypothesis#scaling-hypothesis",
     "added": "2022-12-22T21:05:38+00:00",
     "stars": false,
@@ -6417,7 +6417,7 @@
   {
     "id": 459,
     "unique_id": "e6a211ff",
-    "title": "(150) Discord | #americas-discussion | Blue Politics\ud83c\udf81",
+    "title": "(150) Discord | #americas-discussion | Blue Politics🎁",
     "url": "https://discord.com/channels/600796603967602724/768163154164318258",
     "added": "2022-12-22T21:05:38+00:00",
     "stars": false,
@@ -6585,7 +6585,7 @@
   {
     "id": 471,
     "unique_id": "99f67dde",
-    "title": "algebraic.mle/mle_linear_transform.R at master \u00b7 queelius/algebraic.mle",
+    "title": "algebraic.mle/mle_linear_transform.R at master · queelius/algebraic.mle",
     "url": "https://github.com/queelius/algebraic.mle/blob/master/R/mle_linear_transform.R",
     "added": "2022-12-06T22:58:45+00:00",
     "stars": false,
@@ -6837,7 +6837,7 @@
   {
     "id": 489,
     "unique_id": "c5d9a514",
-    "title": "Cram\u00e9r\u2013Rao bound - Wikipedia",
+    "title": "Cramér–Rao bound - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Cram%C3%A9r%E2%80%93Rao_bound",
     "added": "2022-11-04T03:56:39+00:00",
     "stars": false,
@@ -7243,7 +7243,7 @@
   {
     "id": 518,
     "unique_id": "ca558907",
-    "title": "How to Become Accomplished \u2022 Chad Fowler \u2022 GOTO 2013 - YouTube",
+    "title": "How to Become Accomplished • Chad Fowler • GOTO 2013 - YouTube",
     "url": "https://www.youtube.com/watch?v=hsIcFf9pnCo&ab_channel=GOTOConferences",
     "added": "2022-08-02T06:14:04+00:00",
     "stars": false,
@@ -7285,7 +7285,7 @@
   {
     "id": 521,
     "unique_id": "8873f91e",
-    "title": "programming-resources/ideas.md at master \u00b7 the-programmers-hangout/programming-resources",
+    "title": "programming-resources/ideas.md at master · the-programmers-hangout/programming-resources",
     "url": "https://github.com/the-programmers-hangout/programming-resources/blob/master/ideas.md",
     "added": "2022-08-02T06:14:04+00:00",
     "stars": false,
@@ -7453,7 +7453,7 @@
   {
     "id": 533,
     "unique_id": "8ef66a76",
-    "title": "Build websites for R packages \u2022 pkgdown",
+    "title": "Build websites for R packages • pkgdown",
     "url": "https://pkgdown.r-lib.org/",
     "added": "2022-07-07T23:12:43+00:00",
     "stars": false,
@@ -7551,7 +7551,7 @@
   {
     "id": 540,
     "unique_id": "8e7c0b15",
-    "title": "Ten awesome R Markdown tricks. R Markdown is more versatile than you\u2026 | by Keith McNulty | Towards Data Science",
+    "title": "Ten awesome R Markdown tricks. R Markdown is more versatile than you… | by Keith McNulty | Towards Data Science",
     "url": "https://towardsdatascience.com/ten-awesome-r-markdown-tricks-56ef6d41098",
     "added": "2022-07-07T23:12:43+00:00",
     "stars": false,
@@ -7761,7 +7761,7 @@
   {
     "id": 555,
     "unique_id": "c00be09a",
-    "title": "Cram\u00e9r\u2013von Mises criterion - Wikipedia",
+    "title": "Cramér–von Mises criterion - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Cram%C3%A9r%E2%80%93von_Mises_criterion#:~:text=Cram%C3%A9r%E2%80%93von%20Mises%20test%20(two%20samples),-Let%20and%20be&text=If%20the%20value%20of%20T,T%20via%20the%20expression%20above.",
     "added": "2022-06-11T18:06:11+00:00",
     "stars": false,
@@ -7859,7 +7859,7 @@
   {
     "id": 562,
     "unique_id": "f055cd1d",
-    "title": "Exponential distribution MLE \u2022 algebraic.mle",
+    "title": "Exponential distribution MLE • algebraic.mle",
     "url": "https://queelius.github.io/algebraic.mle/articles/exponential-mle.html",
     "added": "2022-06-11T18:06:11+00:00",
     "stars": false,
@@ -7887,7 +7887,7 @@
   {
     "id": 564,
     "unique_id": "42bd6e49",
-    "title": "series_system_estimation_masked_data/exp_series.R at master \u00b7 queelius/series_system_estimation_masked_data",
+    "title": "series_system_estimation_masked_data/exp_series.R at master · queelius/series_system_estimation_masked_data",
     "url": "https://github.com/queelius/series_system_estimation_masked_data/blob/master/R/exp_series.R",
     "added": "2022-06-11T18:06:11+00:00",
     "stars": false,
@@ -7901,7 +7901,7 @@
   {
     "id": 565,
     "unique_id": "c4d920aa",
-    "title": "Series system with exponentially distributed component lifetimes \u2022 series.system.estimation.masked.data",
+    "title": "Series system with exponentially distributed component lifetimes • series.system.estimation.masked.data",
     "url": "file:///home/spinoza/filetopia/gdrive/filetopia/sources/series_system_estimation_masked_data/docs/articles/exponential.html",
     "added": "2022-06-11T18:06:11+00:00",
     "stars": false,
@@ -7943,7 +7943,7 @@
   {
     "id": 568,
     "unique_id": "4c39f54d",
-    "title": "Kaplan\u2013Meier estimator - Wikipedia",
+    "title": "Kaplan–Meier estimator - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Kaplan%E2%80%93Meier_estimator",
     "added": "2022-06-11T18:06:11+00:00",
     "stars": false,
@@ -7999,7 +7999,7 @@
   {
     "id": 572,
     "unique_id": "17acd9b7",
-    "title": "A ggplot2 Tutorial for Beautiful Plotting in R - C\u00e9dric Scherer",
+    "title": "A ggplot2 Tutorial for Beautiful Plotting in R - Cédric Scherer",
     "url": "https://www.cedricscherer.com/2019/08/05/a-ggplot2-tutorial-for-beautiful-plotting-in-r/",
     "added": "2022-06-11T18:06:11+00:00",
     "stars": false,
@@ -8111,7 +8111,7 @@
   {
     "id": 580,
     "unique_id": "c766eece",
-    "title": "Neyman\u2013Pearson lemma - Wikipedia",
+    "title": "Neyman–Pearson lemma - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Neyman%E2%80%93Pearson_lemma",
     "added": "2022-05-29T16:58:16+00:00",
     "stars": false,
@@ -8125,7 +8125,7 @@
   {
     "id": 581,
     "unique_id": "72250f1c",
-    "title": "Kullback\u2013Leibler divergence - Wikipedia",
+    "title": "Kullback–Leibler divergence - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence",
     "added": "2022-05-29T16:58:16+00:00",
     "stars": false,
@@ -8391,7 +8391,7 @@
   {
     "id": 600,
     "unique_id": "829ecef1",
-    "title": "A ggplot2 Tutorial for Beautiful Plotting in R - C\u00e9dric Scherer",
+    "title": "A ggplot2 Tutorial for Beautiful Plotting in R - Cédric Scherer",
     "url": "https://cedricscherer.netlify.app/2019/08/05/a-ggplot2-tutorial-for-beautiful-plotting-in-r/",
     "added": "2022-05-29T16:58:16+00:00",
     "stars": false,
@@ -8587,7 +8587,7 @@
   {
     "id": 614,
     "unique_id": "89a1f86d",
-    "title": "YaRrr! The Pirate\u2019s Guide to R",
+    "title": "YaRrr! The Pirate’s Guide to R",
     "url": "https://bookdown.org/ndphillips/YaRrr/",
     "added": "2022-05-29T16:58:16+00:00",
     "stars": false,
@@ -8601,7 +8601,7 @@
   {
     "id": 615,
     "unique_id": "73e5e3e3",
-    "title": "Welcome \u00b7 Advanced R.",
+    "title": "Welcome · Advanced R.",
     "url": "http://adv-r.had.co.nz/",
     "added": "2022-05-29T16:58:16+00:00",
     "stars": false,
@@ -8825,7 +8825,7 @@
   {
     "id": 631,
     "unique_id": "ff1090dc",
-    "title": "Statistical inference for data\u2026 by Brian Caffo [PDF/iPad/Kindle]",
+    "title": "Statistical inference for data… by Brian Caffo [PDF/iPad/Kindle]",
     "url": "https://leanpub.com/LittleInferenceBook",
     "added": "2022-05-29T16:58:16+00:00",
     "stars": false,
@@ -8881,7 +8881,7 @@
   {
     "id": 635,
     "unique_id": "3cc7ea8e",
-    "title": "Create a Package or Research Compendium Structure \u2022 rcompendium",
+    "title": "Create a Package or Research Compendium Structure • rcompendium",
     "url": "https://frbcesab.github.io/rcompendium/",
     "added": "2022-05-29T10:57:31+00:00",
     "stars": false,
@@ -8923,7 +8923,7 @@
   {
     "id": 638,
     "unique_id": "f4a72d1d",
-    "title": "Authoring Books and Technical Documents with R Markdown \u2022 bookdown",
+    "title": "Authoring Books and Technical Documents with R Markdown • bookdown",
     "url": "https://pkgs.rstudio.com/bookdown/",
     "added": "2022-05-29T10:57:31+00:00",
     "stars": false,
@@ -8951,7 +8951,7 @@
   {
     "id": 640,
     "unique_id": "5b70ad4c",
-    "title": "Tools for Spell Checking in R \u2022 spelling",
+    "title": "Tools for Spell Checking in R • spelling",
     "url": "https://docs.ropensci.org/spelling/",
     "added": "2022-05-29T10:57:31+00:00",
     "stars": false,
@@ -9007,7 +9007,7 @@
   {
     "id": 644,
     "unique_id": "bee8e38e",
-    "title": "Get started with cpp11 \u2022 cpp11",
+    "title": "Get started with cpp11 • cpp11",
     "url": "https://cpp11.r-lib.org/articles/cpp11.html#stl",
     "added": "2022-05-29T10:57:31+00:00",
     "stars": false,
@@ -9021,7 +9021,7 @@
   {
     "id": 645,
     "unique_id": "c10c5134",
-    "title": "Introduction to pkgdown \u2022 pkgdown",
+    "title": "Introduction to pkgdown • pkgdown",
     "url": "https://pkgdown.r-lib.org/articles/pkgdown.html",
     "added": "2022-05-29T10:57:31+00:00",
     "stars": false,
@@ -9049,7 +9049,7 @@
   {
     "id": 647,
     "unique_id": "ded91e66",
-    "title": "series_system_estimation_masked_data/exp_dist.R at master \u00b7 queelius/series_system_estimation_masked_data",
+    "title": "series_system_estimation_masked_data/exp_dist.R at master · queelius/series_system_estimation_masked_data",
     "url": "https://github.com/queelius/series_system_estimation_masked_data/blob/master/R/exp_dist.R",
     "added": "2022-05-29T10:57:31+00:00",
     "stars": false,
@@ -9077,7 +9077,7 @@
   {
     "id": 649,
     "unique_id": "1cc8ab91",
-    "title": "An API Generator for R \u2022 plumber",
+    "title": "An API Generator for R • plumber",
     "url": "https://www.rplumber.io/",
     "added": "2022-05-14T23:47:56+00:00",
     "stars": false,
@@ -9133,7 +9133,7 @@
   {
     "id": 653,
     "unique_id": "850c6576",
-    "title": "Interface to Python \u2022 reticulate",
+    "title": "Interface to Python • reticulate",
     "url": "https://rstudio.github.io/reticulate/",
     "added": "2022-05-14T23:47:56+00:00",
     "stars": false,
@@ -9161,7 +9161,7 @@
   {
     "id": 655,
     "unique_id": "0c39f2ff",
-    "title": "Functional Programming Tools \u2022 purrr",
+    "title": "Functional Programming Tools • purrr",
     "url": "https://purrr.tidyverse.org/",
     "added": "2022-05-14T23:47:56+00:00",
     "stars": false,
@@ -9175,7 +9175,7 @@
   {
     "id": 656,
     "unique_id": "758ccc84",
-    "title": "Simple, Consistent Wrappers for Common String Operations \u2022 stringr",
+    "title": "Simple, Consistent Wrappers for Common String Operations • stringr",
     "url": "https://stringr.tidyverse.org/",
     "added": "2022-05-14T23:47:56+00:00",
     "stars": false,
@@ -9231,7 +9231,7 @@
   {
     "id": 660,
     "unique_id": "6170939c",
-    "title": "Create Elegant Data Visualisations Using the Grammar of Graphics \u2022 ggplot2",
+    "title": "Create Elegant Data Visualisations Using the Grammar of Graphics • ggplot2",
     "url": "https://ggplot2.tidyverse.org/",
     "added": "2022-05-14T23:47:56+00:00",
     "stars": false,
@@ -9651,7 +9651,7 @@
   {
     "id": 690,
     "unique_id": "b4417ffd",
-    "title": "t4t5/Tweether: A decentralized, uncensorable Twitter-clone built on Ethereum. \u2666\ufe0e",
+    "title": "t4t5/Tweether: A decentralized, uncensorable Twitter-clone built on Ethereum. ♦︎",
     "url": "https://github.com/t4t5/Tweether",
     "added": "2022-02-14T20:47:16+00:00",
     "stars": false,
@@ -9875,7 +9875,7 @@
   {
     "id": 706,
     "unique_id": "2b97b187",
-    "title": "Nelder\u2013Mead method - Wikipedia",
+    "title": "Nelder–Mead method - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method",
     "added": "2022-02-01T23:35:01+00:00",
     "stars": false,
@@ -9903,7 +9903,7 @@
   {
     "id": 708,
     "unique_id": "b1251014",
-    "title": "Gauss\u2013Newton algorithm - Wikipedia",
+    "title": "Gauss–Newton algorithm - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Gauss%E2%80%93Newton_algorithm",
     "added": "2022-02-01T23:35:01+00:00",
     "stars": false,
@@ -10071,7 +10071,7 @@
   {
     "id": 720,
     "unique_id": "3c5ebc40",
-    "title": "S3 \u00b7 Advanced R.",
+    "title": "S3 · Advanced R.",
     "url": "http://adv-r.had.co.nz/S3.html",
     "added": "2022-02-01T23:35:01+00:00",
     "stars": false,
@@ -10211,7 +10211,7 @@
   {
     "id": 730,
     "unique_id": "dc496fbb",
-    "title": "Introduction to readr \u2022 readr",
+    "title": "Introduction to readr • readr",
     "url": "https://readr.tidyverse.org/articles/readr.html",
     "added": "2022-02-01T23:35:01+00:00",
     "stars": false,
@@ -10365,7 +10365,7 @@
   {
     "id": 741,
     "unique_id": "93cc80f6",
-    "title": "OO field guide \u00b7 Advanced R.",
+    "title": "OO field guide · Advanced R.",
     "url": "http://adv-r.had.co.nz/OO-essentials.html#s3",
     "added": "2022-02-01T23:35:01+00:00",
     "stars": false,
@@ -10519,7 +10519,7 @@
   {
     "id": 752,
     "unique_id": "a99e1ced",
-    "title": "Test Coverage for Packages \u2022 covr",
+    "title": "Test Coverage for Packages • covr",
     "url": "https://covr.r-lib.org/",
     "added": "2022-01-20T08:18:31+00:00",
     "stars": false,
@@ -10547,7 +10547,7 @@
   {
     "id": 754,
     "unique_id": "c97a9154",
-    "title": "Construct Modeling Packages \u2022 hardhat",
+    "title": "Construct Modeling Packages • hardhat",
     "url": "https://hardhat.tidymodels.org/",
     "added": "2022-01-20T08:18:31+00:00",
     "stars": false,
@@ -10813,7 +10813,7 @@
   {
     "id": 773,
     "unique_id": "17287936",
-    "title": "Writing an R package from scratch \u2013 Hilary Parker",
+    "title": "Writing an R package from scratch – Hilary Parker",
     "url": "https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/",
     "added": "2022-01-05T05:02:06+00:00",
     "stars": false,
@@ -10911,7 +10911,7 @@
   {
     "id": 780,
     "unique_id": "7273fb7b",
-    "title": "(a) Series structure system; (b) Parallel structure system.\u00a0 | Download Scientific Diagram",
+    "title": "(a) Series structure system; (b) Parallel structure system.  | Download Scientific Diagram",
     "url": "https://www.researchgate.net/figure/a-Series-structure-system-b-Parallel-structure-system_fig1_270979798",
     "added": "2022-01-05T05:02:06+00:00",
     "stars": false,
@@ -11121,7 +11121,7 @@
   {
     "id": 795,
     "unique_id": "72b559c4",
-    "title": "Home \u2014 Spyder IDE",
+    "title": "Home — Spyder IDE",
     "url": "https://www.spyder-ide.org/",
     "added": "2021-12-15T00:55:13+00:00",
     "stars": false,
@@ -11555,7 +11555,7 @@
   {
     "id": 826,
     "unique_id": "4431faf5",
-    "title": "Installing Nginx Server \u00b7",
+    "title": "Installing Nginx Server ·",
     "url": "https://blog.raschadvisory.com/post/installing-nginx-server/",
     "added": "2021-11-14T23:13:23+00:00",
     "stars": false,
@@ -11597,7 +11597,7 @@
   {
     "id": 829,
     "unique_id": "92ea766c",
-    "title": "Caddyfile Quick-start \u2014 Caddy Documentation",
+    "title": "Caddyfile Quick-start — Caddy Documentation",
     "url": "https://caddyserver.com/docs/quick-starts/caddyfile",
     "added": "2021-11-14T23:13:23+00:00",
     "stars": false,
@@ -11611,7 +11611,7 @@
   {
     "id": 830,
     "unique_id": "856985a6",
-    "title": "API \u2014 Caddy Documentation",
+    "title": "API — Caddy Documentation",
     "url": "https://caddyserver.com/docs/api#post-stop",
     "added": "2021-11-14T23:13:23+00:00",
     "stars": false,
@@ -11639,7 +11639,7 @@
   {
     "id": 832,
     "unique_id": "b31e45c6",
-    "title": "Automatic HTTPS \u2014 Caddy Documentation",
+    "title": "Automatic HTTPS — Caddy Documentation",
     "url": "https://caddyserver.com/docs/automatic-https",
     "added": "2021-11-14T23:13:23+00:00",
     "stars": false,
@@ -11891,7 +11891,7 @@
   {
     "id": 850,
     "unique_id": "7814539f",
-    "title": "Grid system \u00b7 Bootstrap v4.5",
+    "title": "Grid system · Bootstrap v4.5",
     "url": "https://getbootstrap.com/docs/4.5/layout/grid/",
     "added": "2021-11-03T07:20:36+00:00",
     "stars": false,
@@ -11989,7 +11989,7 @@
   {
     "id": 857,
     "unique_id": "428f1a3e",
-    "title": "wowchemy-widget-problemset/layouts/partials/widgets at main \u00b7 queelius/wowchemy-widget-problemset",
+    "title": "wowchemy-widget-problemset/layouts/partials/widgets at main · queelius/wowchemy-widget-problemset",
     "url": "https://github.com/queelius/wowchemy-widget-problemset/tree/main/layouts/partials/widgets",
     "added": "2021-11-03T07:20:36+00:00",
     "stars": false,
@@ -12031,7 +12031,7 @@
   {
     "id": 860,
     "unique_id": "fcb4dbde",
-    "title": "Watch \u2014 InterReflections",
+    "title": "Watch — InterReflections",
     "url": "https://www.interreflectionsmovie.com/watch",
     "added": "2021-10-27T21:25:31+00:00",
     "stars": false,
@@ -12087,7 +12087,7 @@
   {
     "id": 864,
     "unique_id": "c6021484",
-    "title": "Pandoc - Pandoc User\u2019s Guide",
+    "title": "Pandoc - Pandoc User’s Guide",
     "url": "https://pandoc.org/MANUAL.html",
     "added": "2021-10-27T21:25:31+00:00",
     "stars": false,
@@ -12199,7 +12199,7 @@
   {
     "id": 872,
     "unique_id": "5bdd0d70",
-    "title": "Objects - Objects to manipulate options, patterns and hooks - Yihui Xie | \u8c22\u76ca\u8f89",
+    "title": "Objects - Objects to manipulate options, patterns and hooks - Yihui Xie | 谢益辉",
     "url": "https://yihui.org/knitr/objects/",
     "added": "2021-10-27T21:25:31+00:00",
     "stars": false,
@@ -12241,7 +12241,7 @@
   {
     "id": 875,
     "unique_id": "3ea9477f",
-    "title": "Tools for Working with Categorical Variables (Factors) \u2022 forcats",
+    "title": "Tools for Working with Categorical Variables (Factors) • forcats",
     "url": "https://forcats.tidyverse.org/",
     "added": "2021-10-23T17:40:19+00:00",
     "stars": false,
@@ -12479,7 +12479,7 @@
   {
     "id": 892,
     "unique_id": "d1ef7a7f",
-    "title": "The Homelab Show \u2013 Catch Up on the Vlog and Podcast",
+    "title": "The Homelab Show – Catch Up on the Vlog and Podcast",
     "url": "https://thehomelab.show/",
     "added": "2021-10-17T18:05:19+00:00",
     "stars": false,
@@ -12787,7 +12787,7 @@
   {
     "id": 914,
     "unique_id": "22fd9b06",
-    "title": "DocOnce Tutorial: Document Once, Include Anywhere \u2014 DocOnce Tutorial: Document Once, Include Anywhere",
+    "title": "DocOnce Tutorial: Document Once, Include Anywhere — DocOnce Tutorial: Document Once, Include Anywhere",
     "url": "http://hplgit.github.io/doconce/doc/pub/tutorial/html/tutorial.html",
     "added": "2021-10-17T18:05:19+00:00",
     "stars": false,
@@ -12815,7 +12815,7 @@
   {
     "id": 916,
     "unique_id": "03670aa5",
-    "title": "Converting From LaTeX to Other Formats \u00ab PhilTeX",
+    "title": "Converting From LaTeX to Other Formats « PhilTeX",
     "url": "http://web.archive.org/web/20121107120612/http://www.charlietanksley.net/philtex/converting-from-latex/",
     "added": "2021-10-17T18:05:19+00:00",
     "stars": false,
@@ -13165,7 +13165,7 @@
   {
     "id": 941,
     "unique_id": "df566823",
-    "title": "r-scripts - STK4051 - V\u00e5r 2019 - Universitetet i Oslo",
+    "title": "r-scripts - STK4051 - Vår 2019 - Universitetet i Oslo",
     "url": "https://www.uio.no/studier/emner/matnat/math/STK4051/v19/r-scripts/?page=2&u-page=2",
     "added": "2021-08-03T02:52:25+00:00",
     "stars": false,
@@ -13277,7 +13277,7 @@
   {
     "id": 949,
     "unique_id": "dcbe966f",
-    "title": "Metropolis\u2013Hastings algorithm - Wikipedia",
+    "title": "Metropolis–Hastings algorithm - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm",
     "added": "2021-08-03T02:52:25+00:00",
     "stars": false,
@@ -13375,7 +13375,7 @@
   {
     "id": 956,
     "unique_id": "b6846383",
-    "title": "Compiler Research (4 Mar 2021) - Cling\u2019s CUDA Backend: Interactive GPU development with CUDA C++ - YouTube",
+    "title": "Compiler Research (4 Mar 2021) - Cling’s CUDA Backend: Interactive GPU development with CUDA C++ - YouTube",
     "url": "https://www.youtube.com/watch?v=HEGDII5lAfo",
     "added": "2021-07-14T02:34:22+00:00",
     "stars": false,
@@ -13417,7 +13417,7 @@
   {
     "id": 959,
     "unique_id": "255d6694",
-    "title": "Tag dispatch versus concept overloading \u2013 Arthur O'Dwyer \u2013 Stuff mostly about C++",
+    "title": "Tag dispatch versus concept overloading – Arthur O'Dwyer – Stuff mostly about C++",
     "url": "https://quuxplusone.github.io/blog/2021/06/07/tag-dispatch-and-concept-overloading/",
     "added": "2021-07-14T02:34:22+00:00",
     "stars": false,
@@ -13613,7 +13613,7 @@
   {
     "id": 973,
     "unique_id": "2354aebe",
-    "title": "Editing aperture/README.md at main \u00b7 queelius/aperture",
+    "title": "Editing aperture/README.md at main · queelius/aperture",
     "url": "https://github.com/queelius/aperture/edit/main/README.md",
     "added": "2021-07-14T02:34:22+00:00",
     "stars": false,
@@ -13655,7 +13655,7 @@
   {
     "id": 976,
     "unique_id": "57b97020",
-    "title": "(5) Carlos Rodrigues - Corecursion, Codata, and Just a Little Combinatorial Game Theory - \u03bbC 2017 - YouTube",
+    "title": "(5) Carlos Rodrigues - Corecursion, Codata, and Just a Little Combinatorial Game Theory - λC 2017 - YouTube",
     "url": "https://www.youtube.com/watch?v=WksM9GJ4q40",
     "added": "2021-07-14T02:34:22+00:00",
     "stars": false,
@@ -13683,7 +13683,7 @@
   {
     "id": 978,
     "unique_id": "f41ed00a",
-    "title": "Add a new physical hard drive to Proxmox VE 4x 5x \u2013 HostFav Blog",
+    "title": "Add a new physical hard drive to Proxmox VE 4x 5x – HostFav Blog",
     "url": "https://www.hostfav.com/blog/index.php/2017/02/01/add-a-new-physical-hard-drive-to-proxmox-ve-4x-5x/",
     "added": "2021-07-14T02:34:22+00:00",
     "stars": false,
@@ -13697,7 +13697,7 @@
   {
     "id": 979,
     "unique_id": "acbbafd3",
-    "title": "Types and Functions \u2014 Idris 1.3.3 documentation",
+    "title": "Types and Functions — Idris 1.3.3 documentation",
     "url": "http://docs.idris-lang.org/en/latest/tutorial/typesfuns.html",
     "added": "2021-07-14T02:34:22+00:00",
     "stars": false,
@@ -14229,7 +14229,7 @@
   {
     "id": 1017,
     "unique_id": "a0665136",
-    "title": "Botan: Crypto and TLS for Modern C++ \u2014 Botan",
+    "title": "Botan: Crypto and TLS for Modern C++ — Botan",
     "url": "https://botan.randombit.net/",
     "added": "2025-01-18T07:42:16.398962+00:00",
     "stars": false,
@@ -14271,7 +14271,7 @@
   {
     "id": 1020,
     "unique_id": "9977f1a6",
-    "title": "C-plus-plus-library-bit-fields/Bitfield.pdf at master \u00b7 wkaras/C-plus-plus-library-bit-fields",
+    "title": "C-plus-plus-library-bit-fields/Bitfield.pdf at master · wkaras/C-plus-plus-library-bit-fields",
     "url": "https://github.com/wkaras/C-plus-plus-library-bit-fields/blob/master/Bitfield.pdf",
     "added": "2025-01-18T07:42:16.398962+00:00",
     "stars": false,
@@ -14285,7 +14285,7 @@
   {
     "id": 1021,
     "unique_id": "3cd99f86",
-    "title": "Overview \u2014 CAF 0.18.3 documentation",
+    "title": "Overview — CAF 0.18.3 documentation",
     "url": "https://actor-framework.readthedocs.io/en/stable/Overview.html",
     "added": "2025-01-18T07:42:16.398962+00:00",
     "stars": false,
@@ -14355,7 +14355,7 @@
   {
     "id": 1026,
     "unique_id": "a1641cc8",
-    "title": "alandefreitas/matplotplusplus: Matplot++: A C++ Graphics Library for Data Visualization \ud83d\udcca\ud83d\uddfe",
+    "title": "alandefreitas/matplotplusplus: Matplot++: A C++ Graphics Library for Data Visualization 📊🗾",
     "url": "https://github.com/alandefreitas/matplotplusplus",
     "added": "2025-01-18T07:42:16.398962+00:00",
     "stars": false,
@@ -14775,7 +14775,7 @@
   {
     "id": 1056,
     "unique_id": "2e8c0736",
-    "title": "Curry\u2013Howard correspondence - Wikipedia",
+    "title": "Curry–Howard correspondence - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Curry%E2%80%93Howard_correspondence",
     "added": "2025-01-18T07:42:16.398962+00:00",
     "stars": false,
@@ -14943,7 +14943,7 @@
   {
     "id": 1068,
     "unique_id": "2189f03c",
-    "title": "Chapter\u00a033.\u00a0Boost.Proto - 1.76.0",
+    "title": "Chapter 33. Boost.Proto - 1.76.0",
     "url": "https://www.boost.org/doc/libs/1_76_0/doc/html/proto.html",
     "added": "2025-01-18T07:42:16.398962+00:00",
     "stars": false,
@@ -14999,7 +14999,7 @@
   {
     "id": 1072,
     "unique_id": "4a923258",
-    "title": "15.1\u00a0eval",
+    "title": "15.1 eval",
     "url": "https://docs.racket-lang.org/guide/eval.html",
     "added": "2021-06-07T07:42:19+00:00",
     "stars": false,
@@ -15013,7 +15013,7 @@
   {
     "id": 1073,
     "unique_id": "abe47fd2",
-    "title": "16.2.1\u00a0Syntax Objects",
+    "title": "16.2.1 Syntax Objects",
     "url": "https://docs.racket-lang.org/guide/stx-obj.html#%28tech._syntax._object%29",
     "added": "2021-06-07T07:42:19+00:00",
     "stars": false,
@@ -15209,7 +15209,7 @@
   {
     "id": 1087,
     "unique_id": "8160b7d5",
-    "title": "In October of 1976 I observed that a certain algorithm - parallel reduction \u2013 was associated with monoids: collections of elements with an associative operation",
+    "title": "In October of 1976 I observed that a certain algorithm - parallel reduction – was associated with monoids: collections of elements with an associative operation",
     "url": "http://stepanovpapers.com/history%20of%20STL.pdf",
     "added": "2021-06-02T19:27:03+00:00",
     "stars": false,
@@ -15643,7 +15643,7 @@
   {
     "id": 1118,
     "unique_id": "6d9bb15c",
-    "title": "Lecture 1: Introduction to Power and Politics in Today\u2019s World - YouTube",
+    "title": "Lecture 1: Introduction to Power and Politics in Today’s World - YouTube",
     "url": "https://www.youtube.com/watch?v=BDqvzFY72mg",
     "added": "2021-06-02T19:26:37+00:00",
     "stars": false,
@@ -15671,7 +15671,7 @@
   {
     "id": 1120,
     "unique_id": "0575e117",
-    "title": "CppCon 2019: Bowie Owens \u201cExpression Templates for Efficient, Generic Finance Code\" - YouTube",
+    "title": "CppCon 2019: Bowie Owens “Expression Templates for Efficient, Generic Finance Code\" - YouTube",
     "url": "https://www.youtube.com/watch?v=4IUCBx5fIv0",
     "added": "2021-06-02T19:26:31+00:00",
     "stars": false,
@@ -15699,7 +15699,7 @@
   {
     "id": 1122,
     "unique_id": "859ba751",
-    "title": "C++Now 2017: Zach Laine \u201cExpression Templates Everywhere with C++14 and Yap\" - YouTube",
+    "title": "C++Now 2017: Zach Laine “Expression Templates Everywhere with C++14 and Yap\" - YouTube",
     "url": "https://www.youtube.com/watch?v=VhIwDxkIsME",
     "added": "2021-06-02T19:26:31+00:00",
     "stars": false,
@@ -15741,7 +15741,7 @@
   {
     "id": 1125,
     "unique_id": "127af806",
-    "title": "CppCon 2016: Arthur O'Dwyer \u201cTemplate Normal Programming (part 1 of 2)\u201d - YouTube",
+    "title": "CppCon 2016: Arthur O'Dwyer “Template Normal Programming (part 1 of 2)” - YouTube",
     "url": "https://www.youtube.com/watch?v=vwrXHznaYLA",
     "added": "2021-06-02T19:26:31+00:00",
     "stars": false,
@@ -15755,7 +15755,7 @@
   {
     "id": 1126,
     "unique_id": "f3f8f2de",
-    "title": "CppCon 2015: Joel Falcou PART 1 \u201cExpression Templates - Past, Present, Future\u201d - YouTube",
+    "title": "CppCon 2015: Joel Falcou PART 1 “Expression Templates - Past, Present, Future” - YouTube",
     "url": "https://www.youtube.com/watch?v=IiVl5oSU5B8",
     "added": "2021-06-02T19:26:31+00:00",
     "stars": false,
@@ -15783,7 +15783,7 @@
   {
     "id": 1128,
     "unique_id": "402487e9",
-    "title": "CppCon 2017: Vinnie Falco \u201cMake Classes Great Again! (Using Concepts for Customization Points)\u201d - YouTube",
+    "title": "CppCon 2017: Vinnie Falco “Make Classes Great Again! (Using Concepts for Customization Points)” - YouTube",
     "url": "https://www.youtube.com/watch?v=WsUnnYEKPnI",
     "added": "2021-06-02T19:26:31+00:00",
     "stars": false,
@@ -15797,7 +15797,7 @@
   {
     "id": 1129,
     "unique_id": "c675ca0f",
-    "title": "CppCon 2015: Fedor Pikus \u201cC++ Metaprogramming: Journey from simple to insanity and back\" - YouTube",
+    "title": "CppCon 2015: Fedor Pikus “C++ Metaprogramming: Journey from simple to insanity and back\" - YouTube",
     "url": "https://www.youtube.com/watch?v=CZi6QqZSbFg",
     "added": "2021-06-02T19:26:31+00:00",
     "stars": false,
@@ -15825,7 +15825,7 @@
   {
     "id": 1131,
     "unique_id": "e2794129",
-    "title": "nbconvert: Convert Notebooks to other formats \u2014 nbconvert 6.0.8.dev0 documentation",
+    "title": "nbconvert: Convert Notebooks to other formats — nbconvert 6.0.8.dev0 documentation",
     "url": "https://nbconvert.readthedocs.io/en/latest/",
     "added": "2025-01-18T07:42:16.434600+00:00",
     "stars": false,
@@ -15853,7 +15853,7 @@
   {
     "id": 1133,
     "unique_id": "32dddd14",
-    "title": "R Package Integration with Modern Reusable C++ Code Using Rcpp - Part 2 \u00b7 R Views",
+    "title": "R Package Integration with Modern Reusable C++ Code Using Rcpp - Part 2 · R Views",
     "url": "https://rviews.rstudio.com/2020/07/14/r-package-integration-with-modern-reusable-c-code-using-rcpp-part-2/",
     "added": "2025-01-18T07:42:16.434600+00:00",
     "stars": false,
@@ -15951,7 +15951,7 @@
   {
     "id": 1140,
     "unique_id": "63ab7c77",
-    "title": "Ljung\u2013Box test - Wikipedia",
+    "title": "Ljung–Box test - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Ljung%E2%80%93Box_test",
     "added": "2025-01-18T07:42:16.437913+00:00",
     "stars": false,
@@ -15965,7 +15965,7 @@
   {
     "id": 1141,
     "unique_id": "f21faa83",
-    "title": "Cochrane\u2013Orcutt estimation - Wikipedia",
+    "title": "Cochrane–Orcutt estimation - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Cochrane%E2%80%93Orcutt_estimation",
     "added": "2025-01-18T07:42:16.437913+00:00",
     "stars": false,
@@ -15979,7 +15979,7 @@
   {
     "id": 1142,
     "unique_id": "0fdd8e89",
-    "title": "Augmented Dickey\u2013Fuller test - Wikipedia",
+    "title": "Augmented Dickey–Fuller test - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Augmented_Dickey%E2%80%93Fuller_test",
     "added": "2025-01-18T07:42:16.437913+00:00",
     "stars": false,
@@ -16007,7 +16007,7 @@
   {
     "id": 1144,
     "unique_id": "a5a1fcf9",
-    "title": "Dickey\u2013Fuller test - Wikipedia",
+    "title": "Dickey–Fuller test - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Dickey%E2%80%93Fuller_test",
     "added": "2025-01-18T07:42:16.437913+00:00",
     "stars": false,
@@ -16035,7 +16035,7 @@
   {
     "id": 1146,
     "unique_id": "dd5cdc2e",
-    "title": "8.1 Stationarity and differencing | Forecasting: Principles\u00a0and\u00a0Practice (2nd ed)",
+    "title": "8.1 Stationarity and differencing | Forecasting: Principles and Practice (2nd ed)",
     "url": "https://otexts.com/fpp2/stationarity.html",
     "added": "2025-01-18T07:42:16.437913+00:00",
     "stars": false,
@@ -16091,7 +16091,7 @@
   {
     "id": 1150,
     "unique_id": "a8911283",
-    "title": "8.4 Moving average models | Forecasting: Principles\u00a0and\u00a0Practice (2nd ed)",
+    "title": "8.4 Moving average models | Forecasting: Principles and Practice (2nd ed)",
     "url": "https://otexts.com/fpp2/MA.html",
     "added": "2025-01-18T07:42:16.437913+00:00",
     "stars": false,
@@ -16147,7 +16147,7 @@
   {
     "id": 1154,
     "unique_id": "4ecb4f97",
-    "title": "8.9 Seasonal ARIMA models | Forecasting: Principles\u00a0and\u00a0Practice (2nd ed)",
+    "title": "8.9 Seasonal ARIMA models | Forecasting: Principles and Practice (2nd ed)",
     "url": "https://otexts.com/fpp2/seasonal-arima.html",
     "added": "2025-01-18T07:42:16.437913+00:00",
     "stars": false,
@@ -16175,7 +16175,7 @@
   {
     "id": 1156,
     "unique_id": "6fa0e3cf",
-    "title": "3.5 Prediction intervals | Forecasting: Principles\u00a0and\u00a0Practice (2nd ed)",
+    "title": "3.5 Prediction intervals | Forecasting: Principles and Practice (2nd ed)",
     "url": "https://otexts.com/fpp2/prediction-intervals.html",
     "added": "2025-01-18T07:42:16.437913+00:00",
     "stars": false,
@@ -16217,7 +16217,7 @@
   {
     "id": 1159,
     "unique_id": "15a41b60",
-    "title": "5.1 The linear model | Forecasting: Principles\u00a0and\u00a0Practice (2nd ed)",
+    "title": "5.1 The linear model | Forecasting: Principles and Practice (2nd ed)",
     "url": "https://otexts.com/fpp2/regression-intro.html",
     "added": "2025-01-18T07:42:16.443391+00:00",
     "stars": false,
@@ -16287,7 +16287,7 @@
   {
     "id": 1164,
     "unique_id": "95feb58e",
-    "title": "Durbin\u2013Watson statistic - Wikipedia",
+    "title": "Durbin–Watson statistic - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Durbin%E2%80%93Watson_statistic",
     "added": "2025-01-18T07:42:16.443391+00:00",
     "stars": false,
@@ -16301,7 +16301,7 @@
   {
     "id": 1165,
     "unique_id": "6b159e2d",
-    "title": "forecast with object, xreg, and arima xreg model fails \u00b7 Issue #682 \u00b7 robjhyndman/forecast \u00b7 GitHub",
+    "title": "forecast with object, xreg, and arima xreg model fails · Issue #682 · robjhyndman/forecast · GitHub",
     "url": "https://github.com/robjhyndman/forecast/issues/682",
     "added": "2025-01-18T07:42:16.443391+00:00",
     "stars": false,
@@ -16357,7 +16357,7 @@
   {
     "id": 1169,
     "unique_id": "585906b8",
-    "title": "9.1 Estimation | Forecasting: Principles\u00a0and\u00a0Practice (2nd ed)",
+    "title": "9.1 Estimation | Forecasting: Principles and Practice (2nd ed)",
     "url": "https://otexts.com/fpp2/estimation.html",
     "added": "2025-01-18T07:42:16.443391+00:00",
     "stars": false,
@@ -16371,7 +16371,7 @@
   {
     "id": 1170,
     "unique_id": "b12d8924",
-    "title": "Appendix: Using R | Forecasting: Principles\u00a0and\u00a0Practice (2nd ed)",
+    "title": "Appendix: Using R | Forecasting: Principles and Practice (2nd ed)",
     "url": "https://otexts.com/fpp2/appendix-using-r.html",
     "added": "2025-01-18T07:42:16.443391+00:00",
     "stars": false,
@@ -16385,7 +16385,7 @@
   {
     "id": 1171,
     "unique_id": "6561ac15",
-    "title": "8.7 ARIMA modelling in R | Forecasting: Principles\u00a0and\u00a0Practice (2nd ed)",
+    "title": "8.7 ARIMA modelling in R | Forecasting: Principles and Practice (2nd ed)",
     "url": "https://otexts.com/fpp2/arima-r.html",
     "added": "2025-01-18T07:42:16.443391+00:00",
     "stars": false,
@@ -16399,7 +16399,7 @@
   {
     "id": 1172,
     "unique_id": "f79cb1bc",
-    "title": "2.2 Time plots | Forecasting: Principles\u00a0and\u00a0Practice (2nd ed)",
+    "title": "2.2 Time plots | Forecasting: Principles and Practice (2nd ed)",
     "url": "https://otexts.com/fpp2/time-plots.html",
     "added": "2025-01-18T07:42:16.443391+00:00",
     "stars": false,
@@ -16483,7 +16483,7 @@
   {
     "id": 1178,
     "unique_id": "c08271e5",
-    "title": "8.3 Autoregressive models | Forecasting: Principles\u00a0and\u00a0Practice (2nd ed)",
+    "title": "8.3 Autoregressive models | Forecasting: Principles and Practice (2nd ed)",
     "url": "https://otexts.com/fpp2/AR.html",
     "added": "2025-01-18T07:42:16.443391+00:00",
     "stars": false,
@@ -16497,7 +16497,7 @@
   {
     "id": 1179,
     "unique_id": "aee89635",
-    "title": "3.3 Residual diagnostics | Forecasting: Principles\u00a0and\u00a0Practice (2nd ed)",
+    "title": "3.3 Residual diagnostics | Forecasting: Principles and Practice (2nd ed)",
     "url": "https://otexts.com/fpp2/residuals.html",
     "added": "2025-01-18T07:42:16.443391+00:00",
     "stars": false,
@@ -16525,7 +16525,7 @@
   {
     "id": 1181,
     "unique_id": "c3b1ea5c",
-    "title": "Bias\u2013variance tradeoff - Wikipedia",
+    "title": "Bias–variance tradeoff - Wikipedia",
     "url": "https://en.wikipedia.org/w/index.php?title=Bias_variance_tradeoff&oldid=1018809373",
     "added": "2025-01-18T07:42:16.443391+00:00",
     "stars": false,
@@ -17015,7 +17015,7 @@
   {
     "id": 1216,
     "unique_id": "fe29af53",
-    "title": "Fermi\u2013Dirac statistics - Wikipedia",
+    "title": "Fermi–Dirac statistics - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Fermi%E2%80%93Dirac_statistics",
     "added": "2025-01-18T07:42:16.461344+00:00",
     "stars": false,
@@ -17197,7 +17197,7 @@
   {
     "id": 1229,
     "unique_id": "26e50952",
-    "title": "Forecasting s-curves is hard \u2013 Constance Crozier",
+    "title": "Forecasting s-curves is hard – Constance Crozier",
     "url": "https://constancecrozier.com/2020/04/16/forecasting-s-curves-is-hard/",
     "added": "2025-01-18T07:42:16.461344+00:00",
     "stars": false,
@@ -17211,7 +17211,7 @@
   {
     "id": 1230,
     "unique_id": "bf366b0b",
-    "title": "blog_code/scurve_animation.py at master \u00b7 constancecrozier/blog_code \u00b7 GitHub",
+    "title": "blog_code/scurve_animation.py at master · constancecrozier/blog_code · GitHub",
     "url": "https://github.com/constancecrozier/blog_code/blob/master/scurve_animation.py",
     "added": "2025-01-18T07:42:16.461344+00:00",
     "stars": false,
@@ -17337,7 +17337,7 @@
   {
     "id": 1239,
     "unique_id": "5d9df83c",
-    "title": "Core \u2014 SymPy 1.7.1 documentation",
+    "title": "Core — SymPy 1.7.1 documentation",
     "url": "https://docs.sympy.org/latest/modules/core.html",
     "added": "2025-01-18T07:42:16.942573+00:00",
     "stars": false,
@@ -17351,7 +17351,7 @@
   {
     "id": 1240,
     "unique_id": "568b1f85",
-    "title": "Basic Algebra and Calculus \u2014 Sage Tutorial v9.2",
+    "title": "Basic Algebra and Calculus — Sage Tutorial v9.2",
     "url": "https://doc.sagemath.org/html/en/tutorial/tour_algebra.html",
     "added": "2025-01-18T07:42:16.942573+00:00",
     "stars": false,
@@ -17365,7 +17365,7 @@
   {
     "id": 1241,
     "unique_id": "7dcd347c",
-    "title": "Symbolic Computation \u2014 Sage 9.2 Reference Manual: Symbolic Calculus",
+    "title": "Symbolic Computation — Sage 9.2 Reference Manual: Symbolic Calculus",
     "url": "https://doc.sagemath.org/html/en/reference/calculus/sage/calculus/calculus.html",
     "added": "2025-01-18T07:42:16.942573+00:00",
     "stars": false,
@@ -17379,7 +17379,7 @@
   {
     "id": 1242,
     "unique_id": "df6d31f6",
-    "title": "Symbolic Expressions \u2014 Sage 9.2 Reference Manual: Symbolic Calculus",
+    "title": "Symbolic Expressions — Sage 9.2 Reference Manual: Symbolic Calculus",
     "url": "https://doc.sagemath.org/html/en/reference/calculus/sage/symbolic/expression.html",
     "added": "2025-01-18T07:42:16.942573+00:00",
     "stars": false,
@@ -17393,7 +17393,7 @@
   {
     "id": 1243,
     "unique_id": "2764f701",
-    "title": "Linear Algebra \u2014 Sage Tutorial v9.2",
+    "title": "Linear Algebra — Sage Tutorial v9.2",
     "url": "https://doc.sagemath.org/html/en/tutorial/tour_linalg.html",
     "added": "2025-01-18T07:42:16.942573+00:00",
     "stars": false,
@@ -17407,7 +17407,7 @@
   {
     "id": 1244,
     "unique_id": "9dfc346f",
-    "title": "Symbolic matrices \u2014 Sage 9.2 Reference Manual: Matrices and Spaces of Matrices",
+    "title": "Symbolic matrices — Sage 9.2 Reference Manual: Matrices and Spaces of Matrices",
     "url": "https://doc.sagemath.org/html/en/reference/matrices/sage/matrix/matrix_symbolic_dense.html",
     "added": "2025-01-18T07:42:16.942573+00:00",
     "stars": false,
@@ -17435,7 +17435,7 @@
   {
     "id": 1246,
     "unique_id": "2f87d730",
-    "title": "Matrices (linear algebra) \u2014 SymPy 1.7.1 documentation",
+    "title": "Matrices (linear algebra) — SymPy 1.7.1 documentation",
     "url": "https://docs.sympy.org/latest/modules/matrices/matrices.html",
     "added": "2025-01-18T07:42:16.942573+00:00",
     "stars": false,
@@ -17449,7 +17449,7 @@
   {
     "id": 1247,
     "unique_id": "a072ebd9",
-    "title": "Matrix Expressions \u2014 SymPy 1.7.1 documentation",
+    "title": "Matrix Expressions — SymPy 1.7.1 documentation",
     "url": "https://docs.sympy.org/latest/modules/matrices/expressions.html#sympy.matrices.expressions.MatrixSymbol",
     "added": "2025-01-18T07:42:16.942573+00:00",
     "stars": false,
@@ -17463,7 +17463,7 @@
   {
     "id": 1248,
     "unique_id": "ec90310d",
-    "title": "Basic Operations \u2014 SymPy 1.7.1 documentation",
+    "title": "Basic Operations — SymPy 1.7.1 documentation",
     "url": "https://docs.sympy.org/latest/tutorial/basic_operations.html",
     "added": "2025-01-18T07:42:16.942573+00:00",
     "stars": false,
@@ -17491,7 +17491,7 @@
   {
     "id": 1250,
     "unique_id": "c6dbd9a3",
-    "title": "Printing \u2014 SymPy 1.7.1 documentation",
+    "title": "Printing — SymPy 1.7.1 documentation",
     "url": "https://docs.sympy.org/latest/tutorial/printing.html",
     "added": "2025-01-18T07:42:16.942573+00:00",
     "stars": false,
@@ -17617,7 +17617,7 @@
   {
     "id": 1259,
     "unique_id": "eb08dda7",
-    "title": "No, it's not The Incentives\u2014it's you - LessWrong",
+    "title": "No, it's not The Incentives—it's you - LessWrong",
     "url": "https://www.lesswrong.com/posts/5nH5Qtax9ae8CQjZ9/no-it-s-not-the-incentives-it-s-you",
     "added": "2025-01-18T07:42:16.949133+00:00",
     "stars": false,
@@ -18107,7 +18107,7 @@
   {
     "id": 1294,
     "unique_id": "5b3a9c51",
-    "title": "Fisher\u2013Tippett\u2013Gnedenko theorem - Wikipedia",
+    "title": "Fisher–Tippett–Gnedenko theorem - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Fisher%E2%80%93Tippett%E2%80%93Gnedenko_theorem",
     "added": "2025-01-18T07:42:16.963300+00:00",
     "stars": false,
@@ -18177,7 +18177,7 @@
   {
     "id": 1299,
     "unique_id": "962958d0",
-    "title": "(8) CppCon 2019: Joshua Berne \u201cContract use: Past, Present, and Future\u201d - YouTube",
+    "title": "(8) CppCon 2019: Joshua Berne “Contract use: Past, Present, and Future” - YouTube",
     "url": "https://www.youtube.com/watch?v=mmyIZzqh5ls",
     "added": "2025-01-18T07:42:16.963300+00:00",
     "stars": false,
@@ -18401,7 +18401,7 @@
   {
     "id": 1315,
     "unique_id": "91387487",
-    "title": "(8) Bjarne Stroustrup - What \u2013 if anything \u2013 have we learned from C++? - Curry On/PLE'15 Keynote - YouTube",
+    "title": "(8) Bjarne Stroustrup - What – if anything – have we learned from C++? - Curry On/PLE'15 Keynote - YouTube",
     "url": "https://www.youtube.com/watch?v=2egL4y_VpYg",
     "added": "2025-01-18T07:42:16.963300+00:00",
     "stars": false,
@@ -18527,7 +18527,7 @@
   {
     "id": 1324,
     "unique_id": "ff4829cd",
-    "title": "Glivenko\u2013Cantelli theorem - Wikipedia",
+    "title": "Glivenko–Cantelli theorem - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Glivenko%E2%80%93Cantelli_theorem",
     "added": "2025-01-18T07:42:16.972692+00:00",
     "stars": false,
@@ -19157,7 +19157,7 @@
   {
     "id": 1369,
     "unique_id": "011d83f3",
-    "title": "Getting Help \u2014 Sage Tutorial v9.2",
+    "title": "Getting Help — Sage Tutorial v9.2",
     "url": "https://doc.sagemath.org/html/en/tutorial/tour_help.html",
     "added": "2025-01-18T07:42:16.977696+00:00",
     "stars": false,
@@ -19269,7 +19269,7 @@
   {
     "id": 1377,
     "unique_id": "7cf374d8",
-    "title": "scipy.stats.lomax \u2014 SciPy v0.14.0 Reference Guide",
+    "title": "scipy.stats.lomax — SciPy v0.14.0 Reference Guide",
     "url": "https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.lomax.html",
     "added": "2025-01-18T07:42:16.977696+00:00",
     "stars": false,
@@ -19605,7 +19605,7 @@
   {
     "id": 1401,
     "unique_id": "983fc26d",
-    "title": "Expectation\u2013maximization algorithm - Wikipedia",
+    "title": "Expectation–maximization algorithm - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm",
     "added": "2025-01-18T07:42:17.000170+00:00",
     "stars": false,
@@ -20025,7 +20025,7 @@
   {
     "id": 1431,
     "unique_id": "2864b331",
-    "title": "Econometrics course problem sets and data \u2013",
+    "title": "Econometrics course problem sets and data –",
     "url": "https://ben-lambert.com/econometrics-course-problem-sets-and-data/",
     "added": "2025-01-18T07:42:17.000170+00:00",
     "stars": false,
@@ -20039,7 +20039,7 @@
   {
     "id": 1432,
     "unique_id": "c918ac75",
-    "title": "Bayesian \u2013",
+    "title": "Bayesian –",
     "url": "https://ben-lambert.com/bayesian/",
     "added": "2025-01-18T07:42:17.000170+00:00",
     "stars": false,
@@ -20123,7 +20123,7 @@
   {
     "id": 1438,
     "unique_id": "175715d0",
-    "title": "(4) Programming with Contracts in C++20 - Bj\u00f6rn Fahller [C++ on Sea 2019] - YouTube",
+    "title": "(4) Programming with Contracts in C++20 - Björn Fahller [C++ on Sea 2019] - YouTube",
     "url": "https://www.youtube.com/watch?v=Dzk1frUXq10&t=1048s",
     "added": "2025-01-18T07:42:17.014566+00:00",
     "stars": false,
@@ -20179,7 +20179,7 @@
   {
     "id": 1442,
     "unique_id": "73516bf4",
-    "title": "Programming with Contracts in C++20 - Bj\u00f6rn Fahller [C++ on Sea 2019] - YouTube",
+    "title": "Programming with Contracts in C++20 - Björn Fahller [C++ on Sea 2019] - YouTube",
     "url": "https://www.youtube.com/watch?v=Dzk1frUXq10&t=1048s",
     "added": "2025-01-18T07:42:17.014566+00:00",
     "stars": false,
@@ -20389,7 +20389,7 @@
   {
     "id": 1457,
     "unique_id": "69d9af16",
-    "title": "Home \u00b7 inotify-tools/inotify-tools Wiki",
+    "title": "Home · inotify-tools/inotify-tools Wiki",
     "url": "https://github.com/inotify-tools/inotify-tools/wiki",
     "added": "2025-01-18T07:42:17.022976+00:00",
     "stars": false,
@@ -20431,7 +20431,7 @@
   {
     "id": 1460,
     "unique_id": "70215eef",
-    "title": "Getting Started \u2014 Ecto v3.5.5",
+    "title": "Getting Started — Ecto v3.5.5",
     "url": "https://hexdocs.pm/ecto/getting-started.html",
     "added": "2025-01-18T07:42:17.022976+00:00",
     "stars": false,
@@ -20445,7 +20445,7 @@
   {
     "id": 1461,
     "unique_id": "02ee32e6",
-    "title": "PostgreSQL: Documentation: 12: 1.3.\u00a0Creating a Database",
+    "title": "PostgreSQL: Documentation: 12: 1.3. Creating a Database",
     "url": "https://www.postgresql.org/docs/12/tutorial-createdb.html",
     "added": "2025-01-18T07:42:17.022976+00:00",
     "stars": false,
@@ -20529,7 +20529,7 @@
   {
     "id": 1467,
     "unique_id": "79246b09",
-    "title": "What is Type Erasure? \u2013 Arthur O'Dwyer \u2013 Stuff mostly about C++",
+    "title": "What is Type Erasure? – Arthur O'Dwyer – Stuff mostly about C++",
     "url": "https://quuxplusone.github.io/blog/2019/03/18/what-is-type-erasure/",
     "added": "2025-01-18T07:42:17.022976+00:00",
     "stars": false,
@@ -20683,7 +20683,7 @@
   {
     "id": 1478,
     "unique_id": "6cf4ac93",
-    "title": "Cloud Computing Services \u00a0|\u00a0 Google Cloud",
+    "title": "Cloud Computing Services  |  Google Cloud",
     "url": "https://cloud.google.com/",
     "added": "2025-01-18T07:42:17.030658+00:00",
     "stars": false,
@@ -20697,7 +20697,7 @@
   {
     "id": 1479,
     "unique_id": "3c05a476",
-    "title": "Step 2 of 2 \u2013 Free Trial \u2013 Google Cloud Platform",
+    "title": "Step 2 of 2 – Free Trial – Google Cloud Platform",
     "url": "https://console.cloud.google.com/freetrial/signup/billing/US?pli=1",
     "added": "2025-01-18T07:42:17.030658+00:00",
     "stars": false,
@@ -21229,7 +21229,7 @@
   {
     "id": 1517,
     "unique_id": "6814f04d",
-    "title": "Category Theory | \u00a0\u00a0Bartosz Milewski's Programming Cafe",
+    "title": "Category Theory |   Bartosz Milewski's Programming Cafe",
     "url": "https://bartoszmilewski.com/category/category-theory/",
     "added": "2025-01-18T07:42:17.034446+00:00",
     "stars": false,
@@ -21411,7 +21411,7 @@
   {
     "id": 1530,
     "unique_id": "da882278",
-    "title": "\u03c3-algebra - Wikipedia",
+    "title": "σ-algebra - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/%CE%A3-algebra",
     "added": "2025-01-18T07:42:17.034446+00:00",
     "stars": false,
@@ -21565,7 +21565,7 @@
   {
     "id": 1541,
     "unique_id": "aaaf5853",
-    "title": "Church\u2013Turing thesis - Wikipedia",
+    "title": "Church–Turing thesis - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Church%E2%80%93Turing_thesis",
     "added": "2025-01-18T07:42:17.051647+00:00",
     "stars": false,
@@ -21915,7 +21915,7 @@
   {
     "id": 1566,
     "unique_id": "9256a936",
-    "title": "Why Haskell II: Sum Types \u2014 Monday Morning Haskell",
+    "title": "Why Haskell II: Sum Types — Monday Morning Haskell",
     "url": "https://mmhaskell.com/blog/2019/1/14/why-haskell-ii-sum-types",
     "added": "2025-01-18T07:42:17.056185+00:00",
     "stars": false,
@@ -22055,7 +22055,7 @@
   {
     "id": 1576,
     "unique_id": "e3edbff9",
-    "title": "Roch Gu\u00e9rin | McKelvey School of Engineering at Washington University in St. Louis",
+    "title": "Roch Guérin | McKelvey School of Engineering at Washington University in St. Louis",
     "url": "https://engineering.wustl.edu/faculty/Roch-Guerin.html",
     "added": "2025-01-18T07:42:17.061845+00:00",
     "stars": false,
@@ -22433,7 +22433,7 @@
   {
     "id": 1603,
     "unique_id": "d0a219de",
-    "title": "Metaprogramming \u00b7 the missing semester of your cs education",
+    "title": "Metaprogramming · the missing semester of your cs education",
     "url": "https://missing.csail.mit.edu/2020/metaprogramming/",
     "added": "2025-01-18T07:42:17.070565+00:00",
     "stars": false,
@@ -22461,7 +22461,7 @@
   {
     "id": 1605,
     "unique_id": "2ff467c9",
-    "title": "Why MIT switched from Scheme to Python \u2013 Wisdom And Wonder",
+    "title": "Why MIT switched from Scheme to Python – Wisdom And Wonder",
     "url": "https://www.wisdomandwonder.com/link/2110/why-mit-switched-from-scheme-to-python",
     "added": "2025-01-18T07:42:17.070565+00:00",
     "stars": false,
@@ -22475,7 +22475,7 @@
   {
     "id": 1606,
     "unique_id": "42e23efa",
-    "title": "foonathan::\u200bblog()",
+    "title": "foonathan::​blog()",
     "url": "https://foonathan.net/post/page/2/",
     "added": "2025-01-18T07:42:17.074724+00:00",
     "stars": false,
@@ -22573,7 +22573,7 @@
   {
     "id": 1613,
     "unique_id": "86f705f3",
-    "title": "Jonathan M\u00fcller",
+    "title": "Jonathan Müller",
     "url": "https://www.jonathanmueller.dev/talk/meetingcpp2019/",
     "added": "2025-01-18T07:42:17.074724+00:00",
     "stars": false,
@@ -23371,7 +23371,7 @@
   {
     "id": 1670,
     "unique_id": "243136e6",
-    "title": "Chapter\u00a01.\u00a0Boost.Beast - 1.74.0",
+    "title": "Chapter 1. Boost.Beast - 1.74.0",
     "url": "https://www.boost.org/doc/libs/1_74_0/libs/beast/doc/html/index.html",
     "added": "2025-01-18T07:42:17.091093+00:00",
     "stars": false,
@@ -23483,7 +23483,7 @@
   {
     "id": 1678,
     "unique_id": "a6f2e377",
-    "title": "Open\u2013closed principle - Wikipedia",
+    "title": "Open–closed principle - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Open%E2%80%93closed_principle",
     "added": "2025-01-18T07:42:17.091093+00:00",
     "stars": false,
@@ -23539,7 +23539,7 @@
   {
     "id": 1682,
     "unique_id": "05552a54",
-    "title": "Chapter\u00a012.\u00a0Boost.CRC 1.5 - 1.74.0",
+    "title": "Chapter 12. Boost.CRC 1.5 - 1.74.0",
     "url": "https://www.boost.org/doc/libs/1_74_0/doc/html/crc.html",
     "added": "2025-01-18T07:42:17.091093+00:00",
     "stars": false,
@@ -23553,7 +23553,7 @@
   {
     "id": 1683,
     "unique_id": "a358ebd7",
-    "title": "Chapter\u00a01.\u00a0Fusion 2.2 - 1.74.0",
+    "title": "Chapter 1. Fusion 2.2 - 1.74.0",
     "url": "https://www.boost.org/doc/libs/1_74_0/libs/fusion/doc/html/",
     "added": "2025-01-18T07:42:17.091093+00:00",
     "stars": false,
@@ -23581,7 +23581,7 @@
   {
     "id": 1685,
     "unique_id": "5fb4aadf",
-    "title": "Chapter\u00a01.\u00a0Boost.Histogram - 1.74.0",
+    "title": "Chapter 1. Boost.Histogram - 1.74.0",
     "url": "https://www.boost.org/doc/libs/1_74_0/libs/histogram/doc/html/index.html",
     "added": "2025-01-18T07:42:17.091093+00:00",
     "stars": false,
@@ -23595,7 +23595,7 @@
   {
     "id": 1686,
     "unique_id": "f7e67501",
-    "title": "Chapter\u00a01.\u00a0Boost.Icl - 1.74.0",
+    "title": "Chapter 1. Boost.Icl - 1.74.0",
     "url": "https://www.boost.org/doc/libs/1_74_0/libs/icl/doc/html/index.html",
     "added": "2025-01-18T07:42:17.091093+00:00",
     "stars": false,
@@ -23609,7 +23609,7 @@
   {
     "id": 1687,
     "unique_id": "7841bab0",
-    "title": "Chapter\u00a018.\u00a0Boost.Interprocess - 1.74.0",
+    "title": "Chapter 18. Boost.Interprocess - 1.74.0",
     "url": "https://www.boost.org/doc/libs/1_74_0/doc/html/interprocess.html",
     "added": "2025-01-18T07:42:17.091093+00:00",
     "stars": false,
@@ -23651,7 +23651,7 @@
   {
     "id": 1690,
     "unique_id": "03c622ba",
-    "title": "Chapter\u00a05.\u00a0Statistical Distributions and Functions - 1.74.0",
+    "title": "Chapter 5. Statistical Distributions and Functions - 1.74.0",
     "url": "https://www.boost.org/doc/libs/1_74_0/libs/math/doc/html/dist.html",
     "added": "2025-01-18T07:42:17.091093+00:00",
     "stars": false,
@@ -23693,7 +23693,7 @@
   {
     "id": 1693,
     "unique_id": "f469304c",
-    "title": "Chapter\u00a029.\u00a0Boost.Process - 1.74.0",
+    "title": "Chapter 29. Boost.Process - 1.74.0",
     "url": "https://www.boost.org/doc/libs/1_74_0/doc/html/process.html",
     "added": "2025-01-18T07:42:17.091093+00:00",
     "stars": false,
@@ -23819,7 +23819,7 @@
   {
     "id": 1702,
     "unique_id": "f754a010",
-    "title": "Atabey Kaygun \u2014 Entropy of truncated MD5 hashing",
+    "title": "Atabey Kaygun — Entropy of truncated MD5 hashing",
     "url": "https://kaygun.tumblr.com/post/88560951409/entropy-of-truncated-md5-hashing",
     "added": "2025-01-18T07:42:17.091093+00:00",
     "stars": false,
@@ -24001,7 +24001,7 @@
   {
     "id": 1715,
     "unique_id": "c006f85e",
-    "title": "Type erasure \u2014 Part I | Andrzej's C++ blog",
+    "title": "Type erasure — Part I | Andrzej's C++ blog",
     "url": "https://akrzemi1.wordpress.com/2013/11/18/type-erasure-part-i/",
     "added": "2025-01-18T07:42:17.091093+00:00",
     "stars": false,
@@ -24393,7 +24393,7 @@
   {
     "id": 1743,
     "unique_id": "3329abb6",
-    "title": "random_approximate_data_type_code/perf_hash_filter.hpp at master \u00b7 queelius/random_approximate_data_type_code",
+    "title": "random_approximate_data_type_code/perf_hash_filter.hpp at master · queelius/random_approximate_data_type_code",
     "url": "https://github.com/queelius/random_approximate_data_type_code/blob/master/include/rate_distorted_set/static/perf_hash_filter/perf_hash_filter.hpp",
     "added": "2025-01-18T07:42:17.112027+00:00",
     "stars": false,
@@ -24575,7 +24575,7 @@
   {
     "id": 1756,
     "unique_id": "72a31694",
-    "title": "series_system_estimation_from_masked_system_failure_time_samples/main.pdf at 1e0319dd75734e67e460f817a7358002311bf7e7 \u00b7 queelius/series_system_estimation_from_masked_system_failure_time_samples",
+    "title": "series_system_estimation_from_masked_system_failure_time_samples/main.pdf at 1e0319dd75734e67e460f817a7358002311bf7e7 · queelius/series_system_estimation_from_masked_system_failure_time_samples",
     "url": "https://github.com/queelius/series_system_estimation_from_masked_system_failure_time_samples/blob/1e0319dd75734e67e460f817a7358002311bf7e7/main.pdf",
     "added": "2025-01-18T07:42:17.112027+00:00",
     "stars": false,
@@ -24631,7 +24631,7 @@
   {
     "id": 1760,
     "unique_id": "9ed722a8",
-    "title": "The Many\u2010Worlds Interpretation and Quantum Computation on JSTOR",
+    "title": "The Many‐Worlds Interpretation and Quantum Computation on JSTOR",
     "url": "https://www.jstor.org/stable/10.1086/525640?seq=1",
     "added": "2025-01-18T07:42:17.112027+00:00",
     "stars": false,
@@ -24729,7 +24729,7 @@
   {
     "id": 1767,
     "unique_id": "e255f526",
-    "title": "Schr\u00f6dinger's cat - Wikipedia",
+    "title": "Schrödinger's cat - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Schr%C3%B6dinger%27s_cat",
     "added": "2025-01-18T07:42:17.112027+00:00",
     "stars": false,
@@ -24883,7 +24883,7 @@
   {
     "id": 1778,
     "unique_id": "4690204b",
-    "title": "Read\u2013eval\u2013print loop - Wikipedia",
+    "title": "Read–eval–print loop - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop",
     "added": "2025-01-18T07:42:17.112027+00:00",
     "stars": false,
@@ -25247,7 +25247,7 @@
   {
     "id": 1804,
     "unique_id": "3f74fab6",
-    "title": "upefnvj30mw51.png (621\u00d7767)",
+    "title": "upefnvj30mw51.png (621×767)",
     "url": "https://preview.redd.it/upefnvj30mw51.png?width=621&auto=webp&s=ff8bff40ef891db3f2f8fd8a4f801a14c9b1e3b8",
     "added": "2025-01-18T07:42:17.134031+00:00",
     "stars": false,
@@ -25485,7 +25485,7 @@
   {
     "id": 1821,
     "unique_id": "26d67dc8",
-    "title": "Trap Bar Deadlifts are Underrated \u2022 Stronger by Science",
+    "title": "Trap Bar Deadlifts are Underrated • Stronger by Science",
     "url": "https://www.strongerbyscience.com/trap-bar-deadlifts/",
     "added": "2025-01-18T07:42:17.134031+00:00",
     "stars": false,
@@ -25499,7 +25499,7 @@
   {
     "id": 1822,
     "unique_id": "c8f3d501",
-    "title": "Support for C++17 \u00b7 Issue #33 \u00b7 ybainier/Hypodermic \u00b7 GitHub",
+    "title": "Support for C++17 · Issue #33 · ybainier/Hypodermic · GitHub",
     "url": "https://github.com/ybainier/Hypodermic/issues/33",
     "added": "2025-01-18T07:42:17.134031+00:00",
     "stars": false,
@@ -25527,7 +25527,7 @@
   {
     "id": 1824,
     "unique_id": "5cdc08e9",
-    "title": "Why I care about how much you Trap Bar Deadlift \u2014 Shelby Young Fitness",
+    "title": "Why I care about how much you Trap Bar Deadlift — Shelby Young Fitness",
     "url": "http://www.shelbyyoungfitness.com/journal/2016/11/16/why-i-care-about-how-much-you-trap-bar-deadlift",
     "added": "2025-01-18T07:42:17.134031+00:00",
     "stars": false,
@@ -25625,7 +25625,7 @@
   {
     "id": 1831,
     "unique_id": "a38cd99d",
-    "title": "The USPS \u2018Whistleblower\u2019 Saga Keeps Getting Weirder",
+    "title": "The USPS ‘Whistleblower’ Saga Keeps Getting Weirder",
     "url": "https://www.thedailybeast.com/richard-hopkins-usps-staffer-at-center-of-gop-voter-fraud-push-recants-his-allegation?ref=home",
     "added": "2025-01-18T07:42:17.134031+00:00",
     "stars": false,
@@ -25793,7 +25793,7 @@
   {
     "id": 1843,
     "unique_id": "4d818080",
-    "title": "(3) Aubrey Cottle \ud83d\udda5\ud83c\udff4\u200d\u2620\ufe0f (@Kirtaner) / Twitter",
+    "title": "(3) Aubrey Cottle 🖥🏴‍☠️ (@Kirtaner) / Twitter",
     "url": "https://twitter.com/Kirtaner",
     "added": "2025-01-18T07:42:37.904103+00:00",
     "stars": false,
@@ -26465,7 +26465,7 @@
   {
     "id": 1891,
     "unique_id": "9f49da23",
-    "title": "GOTO 2015 \u2022 Fun with the Lambda Calculus \u2022 Corey Haines - YouTube",
+    "title": "GOTO 2015 • Fun with the Lambda Calculus • Corey Haines - YouTube",
     "url": "https://www.youtube.com/watch?v=QPqoFCHpLF4",
     "added": "2025-01-18T07:42:37.934441+00:00",
     "stars": false,
@@ -26549,7 +26549,7 @@
   {
     "id": 1897,
     "unique_id": "6ad7a0f2",
-    "title": "GPT-3 bottleneck is training data | Fran\u00e7ois Chollet and Lex Fridman - YouTube",
+    "title": "GPT-3 bottleneck is training data | François Chollet and Lex Fridman - YouTube",
     "url": "https://www.youtube.com/watch?v=UyPMS3Gvdko",
     "added": "2025-01-18T07:42:37.934441+00:00",
     "stars": false,
@@ -27067,7 +27067,7 @@
   {
     "id": 1934,
     "unique_id": "9af367ef",
-    "title": "K\u00f6nig's theorem (set theory) - Wikipedia",
+    "title": "König's theorem (set theory) - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/K%C3%B6nig%27s_theorem_(set_theory)",
     "added": "2025-01-18T07:42:37.944853+00:00",
     "stars": false,
@@ -28075,7 +28075,7 @@
   {
     "id": 2006,
     "unique_id": "b929a95d",
-    "title": "2\u00a0Rosette Essentials",
+    "title": "2 Rosette Essentials",
     "url": "https://docs.racket-lang.org/rosette-guide/ch_essentials.html",
     "added": "2025-01-18T07:42:37.963195+00:00",
     "stars": false,
@@ -28117,7 +28117,7 @@
   {
     "id": 2009,
     "unique_id": "b0efed36",
-    "title": "Hardy\u2013Weinberg principle - Wikipedia",
+    "title": "Hardy–Weinberg principle - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Hardy%E2%80%93Weinberg_principle",
     "added": "2025-01-18T07:42:37.963195+00:00",
     "stars": false,
@@ -28369,7 +28369,7 @@
   {
     "id": 2027,
     "unique_id": "62173795",
-    "title": "C++ Lambdas aren\u2019t magic, part 2 \ud83c\udf86 | by Topher Winward | Medium",
+    "title": "C++ Lambdas aren’t magic, part 2 🎆 | by Topher Winward | Medium",
     "url": "https://medium.com/@winwardo/c-lambdas-arent-magic-part-2-ce0b48934809",
     "added": "2025-01-18T07:42:37.984667+00:00",
     "stars": false,
@@ -28411,7 +28411,7 @@
   {
     "id": 2030,
     "unique_id": "77e94dc2",
-    "title": "Friendly reminder to mark your move constructors noexcept \u2013 Andy G's Blog",
+    "title": "Friendly reminder to mark your move constructors noexcept – Andy G's Blog",
     "url": "https://gieseanw.wordpress.com/2020/08/28/friendly-reminder-to-mark-your-move-constructors-noexcept/",
     "added": "2025-01-18T07:42:37.984667+00:00",
     "stars": false,
@@ -28453,7 +28453,7 @@
   {
     "id": 2033,
     "unique_id": "13eddf92",
-    "title": "[Wandbox]\u4e09\u3078( \u3078\u055e\u0a0a \u055e)\u3078 \uff8a\uff6f\uff8a\uff6f",
+    "title": "[Wandbox]三へ( へ՞ਊ ՞)へ ﾊｯﾊｯ",
     "url": "https://wandbox.org/permlink/YXLR8D0i12mi0dlF",
     "added": "2025-01-18T07:42:37.984667+00:00",
     "stars": false,
@@ -28467,7 +28467,7 @@
   {
     "id": 2034,
     "unique_id": "bbd52106",
-    "title": "CppCon 2018: Mateusz Pusz \u201cEffective replacement of dynamic polymorphism with std::variant\u201d - YouTube",
+    "title": "CppCon 2018: Mateusz Pusz “Effective replacement of dynamic polymorphism with std::variant” - YouTube",
     "url": "https://www.youtube.com/watch?v=gKbORJtnVu8&ab_channel=CppCon",
     "added": "2025-01-18T07:42:37.984667+00:00",
     "stars": false,
@@ -28481,7 +28481,7 @@
   {
     "id": 2035,
     "unique_id": "d3de188b",
-    "title": "(5) Procedural Programming: It\u2019s Back? It Never Went Away - Kevlin Henney [ACCU 2018] - YouTube",
+    "title": "(5) Procedural Programming: It’s Back? It Never Went Away - Kevlin Henney [ACCU 2018] - YouTube",
     "url": "https://www.youtube.com/watch?v=mrY6xrWp3Gs",
     "added": "2025-01-18T07:42:37.984667+00:00",
     "stars": false,
@@ -28495,7 +28495,7 @@
   {
     "id": 2036,
     "unique_id": "6eb66da2",
-    "title": "Variant Visitation V2 \u2013 Michael Park",
+    "title": "Variant Visitation V2 – Michael Park",
     "url": "https://mpark.github.io/programming/2019/01/22/variant-visitation-v2/",
     "added": "2025-01-18T07:42:37.984667+00:00",
     "stars": false,
@@ -28551,7 +28551,7 @@
   {
     "id": 2040,
     "unique_id": "af839f61",
-    "title": "We already have uniform initialisation, stop proposing braced initialisation as solution for everything \u00b7 Fekir's Blog",
+    "title": "We already have uniform initialisation, stop proposing braced initialisation as solution for everything · Fekir's Blog",
     "url": "https://fekir.info/post/we-already-have-uniform-initialisation/",
     "added": "2025-01-18T07:42:37.984667+00:00",
     "stars": false,
@@ -28775,7 +28775,7 @@
   {
     "id": 2056,
     "unique_id": "299a8995",
-    "title": "Hiren's BootCD - The Best Computer Bootable Repair Disc \u2022 Raymond.CC",
+    "title": "Hiren's BootCD - The Best Computer Bootable Repair Disc • Raymond.CC",
     "url": "https://www.raymond.cc/blog/latest-hirens-bootcd-v83-the-king-of-all-boot-cds/",
     "added": "2025-01-18T07:42:37.984667+00:00",
     "stars": false,
@@ -28803,7 +28803,7 @@
   {
     "id": 2058,
     "unique_id": "28c5a26f",
-    "title": "How can I access the contents of a hard drive without knowing the password to the (Windows 7\u201310) computer? - Quora",
+    "title": "How can I access the contents of a hard drive without knowing the password to the (Windows 7–10) computer? - Quora",
     "url": "https://www.quora.com/How-can-I-access-the-contents-of-a-hard-drive-without-knowing-the-password-to-the-Windows-7%E2%80%9310-computer",
     "added": "2025-01-18T07:42:37.984667+00:00",
     "stars": false,
@@ -28817,7 +28817,7 @@
   {
     "id": 2059,
     "unique_id": "693a7684",
-    "title": "C.3.\u00a0Recommended Partitioning Scheme",
+    "title": "C.3. Recommended Partitioning Scheme",
     "url": "https://help.ubuntu.com/lts/installation-guide/s390x/apcs03.html",
     "added": "2025-01-18T07:42:37.984667+00:00",
     "stars": false,
@@ -29069,7 +29069,7 @@
   {
     "id": 2077,
     "unique_id": "868f7ed3",
-    "title": "(1) GOTO 2019 \u2022 The Soul of Erlang and Elixir \u2022 Sa\u0161a Juri\u0107 - YouTube",
+    "title": "(1) GOTO 2019 • The Soul of Erlang and Elixir • Saša Jurić - YouTube",
     "url": "https://www.youtube.com/watch?v=JvBT4XBdoUE",
     "added": "2025-01-18T07:42:38.007578+00:00",
     "stars": false,
@@ -29223,7 +29223,7 @@
   {
     "id": 2088,
     "unique_id": "90b3e072",
-    "title": "How to Create a New JVM Language in Under an Hour by Oleg \u0160elajev - YouTube",
+    "title": "How to Create a New JVM Language in Under an Hour by Oleg Šelajev - YouTube",
     "url": "https://www.youtube.com/watch?v=14hqB7Q0I58",
     "added": "2025-01-18T07:42:38.007578+00:00",
     "stars": false,
@@ -29377,7 +29377,7 @@
   {
     "id": 2099,
     "unique_id": "2daa4695",
-    "title": "CppCon 2015: Juan Pedro Bol\u00edvar Puente \u201cTransducers: from Clojure to C++\" - YouTube",
+    "title": "CppCon 2015: Juan Pedro Bolívar Puente “Transducers: from Clojure to C++\" - YouTube",
     "url": "https://www.youtube.com/watch?v=vohGJjGxtJQ",
     "added": "2025-01-18T07:42:38.007578+00:00",
     "stars": false,
@@ -29391,7 +29391,7 @@
   {
     "id": 2100,
     "unique_id": "2d997d35",
-    "title": "(1) Scott Meyers \u2013 The Most Important Design Guideline - YouTube",
+    "title": "(1) Scott Meyers – The Most Important Design Guideline - YouTube",
     "url": "https://www.youtube.com/watch?v=5tg1ONG18H8",
     "added": "2025-01-18T07:42:38.007578+00:00",
     "stars": false,
@@ -29671,7 +29671,7 @@
   {
     "id": 2120,
     "unique_id": "023b830a",
-    "title": "C++17: I See a Monad in Your Future! | \u00a0\u00a0Bartosz Milewski's Programming Cafe",
+    "title": "C++17: I See a Monad in Your Future! |   Bartosz Milewski's Programming Cafe",
     "url": "https://bartoszmilewski.com/2014/02/26/c17-i-see-a-monad-in-your-future/",
     "added": "2025-01-18T07:42:38.022738+00:00",
     "stars": false,
@@ -29741,7 +29741,7 @@
   {
     "id": 2125,
     "unique_id": "53ca8b5c",
-    "title": "Augmented Backus\u2013Naur form - Wikipedia",
+    "title": "Augmented Backus–Naur form - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Augmented_Backus%E2%80%93Naur_form",
     "added": "2025-01-18T07:42:38.022738+00:00",
     "stars": false,
@@ -29895,7 +29895,7 @@
   {
     "id": 2136,
     "unique_id": "c5f31494",
-    "title": "LightJason \u2014 Theoretical Introduction: Logic Programming",
+    "title": "LightJason — Theoretical Introduction: Logic Programming",
     "url": "https://lightjason.org/knowledgebase/logicalprogramming/",
     "added": "2025-01-18T07:42:38.022738+00:00",
     "stars": false,
@@ -29951,7 +29951,7 @@
   {
     "id": 2140,
     "unique_id": "d475914f",
-    "title": "axe/AXE-Reference-v2.1.pdf at master \u00b7 gbresearch/axe",
+    "title": "axe/AXE-Reference-v2.1.pdf at master · gbresearch/axe",
     "url": "https://github.com/gbresearch/axe/blob/master/docs/AXE-Reference-v2.1.pdf",
     "added": "2025-01-18T07:42:38.022738+00:00",
     "stars": false,
@@ -30301,7 +30301,7 @@
   {
     "id": 2165,
     "unique_id": "566fedc2",
-    "title": "\u03bc operator - Wikipedia",
+    "title": "μ operator - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/%CE%9C_operator",
     "added": "2025-01-18T07:42:38.022738+00:00",
     "stars": false,
@@ -30441,7 +30441,7 @@
   {
     "id": 2175,
     "unique_id": "f77410c9",
-    "title": "Martin Fowler \u2013 Microservices - YouTube",
+    "title": "Martin Fowler – Microservices - YouTube",
     "url": "https://www.youtube.com/watch?v=2yko4TbC8cI",
     "added": "2025-01-18T07:42:38.052712+00:00",
     "stars": false,
@@ -30469,7 +30469,7 @@
   {
     "id": 2177,
     "unique_id": "82106238",
-    "title": "GOTO 2017 \u2022 The Scribe's Oath \u2022 Robert \"Uncle Bob\" Martin - YouTube",
+    "title": "GOTO 2017 • The Scribe's Oath • Robert \"Uncle Bob\" Martin - YouTube",
     "url": "https://www.youtube.com/watch?v=Tng6Fox8EfI",
     "added": "2025-01-18T07:42:38.052712+00:00",
     "stars": false,
@@ -30497,7 +30497,7 @@
   {
     "id": 2179,
     "unique_id": "b081dd12",
-    "title": "Why Isn't Functional Programming the Norm? \u2013 Richard Feldman - YouTube",
+    "title": "Why Isn't Functional Programming the Norm? – Richard Feldman - YouTube",
     "url": "https://www.youtube.com/watch?v=QyJZzq0v7Z4",
     "added": "2025-01-18T07:42:38.052712+00:00",
     "stars": false,
@@ -30707,7 +30707,7 @@
   {
     "id": 2194,
     "unique_id": "510788b0",
-    "title": "(56) Against the Noise \u2014 Functional Scala 2020 - YouTube",
+    "title": "(56) Against the Noise — Functional Scala 2020 - YouTube",
     "url": "https://www.youtube.com/watch?v=T_5lDvGFjY8",
     "added": "2025-01-18T07:42:38.052712+00:00",
     "stars": false,
@@ -30721,7 +30721,7 @@
   {
     "id": 2195,
     "unique_id": "3993ef96",
-    "title": "(56) Why Isn't Functional Programming the Norm? \u2013 Richard Feldman - YouTube",
+    "title": "(56) Why Isn't Functional Programming the Norm? – Richard Feldman - YouTube",
     "url": "https://www.youtube.com/watch?v=QyJZzq0v7Z4&t=107s",
     "added": "2025-01-18T07:42:38.052712+00:00",
     "stars": false,
@@ -30805,7 +30805,7 @@
   {
     "id": 2201,
     "unique_id": "f6b51995",
-    "title": "Why Isn't Functional Programming the Norm? \u2013 Richard Feldman - YouTube",
+    "title": "Why Isn't Functional Programming the Norm? – Richard Feldman - YouTube",
     "url": "https://www.youtube.com/watch?v=QyJZzq0v7Z4&t=107s",
     "added": "2025-01-18T07:42:38.052712+00:00",
     "stars": false,
@@ -31029,7 +31029,7 @@
   {
     "id": 2217,
     "unique_id": "98fbe05a",
-    "title": "R\u00e9nyi entropy - Wikipedia",
+    "title": "Rényi entropy - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/R%C3%A9nyi_entropy",
     "added": "2025-01-18T07:42:38.065848+00:00",
     "stars": false,
@@ -31169,7 +31169,7 @@
   {
     "id": 2227,
     "unique_id": "fb7fd2a1",
-    "title": "Hashing the C++ way \u2013 Vorbrodt's C++ Blog",
+    "title": "Hashing the C++ way – Vorbrodt's C++ Blog",
     "url": "https://vorbrodt.blog/2019/04/08/hashing-the-c-way/",
     "added": "2025-01-18T07:42:38.065848+00:00",
     "stars": false,
@@ -31729,7 +31729,7 @@
   {
     "id": 2267,
     "unique_id": "b7e5caa1",
-    "title": "CppCon 2018: Kostya Serebryany \u201cMemory Tagging and how it improves C/C++ memory safety\u201d - YouTube",
+    "title": "CppCon 2018: Kostya Serebryany “Memory Tagging and how it improves C/C++ memory safety” - YouTube",
     "url": "https://www.youtube.com/watch?v=lLEcbXidK2o",
     "added": "2025-01-18T07:42:38.088936+00:00",
     "stars": false,
@@ -31743,7 +31743,7 @@
   {
     "id": 2268,
     "unique_id": "a8f8f01b",
-    "title": "CppCon 2018: Greg Law \u201cDebugging Linux C++\u201d - YouTube",
+    "title": "CppCon 2018: Greg Law “Debugging Linux C++” - YouTube",
     "url": "https://www.youtube.com/watch?v=V1t6faOKjuQ",
     "added": "2025-01-18T07:42:38.088936+00:00",
     "stars": false,
@@ -31785,7 +31785,7 @@
   {
     "id": 2271,
     "unique_id": "218412ac",
-    "title": "CppCon 2018: Matt Godbolt \u201cThe Bits Between the Bits: How We Get to main()\u201d - YouTube",
+    "title": "CppCon 2018: Matt Godbolt “The Bits Between the Bits: How We Get to main()” - YouTube",
     "url": "https://www.youtube.com/watch?v=dOfucXtyEsU",
     "added": "2025-01-18T07:42:38.088936+00:00",
     "stars": false,
@@ -31813,7 +31813,7 @@
   {
     "id": 2273,
     "unique_id": "b50cfa59",
-    "title": "(55) CppCon 2018: Simon Brand \u201cHow C++ Debuggers Work\u201d - YouTube",
+    "title": "(55) CppCon 2018: Simon Brand “How C++ Debuggers Work” - YouTube",
     "url": "https://www.youtube.com/watch?v=0DDrseUomfU",
     "added": "2025-01-18T07:42:38.088936+00:00",
     "stars": false,
@@ -31827,7 +31827,7 @@
   {
     "id": 2274,
     "unique_id": "74c27add",
-    "title": "CppCon 2017: John D. Woolverton \u201cC Pointers\u201d - YouTube",
+    "title": "CppCon 2017: John D. Woolverton “C Pointers” - YouTube",
     "url": "https://www.youtube.com/watch?v=iJ1rwgCI1Xc",
     "added": "2025-01-18T07:42:38.088936+00:00",
     "stars": false,
@@ -31841,7 +31841,7 @@
   {
     "id": 2275,
     "unique_id": "9d5a93a3",
-    "title": "CppCon 2018: Timur Doumler \u201cCan I has grammar?\u201d - YouTube",
+    "title": "CppCon 2018: Timur Doumler “Can I has grammar?” - YouTube",
     "url": "https://www.youtube.com/watch?v=tsG95Y-C14k",
     "added": "2025-01-18T07:42:38.088936+00:00",
     "stars": false,
@@ -31869,7 +31869,7 @@
   {
     "id": 2277,
     "unique_id": "74b4132a",
-    "title": "CppCon 2018: Stoyan Nikolov \u201cOOP Is Dead, Long Live Data-oriented Design\u201d - YouTube",
+    "title": "CppCon 2018: Stoyan Nikolov “OOP Is Dead, Long Live Data-oriented Design” - YouTube",
     "url": "https://www.youtube.com/watch?v=yy8jQgmhbAU",
     "added": "2025-01-18T07:42:38.088936+00:00",
     "stars": false,
@@ -31883,7 +31883,7 @@
   {
     "id": 2278,
     "unique_id": "ef3d8da3",
-    "title": "(55) CppCon 2019: Matt Godbolt \u201cPath Tracing Three Ways: A Study of C++ Style\u201d - YouTube",
+    "title": "(55) CppCon 2019: Matt Godbolt “Path Tracing Three Ways: A Study of C++ Style” - YouTube",
     "url": "https://www.youtube.com/watch?v=HG6c4Kwbv4I",
     "added": "2025-01-18T07:42:38.088936+00:00",
     "stars": false,
@@ -31897,7 +31897,7 @@
   {
     "id": 2279,
     "unique_id": "3eb68a45",
-    "title": "CppCon 2018: Fedor Pikus \u201cDesign for Performance\u201d - YouTube",
+    "title": "CppCon 2018: Fedor Pikus “Design for Performance” - YouTube",
     "url": "https://www.youtube.com/watch?v=m25p3EtBua4",
     "added": "2025-01-18T07:42:38.088936+00:00",
     "stars": false,
@@ -31967,7 +31967,7 @@
   {
     "id": 2284,
     "unique_id": "5ca88001",
-    "title": "(55) CppCon 2017: Matt Godbolt \u201cWhat Has My Compiler Done for Me Lately? Unbolting the Compiler's Lid\u201d - YouTube",
+    "title": "(55) CppCon 2017: Matt Godbolt “What Has My Compiler Done for Me Lately? Unbolting the Compiler's Lid” - YouTube",
     "url": "https://www.youtube.com/watch?v=bSkpMdDe4g4",
     "added": "2025-01-18T07:42:38.088936+00:00",
     "stars": false,
@@ -32051,7 +32051,7 @@
   {
     "id": 2290,
     "unique_id": "0add534d",
-    "title": "CppCon 2018: Alan Talbot \u201cMoving Faster: Everyday efficiency in modern C++\u201d - YouTube",
+    "title": "CppCon 2018: Alan Talbot “Moving Faster: Everyday efficiency in modern C++” - YouTube",
     "url": "https://www.youtube.com/watch?v=EovBkh9wDnM",
     "added": "2025-01-18T07:42:38.088936+00:00",
     "stars": false,
@@ -32079,7 +32079,7 @@
   {
     "id": 2292,
     "unique_id": "17793227",
-    "title": "CppCon 2018: JF Bastien \u201cSigned integers are two's complement\u201d - YouTube",
+    "title": "CppCon 2018: JF Bastien “Signed integers are two's complement” - YouTube",
     "url": "https://www.youtube.com/watch?v=JhUxIVf1qok",
     "added": "2025-01-18T07:42:38.088936+00:00",
     "stars": false,
@@ -32107,7 +32107,7 @@
   {
     "id": 2294,
     "unique_id": "3203a256",
-    "title": "CppCon 2017: Chandler Carruth \u201cGoing Nowhere Faster\u201d - YouTube",
+    "title": "CppCon 2017: Chandler Carruth “Going Nowhere Faster” - YouTube",
     "url": "https://www.youtube.com/watch?v=2EWejmkKlxs",
     "added": "2025-01-18T07:42:38.088936+00:00",
     "stars": false,
@@ -32121,7 +32121,7 @@
   {
     "id": 2295,
     "unique_id": "07854740",
-    "title": "CppCon 2017: John Regehr \u201cUndefined Behavior in 2017 (part 1 of 2)\u201d - YouTube",
+    "title": "CppCon 2017: John Regehr “Undefined Behavior in 2017 (part 1 of 2)” - YouTube",
     "url": "https://www.youtube.com/watch?v=v1COuU2vU_w",
     "added": "2025-01-18T07:42:38.088936+00:00",
     "stars": false,
@@ -32191,7 +32191,7 @@
   {
     "id": 2300,
     "unique_id": "ef3bd893",
-    "title": "CppCon 2017: Charles Bailey \u201cEnough x86 Assembly to Be Dangerous\u201d - YouTube",
+    "title": "CppCon 2017: Charles Bailey “Enough x86 Assembly to Be Dangerous” - YouTube",
     "url": "https://www.youtube.com/watch?v=IfUPkUAEwrk",
     "added": "2025-01-18T07:42:38.088936+00:00",
     "stars": false,
@@ -32275,7 +32275,7 @@
   {
     "id": 2306,
     "unique_id": "3380008f",
-    "title": "Launching SageMath \u2014 Sage Installation Guide v9.1",
+    "title": "Launching SageMath — Sage Installation Guide v9.1",
     "url": "https://doc.sagemath.org/html/en/installation/launching.html",
     "added": "2025-01-18T07:42:38.104235+00:00",
     "stars": false,
@@ -32289,7 +32289,7 @@
   {
     "id": 2307,
     "unique_id": "8b578197",
-    "title": "Stop reimplementing the virtual table and start using double dispatch \u2013 Andy G's Blog",
+    "title": "Stop reimplementing the virtual table and start using double dispatch – Andy G's Blog",
     "url": "https://gieseanw.wordpress.com/2018/12/29/stop-reimplementing-the-virtual-table-and-start-using-double-dispatch/",
     "added": "2025-01-18T07:42:38.104235+00:00",
     "stars": false,
@@ -32331,7 +32331,7 @@
   {
     "id": 2310,
     "unique_id": "80c7d1d5",
-    "title": "Introduction \u2013 Homomorphic Encryption Standardization",
+    "title": "Introduction – Homomorphic Encryption Standardization",
     "url": "https://homomorphicencryption.org/introduction/",
     "added": "2025-01-18T07:42:38.104235+00:00",
     "stars": false,
@@ -32429,7 +32429,7 @@
   {
     "id": 2317,
     "unique_id": "d4961d07",
-    "title": "A very casual introduction to Fully Homomorphic Encryption \u2013 A Few Thoughts on Cryptographic Engineering",
+    "title": "A very casual introduction to Fully Homomorphic Encryption – A Few Thoughts on Cryptographic Engineering",
     "url": "https://blog.cryptographyengineering.com/2012/01/02/very-casual-introduction-to-fully/",
     "added": "2025-01-18T07:42:38.104235+00:00",
     "stars": false,
@@ -32569,7 +32569,7 @@
   {
     "id": 2327,
     "unique_id": "041f8ebe",
-    "title": "(\u0393(1 + sqrt(m)) \u0393(m) \u0393(1 + m) \u0393(1 + m/sqrt(m))^(-sqrt(m)))/\u0393(sqrt(m) + m) - Wolfram|Alpha",
+    "title": "(Γ(1 + sqrt(m)) Γ(m) Γ(1 + m) Γ(1 + m/sqrt(m))^(-sqrt(m)))/Γ(sqrt(m) + m) - Wolfram|Alpha",
     "url": "https://www.wolframalpha.com/input/?i=%28%CE%93%281+%2B+sqrt%28m%29%29+%CE%93%28m%29+%CE%93%281+%2B+m%29+%CE%93%281+%2B+m%2Fsqrt%28m%29%29%5E%28-sqrt%28m%29%29%29%2F%CE%93%28sqrt%28m%29+%2B+m%29",
     "added": "2025-01-18T07:42:38.104235+00:00",
     "stars": false,
@@ -32583,7 +32583,7 @@
   {
     "id": 2328,
     "unique_id": "64222a38",
-    "title": "Functors | \u00a0\u00a0Bartosz Milewski's Programming Cafe",
+    "title": "Functors |   Bartosz Milewski's Programming Cafe",
     "url": "https://bartoszmilewski.com/2015/01/20/functors/",
     "added": "2025-01-18T07:42:38.104235+00:00",
     "stars": false,
@@ -32821,7 +32821,7 @@
   {
     "id": 2345,
     "unique_id": "251dc3f6",
-    "title": "ProPublica \u2014 Investigative Journalism and News in the Public Interest",
+    "title": "ProPublica — Investigative Journalism and News in the Public Interest",
     "url": "https://www.propublica.org/",
     "added": "2025-01-18T07:42:38.104235+00:00",
     "stars": false,
@@ -33241,7 +33241,7 @@
   {
     "id": 2375,
     "unique_id": "e8a4038b",
-    "title": "Alfredo Correa / boost-covariant \u00b7 GitLab",
+    "title": "Alfredo Correa / boost-covariant · GitLab",
     "url": "https://gitlab.com/correaa/boost-covariant",
     "added": "2025-01-18T07:42:38.104235+00:00",
     "stars": false,
@@ -34165,7 +34165,7 @@
   {
     "id": 2441,
     "unique_id": "579c3a2f",
-    "title": "Evaluation \u2022 Chapter 7 \u2022 Build Your Own Lisp",
+    "title": "Evaluation • Chapter 7 • Build Your Own Lisp",
     "url": "http://www.buildyourownlisp.com/chapter7_evaluation",
     "added": "2025-01-18T07:42:38.146517+00:00",
     "stars": false,
@@ -35019,7 +35019,7 @@
   {
     "id": 2502,
     "unique_id": "0aa336f5",
-    "title": "Lecture 3: Superposition, Th\u00e9venin and Norton | Video Lectures | Circuits and Electronics | Electrical Engineering and Computer Science | MIT OpenCourseWare",
+    "title": "Lecture 3: Superposition, Thévenin and Norton | Video Lectures | Circuits and Electronics | Electrical Engineering and Computer Science | MIT OpenCourseWare",
     "url": "https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-002-circuits-and-electronics-spring-2007/video-lectures/lecture-3/",
     "added": "2025-01-18T07:42:38.169684+00:00",
     "stars": false,
@@ -35565,7 +35565,7 @@
   {
     "id": 2541,
     "unique_id": "e0c15585",
-    "title": "Writing an LLVM Backend \u2014 LLVM 10 documentation",
+    "title": "Writing an LLVM Backend — LLVM 10 documentation",
     "url": "http://llvm.org/docs/WritingAnLLVMBackend.html",
     "added": "2025-01-18T07:42:38.202979+00:00",
     "stars": false,
@@ -35607,7 +35607,7 @@
   {
     "id": 2544,
     "unique_id": "deaf7161",
-    "title": "pandas.Series.rolling \u2014 pandas 1.0.3 documentation",
+    "title": "pandas.Series.rolling — pandas 1.0.3 documentation",
     "url": "https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.rolling.html#pandas.Series.rolling",
     "added": "2025-01-18T07:42:38.202979+00:00",
     "stars": false,
@@ -36629,7 +36629,7 @@
   {
     "id": 2617,
     "unique_id": "2f7710db",
-    "title": "Cubical \u2014 Agda 2.6.0.1 documentation",
+    "title": "Cubical — Agda 2.6.0.1 documentation",
     "url": "https://agda.readthedocs.io/en/v2.6.0.1/language/cubical.html",
     "added": "2025-01-18T07:42:38.232450+00:00",
     "stars": false,
@@ -36643,7 +36643,7 @@
   {
     "id": 2618,
     "unique_id": "e4b00cf2",
-    "title": "(13) GOTO 2019 \u2022 Monolith Decomposition Patterns \u2022 Sam Newman - YouTube",
+    "title": "(13) GOTO 2019 • Monolith Decomposition Patterns • Sam Newman - YouTube",
     "url": "https://www.youtube.com/watch?v=9I9GdSQ1bbM",
     "added": "2025-01-18T07:42:38.232450+00:00",
     "stars": false,
@@ -36727,7 +36727,7 @@
   {
     "id": 2624,
     "unique_id": "10d35c9e",
-    "title": "Monads in C++ | \u00a0\u00a0Bartosz Milewski's Programming Cafe",
+    "title": "Monads in C++ |   Bartosz Milewski's Programming Cafe",
     "url": "https://bartoszmilewski.com/2011/07/11/monads-in-c/",
     "added": "2025-01-18T07:42:38.232450+00:00",
     "stars": false,
@@ -36881,7 +36881,7 @@
   {
     "id": 2635,
     "unique_id": "81dc5074",
-    "title": "(22) CppCon 2019: Marc Gregoire \u201cC++20: What's in it for you?\" - YouTube",
+    "title": "(22) CppCon 2019: Marc Gregoire “C++20: What's in it for you?\" - YouTube",
     "url": "https://www.youtube.com/watch?v=Y652wQqbYEI",
     "added": "2025-01-18T07:42:38.232450+00:00",
     "stars": false,
@@ -37035,7 +37035,7 @@
   {
     "id": 2646,
     "unique_id": "d996f0b7",
-    "title": "Fast Walsh\u2013Hadamard transform - Wikipedia",
+    "title": "Fast Walsh–Hadamard transform - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Fast_Walsh%E2%80%93Hadamard_transform",
     "added": "2025-01-18T07:42:38.250877+00:00",
     "stars": false,
@@ -37231,7 +37231,7 @@
   {
     "id": 2660,
     "unique_id": "a2162481",
-    "title": "(1) Jim Keller: Moore\u2019s Law is Not Dead - YouTube",
+    "title": "(1) Jim Keller: Moore’s Law is Not Dead - YouTube",
     "url": "https://www.youtube.com/watch?v=oIG9ztQw2Gc",
     "added": "2025-01-18T07:42:38.250877+00:00",
     "stars": false,
@@ -37539,7 +37539,7 @@
   {
     "id": 2682,
     "unique_id": "578741c0",
-    "title": "What\u2019s Wrong with Probability Notation? | LingPipe Blog",
+    "title": "What’s Wrong with Probability Notation? | LingPipe Blog",
     "url": "https://lingpipe-blog.com/2009/10/13/whats-wrong-with-probability-notation/",
     "added": "2025-01-18T07:42:38.250877+00:00",
     "stars": false,
@@ -37567,7 +37567,7 @@
   {
     "id": 2684,
     "unique_id": "599a964f",
-    "title": "What\u2019s Wrong with Probability Notation? | LingPipe Blog",
+    "title": "What’s Wrong with Probability Notation? | LingPipe Blog",
     "url": "https://lingpipe-blog.com/2009/10/13/whats-wrong-with-probability-notation/#comment-5650",
     "added": "2025-01-18T07:42:38.250877+00:00",
     "stars": false,
@@ -37847,7 +37847,7 @@
   {
     "id": 2704,
     "unique_id": "9c36c389",
-    "title": "Compositionality \u2013 The open-access journal for the mathematics of composition",
+    "title": "Compositionality – The open-access journal for the mathematics of composition",
     "url": "http://compositionality-journal.org/",
     "added": "2025-01-18T07:42:38.272383+00:00",
     "stars": false,
@@ -37945,7 +37945,7 @@
   {
     "id": 2711,
     "unique_id": "36f3bbbc",
-    "title": "CiteSeerX \u2014 Arithmetic Without the Successor Axiom",
+    "title": "CiteSeerX — Arithmetic Without the Successor Axiom",
     "url": "http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.85.3071",
     "added": "2025-01-18T07:42:38.272383+00:00",
     "stars": false,
@@ -38029,7 +38029,7 @@
   {
     "id": 2717,
     "unique_id": "1f67c22a",
-    "title": "Rate\u2013distortion theory - Wikipedia",
+    "title": "Rate–distortion theory - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Rate%E2%80%93distortion_theory",
     "added": "2025-01-18T07:42:38.272383+00:00",
     "stars": false,
@@ -38071,7 +38071,7 @@
   {
     "id": 2720,
     "unique_id": "e252b3f4",
-    "title": "(31) GOTO 2019 \u2022 Reactive Systems \u2022 Dave Farley - YouTube",
+    "title": "(31) GOTO 2019 • Reactive Systems • Dave Farley - YouTube",
     "url": "https://www.youtube.com/watch?v=tKRa0O7aepo",
     "added": "2025-01-18T07:42:38.287749+00:00",
     "stars": false,
@@ -38239,7 +38239,7 @@
   {
     "id": 2732,
     "unique_id": "9250f753",
-    "title": "Mod-01 Lec-08 GENERATED \u03a3-ALGEBRA, BOREL SETS - YouTube",
+    "title": "Mod-01 Lec-08 GENERATED Σ-ALGEBRA, BOREL SETS - YouTube",
     "url": "https://www.youtube.com/watch?v=P_ROD0l0hfk",
     "added": "2025-01-18T07:42:38.287749+00:00",
     "stars": false,
@@ -38253,7 +38253,7 @@
   {
     "id": 2733,
     "unique_id": "95a77869",
-    "title": "(31) CppCon 2016: Tim Haines \u201cImproving Performance Through Compiler Switches...\" - YouTube",
+    "title": "(31) CppCon 2016: Tim Haines “Improving Performance Through Compiler Switches...\" - YouTube",
     "url": "https://www.youtube.com/watch?v=w5Z4JlMJ1VQ",
     "added": "2025-01-18T07:42:38.287749+00:00",
     "stars": false,
@@ -38281,7 +38281,7 @@
   {
     "id": 2735,
     "unique_id": "fa9af78b",
-    "title": "Chapter\u00a01.\u00a0Boost.Bimap - 1.72.0",
+    "title": "Chapter 1. Boost.Bimap - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/libs/bimap/doc/html/index.html",
     "added": "2025-01-18T07:42:38.287749+00:00",
     "stars": false,
@@ -38379,7 +38379,7 @@
   {
     "id": 2742,
     "unique_id": "69a5c949",
-    "title": "(33) C++Now 2017: Michael Caisse \u201cModern C++\u201d - YouTube",
+    "title": "(33) C++Now 2017: Michael Caisse “Modern C++” - YouTube",
     "url": "https://www.youtube.com/watch?v=C39AaMFys_k",
     "added": "2025-01-18T07:42:38.287749+00:00",
     "stars": false,
@@ -38435,7 +38435,7 @@
   {
     "id": 2746,
     "unique_id": "bc273eeb",
-    "title": "Daniel Lemire's blog \u2013 Daniel Lemire is a computer science professor at the University of Quebec (TELUQ) in Montreal. His research is focused on software performance and data engineering. He is a techno-optimist.",
+    "title": "Daniel Lemire's blog – Daniel Lemire is a computer science professor at the University of Quebec (TELUQ) in Montreal. His research is focused on software performance and data engineering. He is a techno-optimist.",
     "url": "https://lemire.me/blog/",
     "added": "2025-01-18T07:42:38.287749+00:00",
     "stars": false,
@@ -38491,7 +38491,7 @@
   {
     "id": 2750,
     "unique_id": "098132b7",
-    "title": "Type Erasure for Unopinionated Interfaces in C++ \u2013 Peter Goldsborough",
+    "title": "Type Erasure for Unopinionated Interfaces in C++ – Peter Goldsborough",
     "url": "http://www.goldsborough.me/cpp/2018/05/22/00-32-43-type_erasure_for_unopinionated_interfaces_in_c++/",
     "added": "2025-01-18T07:42:38.287749+00:00",
     "stars": false,
@@ -38547,7 +38547,7 @@
   {
     "id": 2754,
     "unique_id": "103b7d79",
-    "title": "Simple Algebraic Data Types | \u00a0\u00a0Bartosz Milewski's Programming Cafe",
+    "title": "Simple Algebraic Data Types |   Bartosz Milewski's Programming Cafe",
     "url": "https://bartoszmilewski.com/2015/01/13/simple-algebraic-data-types/",
     "added": "2025-01-18T07:42:38.287749+00:00",
     "stars": false,
@@ -38575,7 +38575,7 @@
   {
     "id": 2756,
     "unique_id": "0c3f84ea",
-    "title": "CppCon 2015: Michael Caisse \u201cUsing Spirit X3 to Write Parsers\u201d - YouTube",
+    "title": "CppCon 2015: Michael Caisse “Using Spirit X3 to Write Parsers” - YouTube",
     "url": "https://www.youtube.com/watch?v=xSBWklPLRvw&t=1833s",
     "added": "2025-01-18T07:42:38.287749+00:00",
     "stars": false,
@@ -38589,7 +38589,7 @@
   {
     "id": 2757,
     "unique_id": "a175758c",
-    "title": "F-Algebras | \u00a0\u00a0Bartosz Milewski's Programming Cafe",
+    "title": "F-Algebras |   Bartosz Milewski's Programming Cafe",
     "url": "https://bartoszmilewski.com/2017/02/28/f-algebras/",
     "added": "2025-01-18T07:42:38.287749+00:00",
     "stars": false,
@@ -38603,7 +38603,7 @@
   {
     "id": 2758,
     "unique_id": "52f060b0",
-    "title": "C++Now 2019: Michael Caisse \u201cEmbedded Domain Specific Languages for Embedded Bare Metal Projects\u201d - YouTube",
+    "title": "C++Now 2019: Michael Caisse “Embedded Domain Specific Languages for Embedded Bare Metal Projects” - YouTube",
     "url": "https://www.youtube.com/watch?v=OkeRijjmoh8",
     "added": "2025-01-18T07:42:38.287749+00:00",
     "stars": false,
@@ -38659,7 +38659,7 @@
   {
     "id": 2762,
     "unique_id": "05289751",
-    "title": "Compositionality \u2014 First Issue | Azimuth",
+    "title": "Compositionality — First Issue | Azimuth",
     "url": "https://johncarlosbaez.wordpress.com/2019/12/30/compositionality-first-issue/",
     "added": "2025-01-18T07:42:38.287749+00:00",
     "stars": false,
@@ -38673,7 +38673,7 @@
   {
     "id": 2763,
     "unique_id": "d79b4841",
-    "title": "(30) Why Monads? \u2013 Luca Belli - YouTube",
+    "title": "(30) Why Monads? – Luca Belli - YouTube",
     "url": "https://www.youtube.com/watch?v=7xmYgxmhx8M&list=PLcV_8F4QFuGsofz4jPVs8cu4pVj9vvok-&index=25&t=0s",
     "added": "2025-01-18T07:42:38.304929+00:00",
     "stars": false,
@@ -38687,7 +38687,7 @@
   {
     "id": 2764,
     "unique_id": "82e648d6",
-    "title": "(29) C++Now 2018: Lisa Lippincott \u201cOpening Keynote: The Shape of a Program\u201d - YouTube",
+    "title": "(29) C++Now 2018: Lisa Lippincott “Opening Keynote: The Shape of a Program” - YouTube",
     "url": "https://www.youtube.com/watch?v=QFIOE1jKv30&list=PLcV_8F4QFuGsofz4jPVs8cu4pVj9vvok-&index=20&t=453s",
     "added": "2025-01-18T07:42:38.304929+00:00",
     "stars": false,
@@ -38785,7 +38785,7 @@
   {
     "id": 2771,
     "unique_id": "befcf762",
-    "title": "(27) CppCon 2019: Timur Doumler \u201cType punning in modern C++\u201d - YouTube",
+    "title": "(27) CppCon 2019: Timur Doumler “Type punning in modern C++” - YouTube",
     "url": "https://www.youtube.com/watch?v=_qzMpk-22cc&t=1877s",
     "added": "2025-01-18T07:42:38.304929+00:00",
     "stars": false,
@@ -39387,7 +39387,7 @@
   {
     "id": 2814,
     "unique_id": "d74f1d89",
-    "title": "Quine\u2013McCluskey algorithm - Wikipedia",
+    "title": "Quine–McCluskey algorithm - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Quine%E2%80%93McCluskey_algorithm",
     "added": "2025-01-18T07:42:38.324623+00:00",
     "stars": false,
@@ -39457,7 +39457,7 @@
   {
     "id": 2819,
     "unique_id": "8d2c0a6a",
-    "title": "F-Algebras and C++ \u2013 Eric Niebler",
+    "title": "F-Algebras and C++ – Eric Niebler",
     "url": "http://ericniebler.com/2013/07/16/f-algebras-and-c/",
     "added": "2025-01-18T07:42:38.324623+00:00",
     "stars": false,
@@ -39471,7 +39471,7 @@
   {
     "id": 2820,
     "unique_id": "445183d9",
-    "title": "Writing a Memory Allocator \u2013 Dmitry Soshnikov",
+    "title": "Writing a Memory Allocator – Dmitry Soshnikov",
     "url": "http://dmitrysoshnikov.com/compilers/writing-a-memory-allocator/",
     "added": "2025-01-18T07:42:38.324623+00:00",
     "stars": false,
@@ -39541,7 +39541,7 @@
   {
     "id": 2825,
     "unique_id": "676ad621",
-    "title": "Memory Management Glossary: F \u2014 Memory Management Reference 4.0 documentation",
+    "title": "Memory Management Glossary: F — Memory Management Reference 4.0 documentation",
     "url": "https://www.memorymanagement.org/glossary/f.html#free.list",
     "added": "2025-01-18T07:42:38.324623+00:00",
     "stars": false,
@@ -39625,7 +39625,7 @@
   {
     "id": 2831,
     "unique_id": "fc639616",
-    "title": "LibTooling \u2014 Clang 10 documentation",
+    "title": "LibTooling — Clang 10 documentation",
     "url": "https://clang.llvm.org/docs/LibTooling.html",
     "added": "2025-01-18T07:42:38.324623+00:00",
     "stars": false,
@@ -39779,7 +39779,7 @@
   {
     "id": 2842,
     "unique_id": "a7e28df3",
-    "title": "spirit/example/qi/compiler_tutorial/mini_c at master \u00b7 boostorg/spirit",
+    "title": "spirit/example/qi/compiler_tutorial/mini_c at master · boostorg/spirit",
     "url": "https://github.com/boostorg/spirit/tree/master/example/qi/compiler_tutorial/mini_c",
     "added": "2025-01-18T07:42:38.324623+00:00",
     "stars": false,
@@ -40017,7 +40017,7 @@
   {
     "id": 2859,
     "unique_id": "8c141ace",
-    "title": "Gauss\u2013Kuzmin distribution - Wikipedia",
+    "title": "Gauss–Kuzmin distribution - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Gauss%E2%80%93Kuzmin_distribution",
     "added": "2025-01-18T07:42:38.343566+00:00",
     "stars": false,
@@ -40171,7 +40171,7 @@
   {
     "id": 2870,
     "unique_id": "ffd9b223",
-    "title": "Nyquist\u2013Shannon sampling theorem - Wikipedia",
+    "title": "Nyquist–Shannon sampling theorem - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Nyquist%E2%80%93Shannon_sampling_theorem",
     "added": "2025-01-18T07:42:38.343566+00:00",
     "stars": false,
@@ -40493,7 +40493,7 @@
   {
     "id": 2893,
     "unique_id": "9b23a2b4",
-    "title": "(24) CppCon 2017: Herb Sutter \u201cMeta: Thoughts on generative C++\u201d - YouTube",
+    "title": "(24) CppCon 2017: Herb Sutter “Meta: Thoughts on generative C++” - YouTube",
     "url": "https://www.youtube.com/watch?v=4AfRAVcThyA",
     "added": "2025-01-18T07:42:38.364404+00:00",
     "stars": false,
@@ -40535,7 +40535,7 @@
   {
     "id": 2896,
     "unique_id": "de57afa4",
-    "title": "(25) CppCon 2019: Tristan Brindle \u201cAn Overview of Standard Ranges\u201d - YouTube",
+    "title": "(25) CppCon 2019: Tristan Brindle “An Overview of Standard Ranges” - YouTube",
     "url": "https://www.youtube.com/watch?v=SYLgG7Q5Zws",
     "added": "2025-01-18T07:42:38.364404+00:00",
     "stars": false,
@@ -40577,7 +40577,7 @@
   {
     "id": 2899,
     "unique_id": "0777993d",
-    "title": "(25) CppCon 2018: Billy O'Neal \u201cInside Visual C++' Parallel Algorithms\u201d - YouTube",
+    "title": "(25) CppCon 2018: Billy O'Neal “Inside Visual C++' Parallel Algorithms” - YouTube",
     "url": "https://www.youtube.com/watch?v=nOpwhTbulmk",
     "added": "2025-01-18T07:42:38.364404+00:00",
     "stars": false,
@@ -40605,7 +40605,7 @@
   {
     "id": 2901,
     "unique_id": "d2dd9f98",
-    "title": "Compositionality \u2013 The open-access journal for the mathematics of composition",
+    "title": "Compositionality – The open-access journal for the mathematics of composition",
     "url": "https://compositionality-journal.org/",
     "added": "2025-01-18T07:42:38.364404+00:00",
     "stars": false,
@@ -40941,7 +40941,7 @@
   {
     "id": 2925,
     "unique_id": "73a7240f",
-    "title": "Iterator Chains as Pythonic Data Processing Pipelines \u2013 dbader.org",
+    "title": "Iterator Chains as Pythonic Data Processing Pipelines – dbader.org",
     "url": "https://dbader.org/blog/python-iterator-chains",
     "added": "2025-01-18T07:42:38.364404+00:00",
     "stars": false,
@@ -41165,7 +41165,7 @@
   {
     "id": 2941,
     "unique_id": "ffbf9170",
-    "title": "Euler\u2013Mascheroni constant - Wikipedia",
+    "title": "Euler–Mascheroni constant - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant",
     "added": "2025-01-18T07:42:38.384925+00:00",
     "stars": false,
@@ -41235,7 +41235,7 @@
   {
     "id": 2946,
     "unique_id": "fe9b2b6e",
-    "title": "Extended Backus\u2013Naur form - Wikipedia",
+    "title": "Extended Backus–Naur form - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form",
     "added": "2025-01-18T07:42:38.384925+00:00",
     "stars": false,
@@ -41571,7 +41571,7 @@
   {
     "id": 2970,
     "unique_id": "759b8c06",
-    "title": "L\u00e9vy distribution - Wikipedia",
+    "title": "Lévy distribution - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/L%C3%A9vy_distribution",
     "added": "2025-01-18T07:42:38.384925+00:00",
     "stars": false,
@@ -41725,7 +41725,7 @@
   {
     "id": 2981,
     "unique_id": "ff449a1c",
-    "title": "(11) CppCon 2018: Sean Parent \u201cBetter Code: Human Interface\u201d - YouTube",
+    "title": "(11) CppCon 2018: Sean Parent “Better Code: Human Interface” - YouTube",
     "url": "https://www.youtube.com/watch?v=0WlJEz2wb8Y&t=2567s",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -41753,7 +41753,7 @@
   {
     "id": 2983,
     "unique_id": "a01fd6bf",
-    "title": "CppCon 2019: Kris Jusiak \u201cPostmodern Meta C++\u201d - YouTube",
+    "title": "CppCon 2019: Kris Jusiak “Postmodern Meta C++” - YouTube",
     "url": "https://www.youtube.com/watch?v=uAc42iOAZLI",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -41823,7 +41823,7 @@
   {
     "id": 2988,
     "unique_id": "9d0891ef",
-    "title": "Miscellaneous/type_erasure.zip at master \u00b7 boost-vault/Miscellaneous",
+    "title": "Miscellaneous/type_erasure.zip at master · boost-vault/Miscellaneous",
     "url": "https://github.com/boost-vault/Miscellaneous/blob/master/type_erasure.zip",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -41879,7 +41879,7 @@
   {
     "id": 2992,
     "unique_id": "b1b486f4",
-    "title": "Want Speed? Pass by Value. \u00ab C++Next",
+    "title": "Want Speed? Pass by Value. « C++Next",
     "url": "http://web.archive.org/web/20140113221447/http://cpp-next.com/archive/2009/08/want-speed-pass-by-value/",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -41893,7 +41893,7 @@
   {
     "id": 2993,
     "unique_id": "026e37f9",
-    "title": "Want Speed? Pass by Value. \u00ab C++Next",
+    "title": "Want Speed? Pass by Value. « C++Next",
     "url": "http://web.archive.org/web/20131225054841/http://cpp-next.com/archive/2009/08/want-speed-pass-by-value/comment-page-1/#comment-80",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -41907,7 +41907,7 @@
   {
     "id": 2994,
     "unique_id": "1477d5c5",
-    "title": "value \u00ab C++Next",
+    "title": "value « C++Next",
     "url": "http://web.archive.org/web/20131225090138/http://cpp-next.com/archive/tag/value/",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -41963,7 +41963,7 @@
   {
     "id": 2998,
     "unique_id": "0f8209da",
-    "title": "sean-parent.github.io/01-types.md at master \u00b7 sean-parent/sean-parent.github.io",
+    "title": "sean-parent.github.io/01-types.md at master · sean-parent/sean-parent.github.io",
     "url": "https://github.com/sean-parent/sean-parent.github.io/blob/master/better-code/01-types.md",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42131,7 +42131,7 @@
   {
     "id": 3010,
     "unique_id": "b91f7b38",
-    "title": "proposal: spec: add sum types / discriminated unions \u00b7 Issue #19412 \u00b7 golang/go",
+    "title": "proposal: spec: add sum types / discriminated unions · Issue #19412 · golang/go",
     "url": "https://github.com/golang/go/issues/19412",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42243,7 +42243,7 @@
   {
     "id": 3018,
     "unique_id": "1040eaf3",
-    "title": "Chapter\u00a040.\u00a0Boost.TypeErasure - 1.72.0",
+    "title": "Chapter 40. Boost.TypeErasure - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/doc/html/boost_typeerasure.html#boost_typeerasure.introduction",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42285,7 +42285,7 @@
   {
     "id": 3021,
     "unique_id": "7e160d76",
-    "title": "Chapter\u00a018.\u00a0Boost.Interprocess - 1.72.0",
+    "title": "Chapter 18. Boost.Interprocess - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/doc/html/interprocess.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42299,7 +42299,7 @@
   {
     "id": 3022,
     "unique_id": "6f9b100c",
-    "title": "Chapter\u00a014.\u00a0Boost.DLL - 1.72.0",
+    "title": "Chapter 14. Boost.DLL - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/doc/html/boost_dll.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42313,7 +42313,7 @@
   {
     "id": 3023,
     "unique_id": "5944ae5e",
-    "title": "Chapter\u00a010.\u00a0Boost.ContainerHash - 1.72.0",
+    "title": "Chapter 10. Boost.ContainerHash - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/doc/html/hash.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42327,7 +42327,7 @@
   {
     "id": 3024,
     "unique_id": "4a71c91b",
-    "title": "Chapter\u00a02.\u00a0Boost String Algorithms Library - 1.72.0",
+    "title": "Chapter 2. Boost String Algorithms Library - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/doc/html/string_algo.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42341,7 +42341,7 @@
   {
     "id": 3025,
     "unique_id": "5364df1e",
-    "title": "Chapter\u00a01.\u00a0Boost.Beast - 1.72.0",
+    "title": "Chapter 1. Boost.Beast - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/libs/beast/doc/html/index.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42355,7 +42355,7 @@
   {
     "id": 3026,
     "unique_id": "c5d4d9cb",
-    "title": "Chapter\u00a01.\u00a0Boost.Compute - 1.72.0",
+    "title": "Chapter 1. Boost.Compute - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/libs/compute/doc/html/index.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42369,7 +42369,7 @@
   {
     "id": 3027,
     "unique_id": "8b342c0e",
-    "title": "Chapter\u00a01.\u00a0Context - 1.72.0",
+    "title": "Chapter 1. Context - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/libs/context/doc/html/index.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42383,7 +42383,7 @@
   {
     "id": 3028,
     "unique_id": "b3131c73",
-    "title": "Chapter\u00a01.\u00a0Boost.Contract 1.0.0 - 1.72.0",
+    "title": "Chapter 1. Boost.Contract 1.0.0 - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/libs/contract/doc/html/index.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42397,7 +42397,7 @@
   {
     "id": 3029,
     "unique_id": "0666b5e3",
-    "title": "Chapter\u00a01.\u00a0Boost.Core - 1.72.0",
+    "title": "Chapter 1. Boost.Core - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/libs/core/doc/html/index.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42411,7 +42411,7 @@
   {
     "id": 3030,
     "unique_id": "fb0cf0a4",
-    "title": "Chapter\u00a01.\u00a0Coroutine2 - 1.72.0",
+    "title": "Chapter 1. Coroutine2 - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/libs/coroutine2/doc/html/index.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42425,7 +42425,7 @@
   {
     "id": 3031,
     "unique_id": "11424844",
-    "title": "Chapter\u00a012.\u00a0Boost.CRC 1.5 - 1.72.0",
+    "title": "Chapter 12. Boost.CRC 1.5 - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/doc/html/crc.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42453,7 +42453,7 @@
   {
     "id": 3033,
     "unique_id": "536cb922",
-    "title": "Chapter\u00a01.\u00a0Fiber - 1.72.0",
+    "title": "Chapter 1. Fiber - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/libs/fiber/doc/html/index.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42495,7 +42495,7 @@
   {
     "id": 3036,
     "unique_id": "ff4972a5",
-    "title": "Chapter\u00a01.\u00a0Boost.Histogram - 1.72.0",
+    "title": "Chapter 1. Boost.Histogram - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/libs/histogram/doc/html/index.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42509,7 +42509,7 @@
   {
     "id": 3037,
     "unique_id": "f81f2c2d",
-    "title": "Boost.HOF \u2014 Boost.HigherOrderFunctions 0.6 documentation - 1.72.0",
+    "title": "Boost.HOF — Boost.HigherOrderFunctions 0.6 documentation - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/libs/hof/doc/html/doc/",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42523,7 +42523,7 @@
   {
     "id": 3038,
     "unique_id": "bcdf8dce",
-    "title": "Chapter\u00a01.\u00a0Boost.Icl - 1.72.0",
+    "title": "Chapter 1. Boost.Icl - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/libs/icl/doc/html/index.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42551,7 +42551,7 @@
   {
     "id": 3040,
     "unique_id": "116f182d",
-    "title": "Chapter\u00a05.\u00a0Statistical Distributions and Functions - 1.72.0",
+    "title": "Chapter 5. Statistical Distributions and Functions - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/libs/math/doc/html/dist.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42565,7 +42565,7 @@
   {
     "id": 3041,
     "unique_id": "5a715eb4",
-    "title": "Chapter\u00a024.\u00a0Boost.Metaparse - 1.72.0",
+    "title": "Chapter 24. Boost.Metaparse - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/doc/html/metaparse.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42579,7 +42579,7 @@
   {
     "id": 3042,
     "unique_id": "16b627e2",
-    "title": "Chapter\u00a01.\u00a0Boost.Multiprecision - 1.72.0",
+    "title": "Chapter 1. Boost.Multiprecision - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/libs/multiprecision/doc/html/index.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42593,7 +42593,7 @@
   {
     "id": 3043,
     "unique_id": "61084620",
-    "title": "Chapter\u00a030.\u00a0Boost.Process - 1.72.0",
+    "title": "Chapter 30. Boost.Process - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/doc/html/process.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42607,7 +42607,7 @@
   {
     "id": 3044,
     "unique_id": "408bbf9f",
-    "title": "Chapter\u00a033.\u00a0Boost.Proto - 1.72.0",
+    "title": "Chapter 33. Boost.Proto - 1.72.0",
     "url": "https://www.boost.org/doc/libs/1_72_0/doc/html/proto.html",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42649,7 +42649,7 @@
   {
     "id": 3047,
     "unique_id": "63508c21",
-    "title": "(14) CppCon 2015: Michael Caisse \u201cUsing Spirit X3 to Write Parsers\u201d - YouTube",
+    "title": "(14) CppCon 2015: Michael Caisse “Using Spirit X3 to Write Parsers” - YouTube",
     "url": "https://www.youtube.com/watch?v=xSBWklPLRvw",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42733,7 +42733,7 @@
   {
     "id": 3053,
     "unique_id": "69e31d3c",
-    "title": "luz-cpu/luz_user_manual.rst at master \u00b7 eliben/luz-cpu",
+    "title": "luz-cpu/luz_user_manual.rst at master · eliben/luz-cpu",
     "url": "https://github.com/eliben/luz-cpu/blob/master/doc/luz_user_manual.rst",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42803,7 +42803,7 @@
   {
     "id": 3058,
     "unique_id": "6c5f2a43",
-    "title": "(14) CppCon 2019: Matt Godbolt \u201cPath Tracing Three Ways: A Study of C++ Style\u201d - YouTube",
+    "title": "(14) CppCon 2019: Matt Godbolt “Path Tracing Three Ways: A Study of C++ Style” - YouTube",
     "url": "https://www.youtube.com/watch?v=HG6c4Kwbv4I&t=813s",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -42817,7 +42817,7 @@
   {
     "id": 3059,
     "unique_id": "154827e9",
-    "title": "(14) CppCon 2018: Matt Godbolt \u201cThe Bits Between the Bits: How We Get to main()\u201d - YouTube",
+    "title": "(14) CppCon 2018: Matt Godbolt “The Bits Between the Bits: How We Get to main()” - YouTube",
     "url": "https://www.youtube.com/watch?v=dOfucXtyEsU&t=2159s",
     "added": "2025-01-18T07:42:38.405958+00:00",
     "stars": false,
@@ -44021,7 +44021,7 @@
   {
     "id": 3145,
     "unique_id": "67912103",
-    "title": "Riemann\u2013Stieltjes integral - Wikipedia",
+    "title": "Riemann–Stieltjes integral - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Riemann%E2%80%93Stieltjes_integral",
     "added": "2025-01-18T07:42:38.448443+00:00",
     "stars": false,
@@ -44091,7 +44091,7 @@
   {
     "id": 3150,
     "unique_id": "a646024c",
-    "title": "Moore\u2013Penrose inverse - Wikipedia",
+    "title": "Moore–Penrose inverse - Wikipedia",
     "url": "https://en.m.wikipedia.org/wiki/Moore%E2%80%93Penrose_inverse",
     "added": "2025-01-18T07:42:38.448443+00:00",
     "stars": false,
@@ -44371,7 +44371,7 @@
   {
     "id": 3170,
     "unique_id": "87bb6f6e",
-    "title": "Understanding Git \u2014 Behind the Command Line - Enrico Campidoglio - YouTube",
+    "title": "Understanding Git — Behind the Command Line - Enrico Campidoglio - YouTube",
     "url": "https://www.youtube.com/watch?v=wR9zxqB_r-0",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -44441,7 +44441,7 @@
   {
     "id": 3175,
     "unique_id": "8b20164a",
-    "title": "(340) CppCon 2019: Ben Smith \u201cApplied WebAssembly: Compiling and Running C++ in Your Web Browser\u201d - YouTube",
+    "title": "(340) CppCon 2019: Ben Smith “Applied WebAssembly: Compiling and Running C++ in Your Web Browser” - YouTube",
     "url": "https://www.youtube.com/watch?v=5N4b-rU-OAA",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -44469,7 +44469,7 @@
   {
     "id": 3177,
     "unique_id": "9efd024c",
-    "title": "CppCon 2019: Jussi Pakkanen \u201cBehind the Scenes of a C++ Build System\u201d - YouTube",
+    "title": "CppCon 2019: Jussi Pakkanen “Behind the Scenes of a C++ Build System” - YouTube",
     "url": "https://www.youtube.com/watch?v=34KzT2yvQuM&list=PLHTh1InhhwT6KhvViwRiTR7I5s09dLCSw&index=8",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -44497,7 +44497,7 @@
   {
     "id": 3179,
     "unique_id": "d4cf84ca",
-    "title": "(345) CppCon 2019: Sean Parent \u201cBetter Code: Relationships\u201d - YouTube",
+    "title": "(345) CppCon 2019: Sean Parent “Better Code: Relationships” - YouTube",
     "url": "https://www.youtube.com/watch?v=ejF6qqohp3M&t=1326s",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -44539,7 +44539,7 @@
   {
     "id": 3182,
     "unique_id": "1eb34d46",
-    "title": "Why Monads? \u2013 Luca Belli - YouTube",
+    "title": "Why Monads? – Luca Belli - YouTube",
     "url": "https://www.youtube.com/watch?v=7xmYgxmhx8M",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -44637,7 +44637,7 @@
   {
     "id": 3189,
     "unique_id": "4349072f",
-    "title": "(345) CppCon 2019: Bjarne Stroustrup \u201cC++20: C++ at 40\u201d - YouTube",
+    "title": "(345) CppCon 2019: Bjarne Stroustrup “C++20: C++ at 40” - YouTube",
     "url": "https://www.youtube.com/watch?v=u_ij0YNkFUs&list=PLHTh1InhhwT6KhvViwRiTR7I5s09dLCSw",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -44651,7 +44651,7 @@
   {
     "id": 3190,
     "unique_id": "24e81aae",
-    "title": "CppCon 2019: Jeff Garland \u201cFrom STL to Ranges: Using Ranges Effectively\u201d - YouTube",
+    "title": "CppCon 2019: Jeff Garland “From STL to Ranges: Using Ranges Effectively” - YouTube",
     "url": "https://www.youtube.com/watch?v=vJ290qlAbbw&list=PLHTh1InhhwT6KhvViwRiTR7I5s09dLCSw&index=7",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -44665,7 +44665,7 @@
   {
     "id": 3191,
     "unique_id": "9786ecc4",
-    "title": "How to build Python-C++ libraries - J\u00f8rgen Kvalsvik - YouTube",
+    "title": "How to build Python-C++ libraries - Jørgen Kvalsvik - YouTube",
     "url": "https://www.youtube.com/watch?v=hFpKOO3TxZ0",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -44679,7 +44679,7 @@
   {
     "id": 3192,
     "unique_id": "15109a10",
-    "title": "C++: \u03bb Demystified - Andreas Fertig - YouTube",
+    "title": "C++: λ Demystified - Andreas Fertig - YouTube",
     "url": "https://www.youtube.com/watch?v=M0qy6RiMU90",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -44777,7 +44777,7 @@
   {
     "id": 3199,
     "unique_id": "42afe90c",
-    "title": "(327) GOTO 2019 \u2022 Knowledge is Power: Getting out of Trouble by Understanding Git \u2022 Steve Smith - YouTube",
+    "title": "(327) GOTO 2019 • Knowledge is Power: Getting out of Trouble by Understanding Git • Steve Smith - YouTube",
     "url": "https://www.youtube.com/watch?v=fHLcZGi3yMQ&t=205s",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -44791,7 +44791,7 @@
   {
     "id": 3200,
     "unique_id": "cd49fcfd",
-    "title": "Type-Driven Development in Idris \u2014 Edwin Brady - YouTube",
+    "title": "Type-Driven Development in Idris — Edwin Brady - YouTube",
     "url": "https://www.youtube.com/watch?v=X36ye-1x_HQ",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -44805,7 +44805,7 @@
   {
     "id": 3201,
     "unique_id": "411e9fae",
-    "title": "CppCon 2019: Inbal Levi \u201cBack to Basics: Virtual Dispatch and its Alternatives\u201d - YouTube",
+    "title": "CppCon 2019: Inbal Levi “Back to Basics: Virtual Dispatch and its Alternatives” - YouTube",
     "url": "https://www.youtube.com/watch?v=jBnIMEb2GhA&list=PLHTh1InhhwT6KhvViwRiTR7I5s09dLCSw&index=10",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -44847,7 +44847,7 @@
   {
     "id": 3204,
     "unique_id": "02645e87",
-    "title": "CppCon 2019: Arthur O'Dwyer \u201cBack to Basics: Type Erasure\u201d - YouTube",
+    "title": "CppCon 2019: Arthur O'Dwyer “Back to Basics: Type Erasure” - YouTube",
     "url": "https://www.youtube.com/watch?v=tbUCHifyT24&t=1050s",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -44875,7 +44875,7 @@
   {
     "id": 3206,
     "unique_id": "202fbc01",
-    "title": "CppCon 2019: Arthur O'Dwyer \u201cBack to Basics: Lambdas from Scratch\u201d - YouTube",
+    "title": "CppCon 2019: Arthur O'Dwyer “Back to Basics: Lambdas from Scratch” - YouTube",
     "url": "https://www.youtube.com/watch?v=3jCOwajNch0&t=230s",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -45029,7 +45029,7 @@
   {
     "id": 3217,
     "unique_id": "2f35ac53",
-    "title": "Mathieu Ropert \u201cThis Videogame Programmer Used the STL and You Will Never Guess What Happened Next\u201d - YouTube",
+    "title": "Mathieu Ropert “This Videogame Programmer Used the STL and You Will Never Guess What Happened Next” - YouTube",
     "url": "https://www.youtube.com/watch?v=6hC9IxqdDDw&t=15s",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -45043,7 +45043,7 @@
   {
     "id": 3218,
     "unique_id": "22ff115e",
-    "title": "(332) CppCon 2019: Sean Parent \u201cBetter Code: Relationships\u201d - YouTube",
+    "title": "(332) CppCon 2019: Sean Parent “Better Code: Relationships” - YouTube",
     "url": "https://www.youtube.com/watch?v=ejF6qqohp3M&t=1325s",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -45057,7 +45057,7 @@
   {
     "id": 3219,
     "unique_id": "fc47e5e0",
-    "title": "CppCon 2019:Ben Saks \u201cBack to Basics: Understanding Value Categories\u201d - YouTube",
+    "title": "CppCon 2019:Ben Saks “Back to Basics: Understanding Value Categories” - YouTube",
     "url": "https://www.youtube.com/watch?v=XS2JddPq7GQ",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -45127,7 +45127,7 @@
   {
     "id": 3224,
     "unique_id": "df783d43",
-    "title": "(332) CppCon 2017: Louis Dionne \u201cRuntime Polymorphism: Back to the Basics\u201d - YouTube",
+    "title": "(332) CppCon 2017: Louis Dionne “Runtime Polymorphism: Back to the Basics” - YouTube",
     "url": "https://www.youtube.com/watch?v=gVGtNFg4ay0",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -45323,7 +45323,7 @@
   {
     "id": 3238,
     "unique_id": "5017314f",
-    "title": "GOTO 2018 \u2022 Functional Programming in 40 Minutes \u2022 Russ Olsen - YouTube",
+    "title": "GOTO 2018 • Functional Programming in 40 Minutes • Russ Olsen - YouTube",
     "url": "https://www.youtube.com/watch?v=0if71HOyVjY",
     "added": "2025-01-18T07:42:38.492421+00:00",
     "stars": false,
@@ -46107,7 +46107,7 @@
   {
     "id": 3294,
     "unique_id": "79165a58",
-    "title": "Chapter\u00a010.\u00a0Boost.ContainerHash - 1.71.0",
+    "title": "Chapter 10. Boost.ContainerHash - 1.71.0",
     "url": "https://www.boost.org/doc/libs/1_71_0/doc/html/hash.html",
     "added": "2025-01-18T07:42:38.535201+00:00",
     "stars": false,
@@ -46303,7 +46303,7 @@
   {
     "id": 3308,
     "unique_id": "f9b77f66",
-    "title": "GOTO Blog \u2013 GOTO Conferences bring together software innovators and thought leaders from startups and enterprises",
+    "title": "GOTO Blog – GOTO Conferences bring together software innovators and thought leaders from startups and enterprises",
     "url": "https://blog.gotocon.com/",
     "added": "2025-01-18T07:42:38.564890+00:00",
     "stars": false,
@@ -46331,7 +46331,7 @@
   {
     "id": 3310,
     "unique_id": "7cfe056a",
-    "title": "Alpha\u2013beta pruning - Wikipedia",
+    "title": "Alpha–beta pruning - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning",
     "added": "2025-01-18T07:42:38.564890+00:00",
     "stars": false,
@@ -46499,7 +46499,7 @@
   {
     "id": 3322,
     "unique_id": "4ecd9237",
-    "title": "(317) Stephan T. Lavavej \u201cFloating-Point \uff1ccharconv\uff1e: Making Your Code 10x Faster With C++17's Final Boss\u201d - YouTube",
+    "title": "(317) Stephan T. Lavavej “Floating-Point ＜charconv＞: Making Your Code 10x Faster With C++17's Final Boss” - YouTube",
     "url": "https://www.youtube.com/watch?v=4P_kbF0EbZM",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46527,7 +46527,7 @@
   {
     "id": 3324,
     "unique_id": "8ba50427",
-    "title": "(308) CppCon 2018: Juan Pedro Bolivar Puente \u201cThe Most Valuable Values\u201d - YouTube",
+    "title": "(308) CppCon 2018: Juan Pedro Bolivar Puente “The Most Valuable Values” - YouTube",
     "url": "https://www.youtube.com/watch?v=_oBx_NbLghY",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46541,7 +46541,7 @@
   {
     "id": 3325,
     "unique_id": "cb6f8d86",
-    "title": "(317) Mathieu Ropert \u201cThis Videogame Programmer Used the STL and You Will Never Guess What Happened Next\u201d - YouTube",
+    "title": "(317) Mathieu Ropert “This Videogame Programmer Used the STL and You Will Never Guess What Happened Next” - YouTube",
     "url": "https://www.youtube.com/watch?v=6hC9IxqdDDw",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46555,7 +46555,7 @@
   {
     "id": 3326,
     "unique_id": "bd4aa285",
-    "title": "(317) CppCon 2019: Matt Godbolt \u201cPath Tracing Three Ways: A Study of C++ Style\u201d - YouTube",
+    "title": "(317) CppCon 2019: Matt Godbolt “Path Tracing Three Ways: A Study of C++ Style” - YouTube",
     "url": "https://www.youtube.com/watch?v=HG6c4Kwbv4I",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46597,7 +46597,7 @@
   {
     "id": 3329,
     "unique_id": "f4c5f2ac",
-    "title": "CppCon 2017: Juanpe Bol\u00edvar \"Programing: The Last 4000 Years\u201d - YouTube",
+    "title": "CppCon 2017: Juanpe Bolívar \"Programing: The Last 4000 Years” - YouTube",
     "url": "https://www.youtube.com/watch?v=y2___qaG_9Q",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46667,7 +46667,7 @@
   {
     "id": 3334,
     "unique_id": "e1137df3",
-    "title": "(317) CppCon 2019: Louis Dionne \u201cThe C++ ABI From the Ground Up\u201d - YouTube",
+    "title": "(317) CppCon 2019: Louis Dionne “The C++ ABI From the Ground Up” - YouTube",
     "url": "https://www.youtube.com/watch?v=DZ93lP1I7wU",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46681,7 +46681,7 @@
   {
     "id": 3335,
     "unique_id": "bf4e0587",
-    "title": "(311) CppCon 2019: Peter Sommerlad \u201cC++ Class Natures in Their Canonical Form and How to Find Them\u201d - YouTube",
+    "title": "(311) CppCon 2019: Peter Sommerlad “C++ Class Natures in Their Canonical Form and How to Find Them” - YouTube",
     "url": "https://www.youtube.com/watch?v=PedVlux_p-k",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46723,7 +46723,7 @@
   {
     "id": 3338,
     "unique_id": "3c29bbe0",
-    "title": "(317) CppCon 2019: Sean Parent \u201cBetter Code: Relationships\u201d - YouTube",
+    "title": "(317) CppCon 2019: Sean Parent “Better Code: Relationships” - YouTube",
     "url": "https://www.youtube.com/watch?v=ejF6qqohp3M&list=PLHTh1InhhwT6KhvViwRiTR7I5s09dLCSw&index=5&t=880s",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46737,7 +46737,7 @@
   {
     "id": 3339,
     "unique_id": "89262892",
-    "title": "(309) Why Isn't Functional Programming the Norm? \u2013 Richard Feldman - YouTube",
+    "title": "(309) Why Isn't Functional Programming the Norm? – Richard Feldman - YouTube",
     "url": "https://www.youtube.com/watch?v=QyJZzq0v7Z4",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46765,7 +46765,7 @@
   {
     "id": 3341,
     "unique_id": "d99ef0db",
-    "title": "CppCon 2019: Arthur O'Dwyer \u201cBack to Basics: Type Erasure\u201d - YouTube",
+    "title": "CppCon 2019: Arthur O'Dwyer “Back to Basics: Type Erasure” - YouTube",
     "url": "https://www.youtube.com/watch?v=tbUCHifyT24",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46779,7 +46779,7 @@
   {
     "id": 3342,
     "unique_id": "2519fc64",
-    "title": "CppCon 2019: Peter Sommerlad \u201cC++ Class Natures in Their Canonical Form and How to Find Them\u201d - YouTube",
+    "title": "CppCon 2019: Peter Sommerlad “C++ Class Natures in Their Canonical Form and How to Find Them” - YouTube",
     "url": "https://www.youtube.com/watch?v=PedVlux_p-k",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46793,7 +46793,7 @@
   {
     "id": 3343,
     "unique_id": "91b9699e",
-    "title": "J. Bialek, S. Block \u201cKilling Uninitialized Memory: Protecting the OS Without Destroying Performance\u201d - YouTube",
+    "title": "J. Bialek, S. Block “Killing Uninitialized Memory: Protecting the OS Without Destroying Performance” - YouTube",
     "url": "https://www.youtube.com/watch?v=rQWjF8NvqAU",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46807,7 +46807,7 @@
   {
     "id": 3344,
     "unique_id": "cdd27fc5",
-    "title": "(317) John Bandela \u201cPolymorphism != Virtual: Easy, Flexible Runtime Polymorphism Without Inheritance\u201d - YouTube",
+    "title": "(317) John Bandela “Polymorphism != Virtual: Easy, Flexible Runtime Polymorphism Without Inheritance” - YouTube",
     "url": "https://www.youtube.com/watch?v=PSxo85L2lC0",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46821,7 +46821,7 @@
   {
     "id": 3345,
     "unique_id": "e765bdcd",
-    "title": "(317) CppCon 2019: Chandler Carruth, Titus Winters \u201cWhat is C++\u201d - YouTube",
+    "title": "(317) CppCon 2019: Chandler Carruth, Titus Winters “What is C++” - YouTube",
     "url": "https://www.youtube.com/watch?v=LJh5QCV4wDg&t=97s",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46919,7 +46919,7 @@
   {
     "id": 3352,
     "unique_id": "5aacad10",
-    "title": "(311) CppCon 2019: Arthur O'Dwyer \u201cBack to Basics: Type Erasure\u201d - YouTube",
+    "title": "(311) CppCon 2019: Arthur O'Dwyer “Back to Basics: Type Erasure” - YouTube",
     "url": "https://www.youtube.com/watch?v=tbUCHifyT24",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46961,7 +46961,7 @@
   {
     "id": 3355,
     "unique_id": "8a83d5e3",
-    "title": "(311) CppCon 2019: Arthur O'Dwyer \u201cBack to Basics: Lambdas from Scratch\u201d - YouTube",
+    "title": "(311) CppCon 2019: Arthur O'Dwyer “Back to Basics: Lambdas from Scratch” - YouTube",
     "url": "https://www.youtube.com/watch?v=3jCOwajNch0",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -46975,7 +46975,7 @@
   {
     "id": 3356,
     "unique_id": "1d2c9334",
-    "title": "Juan Pedro Bol\u00edvar Puente \u2014 Postmodern immutable data structures - YouTube",
+    "title": "Juan Pedro Bolívar Puente — Postmodern immutable data structures - YouTube",
     "url": "https://www.youtube.com/watch?v=dbFfpTp3EhA",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -47003,7 +47003,7 @@
   {
     "id": 3358,
     "unique_id": "7ecbc2f3",
-    "title": "CppCon 2019: Sean Parent \u201cBetter Code: Relationships\u201d - YouTube",
+    "title": "CppCon 2019: Sean Parent “Better Code: Relationships” - YouTube",
     "url": "https://www.youtube.com/watch?v=ejF6qqohp3M",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -47017,7 +47017,7 @@
   {
     "id": 3359,
     "unique_id": "fc891745",
-    "title": "(317) CppCon 2019: Arthur O'Dwyer \u201cBack to Basics: Lambdas from Scratch\u201d - YouTube",
+    "title": "(317) CppCon 2019: Arthur O'Dwyer “Back to Basics: Lambdas from Scratch” - YouTube",
     "url": "https://www.youtube.com/watch?v=3jCOwajNch0",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -47031,7 +47031,7 @@
   {
     "id": 3360,
     "unique_id": "948b3023",
-    "title": "(311) CppCon 2019: Louis Dionne \u201cThe C++ ABI From the Ground Up\u201d - YouTube",
+    "title": "(311) CppCon 2019: Louis Dionne “The C++ ABI From the Ground Up” - YouTube",
     "url": "https://www.youtube.com/watch?v=DZ93lP1I7wU",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -47045,7 +47045,7 @@
   {
     "id": 3361,
     "unique_id": "ea7f56a8",
-    "title": "(312) CppCon 2019: Matt Godbolt \u201cPath Tracing Three Ways: A Study of C++ Style\u201d - YouTube",
+    "title": "(312) CppCon 2019: Matt Godbolt “Path Tracing Three Ways: A Study of C++ Style” - YouTube",
     "url": "https://www.youtube.com/watch?v=HG6c4Kwbv4I",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -47115,7 +47115,7 @@
   {
     "id": 3366,
     "unique_id": "4e98ecc7",
-    "title": "(317) Solve hard problems quickly using SAT solvers - Martin Ho\u0159e\u0148ovsk\u00fd - YouTube",
+    "title": "(317) Solve hard problems quickly using SAT solvers - Martin Hořeňovský - YouTube",
     "url": "https://www.youtube.com/watch?v=x2XtpCn0-bM",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -47255,7 +47255,7 @@
   {
     "id": 3376,
     "unique_id": "90ede871",
-    "title": "(316) CppCon 2019: Chandler Carruth, Titus Winters \u201cWhat is C++\u201d - YouTube",
+    "title": "(316) CppCon 2019: Chandler Carruth, Titus Winters “What is C++” - YouTube",
     "url": "https://www.youtube.com/watch?v=LJh5QCV4wDg&t=97s",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -47311,7 +47311,7 @@
   {
     "id": 3380,
     "unique_id": "bac06fdb",
-    "title": "(311) John Bandela \u201cPolymorphism != Virtual: Easy, Flexible Runtime Polymorphism Without Inheritance\u201d - YouTube",
+    "title": "(311) John Bandela “Polymorphism != Virtual: Easy, Flexible Runtime Polymorphism Without Inheritance” - YouTube",
     "url": "https://www.youtube.com/watch?v=PSxo85L2lC0",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -47493,7 +47493,7 @@
   {
     "id": 3393,
     "unique_id": "6f6c2adc",
-    "title": "(305) CppCon 2019: Joel Falcou, Vincent Reverdy \u201cEDSL Infinity Wars: Mainstreaming Symbolic Computation\u201d - YouTube",
+    "title": "(305) CppCon 2019: Joel Falcou, Vincent Reverdy “EDSL Infinity Wars: Mainstreaming Symbolic Computation” - YouTube",
     "url": "https://www.youtube.com/watch?v=XH00wB_bbU4",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -47507,7 +47507,7 @@
   {
     "id": 3394,
     "unique_id": "1864a5ba",
-    "title": "(311) J. Bialek, S. Block \u201cKilling Uninitialized Memory: Protecting the OS Without Destroying Performance\u201d - YouTube",
+    "title": "(311) J. Bialek, S. Block “Killing Uninitialized Memory: Protecting the OS Without Destroying Performance” - YouTube",
     "url": "https://www.youtube.com/watch?v=rQWjF8NvqAU",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -47521,7 +47521,7 @@
   {
     "id": 3395,
     "unique_id": "059c5c05",
-    "title": "(303) CppCon 2019: Robert Schumacher \u201cHow to Herd 1,000 Libraries\u201d - YouTube",
+    "title": "(303) CppCon 2019: Robert Schumacher “How to Herd 1,000 Libraries” - YouTube",
     "url": "https://www.youtube.com/watch?v=Lb3hlLlHTrs",
     "added": "2025-01-18T07:42:38.579232+00:00",
     "stars": false,
@@ -47731,7 +47731,7 @@
   {
     "id": 3410,
     "unique_id": "08b1af3c",
-    "title": "fm2gp/3_5.md at master \u00b7 bmershon/fm2gp",
+    "title": "fm2gp/3_5.md at master · bmershon/fm2gp",
     "url": "https://github.com/bmershon/fm2gp/blob/master/solutions/3_5.md",
     "added": "2025-01-18T07:42:38.613911+00:00",
     "stars": false,
@@ -47829,7 +47829,7 @@
   {
     "id": 3417,
     "unique_id": "36e86778",
-    "title": "Lubachevsky\u2013Stillinger algorithm - Wikipedia",
+    "title": "Lubachevsky–Stillinger algorithm - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Lubachevsky%E2%80%93Stillinger_algorithm",
     "added": "2025-01-18T07:42:38.613911+00:00",
     "stars": false,
@@ -47927,7 +47927,7 @@
   {
     "id": 3424,
     "unique_id": "1c904793",
-    "title": "Maxwell\u2013Boltzmann distribution - Wikipedia",
+    "title": "Maxwell–Boltzmann distribution - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Maxwell%E2%80%93Boltzmann_distribution#Distribution_of_speeds",
     "added": "2025-01-18T07:42:38.613911+00:00",
     "stars": false,
@@ -48487,7 +48487,7 @@
   {
     "id": 3464,
     "unique_id": "50feb8d6",
-    "title": "Discrete Random Variables \u2013 Mathematics A-Level Revision",
+    "title": "Discrete Random Variables – Mathematics A-Level Revision",
     "url": "https://revisionmaths.com/advanced-level-maths-revision/statistics/discrete-random-variables",
     "added": "2025-01-18T07:42:38.630485+00:00",
     "stars": false,
@@ -48711,7 +48711,7 @@
   {
     "id": 3480,
     "unique_id": "d35a6567",
-    "title": "The C++20 Concepts is the missing feature to eliminate the generics paradigm drawbacks. \u2013 CppDepend Blog",
+    "title": "The C++20 Concepts is the missing feature to eliminate the generics paradigm drawbacks. – CppDepend Blog",
     "url": "https://cppdepend.com/blog/?p=524",
     "added": "2025-01-18T07:42:39.551453+00:00",
     "stars": false,
@@ -48795,7 +48795,7 @@
   {
     "id": 3486,
     "unique_id": "5d926f8e",
-    "title": "CppCoreGuidelines/CppCoreGuidelines.md at master \u00b7 isocpp/CppCoreGuidelines",
+    "title": "CppCoreGuidelines/CppCoreGuidelines.md at master · isocpp/CppCoreGuidelines",
     "url": "https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md#t20-avoid-concepts-without-meaningful-semantics",
     "added": "2025-01-18T07:42:39.551453+00:00",
     "stars": false,
@@ -48963,7 +48963,7 @@
   {
     "id": 3498,
     "unique_id": "9eca7fe9",
-    "title": "std::variant Doesn\u2019t Let Me Sleep | Pablo Arias",
+    "title": "std::variant Doesn’t Let Me Sleep | Pablo Arias",
     "url": "https://pabloariasal.github.io/2018/06/26/std-variant/",
     "added": "2025-01-18T07:42:39.551453+00:00",
     "stars": false,
@@ -48991,7 +48991,7 @@
   {
     "id": 3500,
     "unique_id": "1dd40df1",
-    "title": "Part II \u2013 The Standard Library - ppt download",
+    "title": "Part II – The Standard Library - ppt download",
     "url": "https://slideplayer.com/slide/11978377/",
     "added": "2025-01-18T07:42:39.551453+00:00",
     "stars": false,
@@ -49019,7 +49019,7 @@
   {
     "id": 3502,
     "unique_id": "8bb6867f",
-    "title": "Jacek's C++ Blog \u00b7 Type Lists",
+    "title": "Jacek's C++ Blog · Type Lists",
     "url": "https://blog.galowicz.de/2016/05/08/compile_time_type_lists/",
     "added": "2025-01-18T07:42:39.551453+00:00",
     "stars": false,
@@ -49383,7 +49383,7 @@
   {
     "id": 3528,
     "unique_id": "19f1ad61",
-    "title": "Efficient and accurate rolling standard deviation \u2013 The Mindful Programmer",
+    "title": "Efficient and accurate rolling standard deviation – The Mindful Programmer",
     "url": "http://jonisalonen.com/2014/efficient-and-accurate-rolling-standard-deviation/",
     "added": "2025-01-18T07:42:39.568191+00:00",
     "stars": false,
@@ -49495,7 +49495,7 @@
   {
     "id": 3536,
     "unique_id": "6a234bfe",
-    "title": "Welford\u2019s method for computing variance \u2013 The Mindful Programmer",
+    "title": "Welford’s method for computing variance – The Mindful Programmer",
     "url": "http://jonisalonen.com/2013/deriving-welfords-method-for-computing-variance/",
     "added": "2025-01-18T07:42:39.568191+00:00",
     "stars": false,
@@ -49565,7 +49565,7 @@
   {
     "id": 3541,
     "unique_id": "3be14445",
-    "title": "Extremes and related properties of random sequences and processes - M. R. Leadbetter, Georg Lindgren, Holger Rootz\u00e9n - Google Books",
+    "title": "Extremes and related properties of random sequences and processes - M. R. Leadbetter, Georg Lindgren, Holger Rootzén - Google Books",
     "url": "https://books.google.com/books?id=3ZKmAAAAIAAJ&q=leadbetter+and+lindgren&dq=leadbetter+and+lindgren&hl=en&ei=z7ZFTPPFH9T-nAfa58HaAw&sa=X&oi=book_result&ct=result",
     "added": "2025-01-18T07:42:39.581771+00:00",
     "stars": false,
@@ -50125,7 +50125,7 @@
   {
     "id": 3581,
     "unique_id": "a23e0418",
-    "title": "Entity\u2013relationship model - Wikipedia",
+    "title": "Entity–relationship model - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Entity%E2%80%93relationship_model",
     "added": "2025-01-18T07:42:39.581771+00:00",
     "stars": false,
@@ -50153,7 +50153,7 @@
   {
     "id": 3583,
     "unique_id": "76874640",
-    "title": "Entity\u2013attribute\u2013value model - Wikipedia",
+    "title": "Entity–attribute–value model - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Entity%E2%80%93attribute%E2%80%93value_model",
     "added": "2025-01-18T07:42:39.581771+00:00",
     "stars": false,
@@ -50741,7 +50741,7 @@
   {
     "id": 3625,
     "unique_id": "3420fd7f",
-    "title": "Standard Ranges \u2013 Eric Niebler",
+    "title": "Standard Ranges – Eric Niebler",
     "url": "http://ericniebler.com/2018/12/05/standard-ranges/",
     "added": "2025-01-18T07:42:39.912715+00:00",
     "stars": false,
@@ -50769,7 +50769,7 @@
   {
     "id": 3627,
     "unique_id": "a9c7dea8",
-    "title": "Programming with Universal Constructions | \u00a0\u00a0Bartosz Milewski's Programming Cafe",
+    "title": "Programming with Universal Constructions |   Bartosz Milewski's Programming Cafe",
     "url": "https://bartoszmilewski.com/2019/07/03/programming-with-universal-constructions/",
     "added": "2025-01-18T07:42:39.912715+00:00",
     "stars": false,
@@ -51007,7 +51007,7 @@
   {
     "id": 3644,
     "unique_id": "65e38752",
-    "title": "Read 14 answers by scientists with 18 recommendations from their colleagues to the question asked by Utku K\u00f6se on Apr 4, 2017",
+    "title": "Read 14 answers by scientists with 18 recommendations from their colleagues to the question asked by Utku Köse on Apr 4, 2017",
     "url": "https://www.researchgate.net/post/What_are_alternative_repositories_like_arXivorg",
     "added": "2025-01-18T07:42:39.912715+00:00",
     "stars": false,
@@ -51175,7 +51175,7 @@
   {
     "id": 3656,
     "unique_id": "0d677847",
-    "title": "Basic Algebra and Calculus \u2014 Sage Tutorial v8.8",
+    "title": "Basic Algebra and Calculus — Sage Tutorial v8.8",
     "url": "http://doc.sagemath.org/html/en/tutorial/tour_algebra.html",
     "added": "2025-01-18T07:42:39.925810+00:00",
     "stars": false,
@@ -51189,7 +51189,7 @@
   {
     "id": 3657,
     "unique_id": "5b8b99b1",
-    "title": "Plotting \u2014 Sage Tutorial v8.8",
+    "title": "Plotting — Sage Tutorial v8.8",
     "url": "http://doc.sagemath.org/html/en/tutorial/tour_plotting.html",
     "added": "2025-01-18T07:42:39.925810+00:00",
     "stars": false,
@@ -51357,7 +51357,7 @@
   {
     "id": 3669,
     "unique_id": "a601a1ce",
-    "title": "Overview \u2014 JupyterLab 1.0.2 documentation",
+    "title": "Overview — JupyterLab 1.0.2 documentation",
     "url": "https://jupyterlab.readthedocs.io/en/stable/getting_started/overview.html",
     "added": "2025-01-18T07:42:39.925810+00:00",
     "stars": false,
@@ -51567,7 +51567,7 @@
   {
     "id": 3684,
     "unique_id": "a5a49426",
-    "title": "Let\u2019s Build a Multiplayer Phas - Oscar Lodriguez_3351.pdf",
+    "title": "Let’s Build a Multiplayer Phas - Oscar Lodriguez_3351.pdf",
     "url": "file:///home/spinoza/Downloads/Let%E2%80%99s%20Build%20a%20Multiplayer%20Phas%20-%20Oscar%20Lodriguez_3351.pdf",
     "added": "2025-01-18T07:42:45.496854+00:00",
     "stars": false,
@@ -51833,7 +51833,7 @@
   {
     "id": 3703,
     "unique_id": "1bf9e690",
-    "title": "CppCon2018/regular_types_and_why_do_i_care__victor_ciura__cppcon_2018.pdf at master \u00b7 CppCon/CppCon2018 \u00b7 GitHub",
+    "title": "CppCon2018/regular_types_and_why_do_i_care__victor_ciura__cppcon_2018.pdf at master · CppCon/CppCon2018 · GitHub",
     "url": "https://github.com/CppCon/CppCon2018/blob/master/Presentations/regular_types_and_why_do_i_care/regular_types_and_why_do_i_care__victor_ciura__cppcon_2018.pdf",
     "added": "2025-01-18T07:42:45.508025+00:00",
     "stars": false,
@@ -51847,7 +51847,7 @@
   {
     "id": 3704,
     "unique_id": "d4363cd6",
-    "title": "(137) CppCon 2015: Andrei Alexandrescu \u201cstd::allocator...\u201d - YouTube",
+    "title": "(137) CppCon 2015: Andrei Alexandrescu “std::allocator...” - YouTube",
     "url": "https://www.youtube.com/watch?v=LIb3L4vKZ7U",
     "added": "2025-01-18T07:42:45.508025+00:00",
     "stars": false,
@@ -51903,7 +51903,7 @@
   {
     "id": 3708,
     "unique_id": "d89f64a2",
-    "title": "(131) CppCon 2015: Andrei Alexandrescu \u201cDeclarative Control Flow\" - YouTube",
+    "title": "(131) CppCon 2015: Andrei Alexandrescu “Declarative Control Flow\" - YouTube",
     "url": "https://www.youtube.com/watch?v=WjTrfoiB0MQ",
     "added": "2025-01-18T07:42:45.508025+00:00",
     "stars": false,
@@ -51945,7 +51945,7 @@
   {
     "id": 3711,
     "unique_id": "678fe50e",
-    "title": "CppCon 2015: Andrei Alexandrescu \u201cstd::allocator...\u201d - YouTube",
+    "title": "CppCon 2015: Andrei Alexandrescu “std::allocator...” - YouTube",
     "url": "https://www.youtube.com/watch?v=LIb3L4vKZ7U",
     "added": "2025-01-18T07:42:45.508025+00:00",
     "stars": false,
@@ -51987,7 +51987,7 @@
   {
     "id": 3714,
     "unique_id": "31a23c75",
-    "title": "(347) CppCon 2018: Victor Ciura \u201cRegular Types and Why Do I Care ?\u201d - YouTube",
+    "title": "(347) CppCon 2018: Victor Ciura “Regular Types and Why Do I Care ?” - YouTube",
     "url": "https://www.youtube.com/watch?v=h60zqdzIelE&list=PLcV_8F4QFuGvTprCNrb4k3INquXw1pUTh&index=52&t=1s",
     "added": "2025-01-18T07:42:45.508025+00:00",
     "stars": false,
@@ -52043,7 +52043,7 @@
   {
     "id": 3718,
     "unique_id": "c9369714",
-    "title": "code::dive 2016 conference \u2013 Sean Parent \u2013 Better Code: Concurrency - YouTube",
+    "title": "code::dive 2016 conference – Sean Parent – Better Code: Concurrency - YouTube",
     "url": "https://www.youtube.com/watch?v=QIHy8pXbneI",
     "added": "2025-01-18T07:42:45.508025+00:00",
     "stars": false,
@@ -52071,7 +52071,7 @@
   {
     "id": 3720,
     "unique_id": "3355e1c6",
-    "title": "CppCon 2016: Cheinan Marks \u201cI Just Wanted a Random Integer!\" - YouTube",
+    "title": "CppCon 2016: Cheinan Marks “I Just Wanted a Random Integer!\" - YouTube",
     "url": "https://www.youtube.com/watch?v=4_QO1nm7uJs",
     "added": "2025-01-18T07:42:45.508025+00:00",
     "stars": false,
@@ -52099,7 +52099,7 @@
   {
     "id": 3722,
     "unique_id": "e859d1da",
-    "title": "Higher Order Functions for ordinary developers - Bj\u00f6rn Fahller - Meeting C++ 2018 - YouTube",
+    "title": "Higher Order Functions for ordinary developers - Björn Fahller - Meeting C++ 2018 - YouTube",
     "url": "https://www.youtube.com/watch?v=qL6zUn7iiLg",
     "added": "2025-01-18T07:42:45.508025+00:00",
     "stars": false,
@@ -52113,7 +52113,7 @@
   {
     "id": 3723,
     "unique_id": "fb6d726f",
-    "title": "CppCon 2018: Jonathan Boccara \u201c105 STL Algorithms in Less Than an Hour\u201d - YouTube",
+    "title": "CppCon 2018: Jonathan Boccara “105 STL Algorithms in Less Than an Hour” - YouTube",
     "url": "https://www.youtube.com/watch?v=2olsGf6JIkU",
     "added": "2025-01-18T07:42:45.508025+00:00",
     "stars": false,
@@ -52211,7 +52211,7 @@
   {
     "id": 3730,
     "unique_id": "e2e922bf",
-    "title": "CppCon 2018: Sean Parent \u201cBetter Code: Human Interface\u201d - YouTube",
+    "title": "CppCon 2018: Sean Parent “Better Code: Human Interface” - YouTube",
     "url": "https://www.youtube.com/watch?v=0WlJEz2wb8Y",
     "added": "2025-01-18T07:42:45.508025+00:00",
     "stars": false,
@@ -53191,7 +53191,7 @@
   {
     "id": 3800,
     "unique_id": "d28069db",
-    "title": "How I format my C++ papers \u2013 Michael Park",
+    "title": "How I format my C++ papers – Michael Park",
     "url": "https://mpark.github.io/programming/2018/11/16/how-i-format-my-cpp-papers/",
     "added": "2025-01-18T07:42:45.564134+00:00",
     "stars": false,
@@ -53289,7 +53289,7 @@
   {
     "id": 3807,
     "unique_id": "7b37abd8",
-    "title": "Sutter\u2019s Mill | Herb Sutter on software development",
+    "title": "Sutter’s Mill | Herb Sutter on software development",
     "url": "https://herbsutter.com/",
     "added": "2025-01-18T07:42:45.564134+00:00",
     "stars": false,
@@ -53975,7 +53975,7 @@
   {
     "id": 3856,
     "unique_id": "eb9f925f",
-    "title": "The Algebra of Types \u2013 Hacker Noon",
+    "title": "The Algebra of Types – Hacker Noon",
     "url": "https://hackernoon.com/the-algebra-of-types-812e639996ac",
     "added": "2025-01-18T07:42:46.043409+00:00",
     "stars": false,
@@ -54059,7 +54059,7 @@
   {
     "id": 3862,
     "unique_id": "28725cb4",
-    "title": "It\u2019s Time To Do CMake Right | Pablo Arias",
+    "title": "It’s Time To Do CMake Right | Pablo Arias",
     "url": "https://pabloariasal.github.io/2018/02/19/its-time-to-do-cmake-right/",
     "added": "2025-01-18T07:42:46.059481+00:00",
     "stars": false,
@@ -54087,7 +54087,7 @@
   {
     "id": 3864,
     "unique_id": "45aae74d",
-    "title": "Effective Modern CMake \u00b7 GitHub",
+    "title": "Effective Modern CMake · GitHub",
     "url": "https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1",
     "added": "2025-01-18T07:42:46.059481+00:00",
     "stars": false,
@@ -54129,7 +54129,7 @@
   {
     "id": 3867,
     "unique_id": "4c119e37",
-    "title": "C++ application development ( Part 1 \u2014 Project structure )",
+    "title": "C++ application development ( Part 1 — Project structure )",
     "url": "https://medium.com/heuristics/c-application-development-part-1-project-structure-454b00f9eddc",
     "added": "2025-01-18T07:42:46.059481+00:00",
     "stars": false,
@@ -54311,7 +54311,7 @@
   {
     "id": 3880,
     "unique_id": "a8ca7e77",
-    "title": "Ceres Solver \u2014 A Large Scale Non-linear Optimization Library",
+    "title": "Ceres Solver — A Large Scale Non-linear Optimization Library",
     "url": "http://ceres-solver.org/",
     "added": "2025-01-18T07:42:46.059481+00:00",
     "stars": false,
@@ -54325,7 +54325,7 @@
   {
     "id": 3881,
     "unique_id": "145194b3",
-    "title": "blaze-lib / blaze \u2014 Bitbucket",
+    "title": "blaze-lib / blaze — Bitbucket",
     "url": "https://bitbucket.org/blaze-lib/blaze",
     "added": "2025-01-18T07:42:46.059481+00:00",
     "stars": false,
@@ -54409,7 +54409,7 @@
   {
     "id": 3887,
     "unique_id": "d46b4c1c",
-    "title": "Chapter\u00a01.\u00a0Coroutine2 - 1.68.0",
+    "title": "Chapter 1. Coroutine2 - 1.68.0",
     "url": "https://www.boost.org/doc/libs/1_68_0/libs/coroutine2/doc/html/index.html",
     "added": "2025-01-18T07:42:46.059481+00:00",
     "stars": false,
@@ -54535,7 +54535,7 @@
   {
     "id": 3896,
     "unique_id": "8d038515",
-    "title": "Chapter\u00a01.\u00a0Fiber - 1.68.0",
+    "title": "Chapter 1. Fiber - 1.68.0",
     "url": "https://www.boost.org/doc/libs/1_68_0/libs/fiber/doc/html/index.html",
     "added": "2025-01-18T07:42:46.059481+00:00",
     "stars": false,
@@ -54549,7 +54549,7 @@
   {
     "id": 3897,
     "unique_id": "b554c4f8",
-    "title": "Chapter\u00a01.\u00a0Context - 1.68.0",
+    "title": "Chapter 1. Context - 1.68.0",
     "url": "https://www.boost.org/doc/libs/1_68_0/libs/context/doc/html/index.html",
     "added": "2025-01-18T07:42:46.059481+00:00",
     "stars": false,
@@ -54717,7 +54717,7 @@
   {
     "id": 3909,
     "unique_id": "bb3f4496",
-    "title": "alexey_gruzdev / Yato \u2014 Bitbucket",
+    "title": "alexey_gruzdev / Yato — Bitbucket",
     "url": "https://bitbucket.org/alexey_gruzdev/yato/overview",
     "added": "2025-01-18T07:42:46.059481+00:00",
     "stars": false,
@@ -54787,7 +54787,7 @@
   {
     "id": 3914,
     "unique_id": "1a9d6354",
-    "title": "Introduction \u00b7 LibSourcey",
+    "title": "Introduction · LibSourcey",
     "url": "https://sourcey.com/libsourcey/",
     "added": "2025-01-18T07:42:46.059481+00:00",
     "stars": false,
@@ -54913,7 +54913,7 @@
   {
     "id": 3923,
     "unique_id": "aeef3a05",
-    "title": "Introduction to the Basics \u00b7 Modern CMake",
+    "title": "Introduction to the Basics · Modern CMake",
     "url": "https://cliutils.gitlab.io/modern-cmake/chapters/basics.html",
     "added": "2025-01-18T07:42:46.059481+00:00",
     "stars": false,
@@ -54955,7 +54955,7 @@
   {
     "id": 3926,
     "unique_id": "79616b3c",
-    "title": "Chapter\u00a01.\u00a0Boost.Beast - 1.68.0",
+    "title": "Chapter 1. Boost.Beast - 1.68.0",
     "url": "https://www.boost.org/doc/libs/1_68_0/libs/beast/doc/html/index.html",
     "added": "2025-01-18T07:42:46.059481+00:00",
     "stars": false,
@@ -54969,7 +54969,7 @@
   {
     "id": 3927,
     "unique_id": "6af0d532",
-    "title": "Chapter\u00a047.\u00a0Boost.YAP - 1.68.0",
+    "title": "Chapter 47. Boost.YAP - 1.68.0",
     "url": "https://www.boost.org/doc/libs/1_68_0/doc/html/yap.html",
     "added": "2025-01-18T07:42:46.059481+00:00",
     "stars": false,
@@ -55011,7 +55011,7 @@
   {
     "id": 3930,
     "unique_id": "072794a5",
-    "title": "PEGTL/README.md at master \u00b7 taocpp/PEGTL \u00b7 GitHub",
+    "title": "PEGTL/README.md at master · taocpp/PEGTL · GitHub",
     "url": "https://github.com/taocpp/PEGTL/blob/master/doc/README.md",
     "added": "2025-01-18T07:42:46.059481+00:00",
     "stars": false,
@@ -55221,7 +55221,7 @@
   {
     "id": 3945,
     "unique_id": "2c6f321d",
-    "title": "Kolmogorov\u2013Smirnov test - Wikipedia",
+    "title": "Kolmogorov–Smirnov test - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test",
     "added": "2025-01-18T07:42:49.916157+00:00",
     "stars": false,
@@ -55823,7 +55823,7 @@
   {
     "id": 3988,
     "unique_id": "24178e61",
-    "title": "Understanding RPC, REST and GraphQL \u2013 APIs You Won't Hate",
+    "title": "Understanding RPC, REST and GraphQL – APIs You Won't Hate",
     "url": "https://blog.apisyouwonthate.com/understanding-rpc-rest-and-graphql-2f959aadebe7",
     "added": "2025-01-18T07:42:49.916157+00:00",
     "stars": false,
@@ -56621,7 +56621,7 @@
   {
     "id": 4045,
     "unique_id": "0d0fc7ec",
-    "title": "Iterators++, Part 1 \u2013 Eric Niebler",
+    "title": "Iterators++, Part 1 – Eric Niebler",
     "url": "http://ericniebler.com/2015/02/03/iterators-plus-plus-part-1/",
     "added": "2025-01-18T07:42:55.328452+00:00",
     "stars": false,
@@ -56929,7 +56929,7 @@
   {
     "id": 4067,
     "unique_id": "d6611d6b",
-    "title": "Wording for \u201cfunctionality gaps in constraints\u201d",
+    "title": "Wording for “functionality gaps in constraints”",
     "url": "http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0857r0.html",
     "added": "2025-01-18T07:42:55.328452+00:00",
     "stars": false,
@@ -57363,7 +57363,7 @@
   {
     "id": 4098,
     "unique_id": "1856338f",
-    "title": "2.8.2.\u00a0Union, intersection, and difference of sets",
+    "title": "2.8.2. Union, intersection, and difference of sets",
     "url": "http://www.leda-tutorial.org/en/official/ch02s08s02.html",
     "added": "2025-01-18T07:42:55.356586+00:00",
     "stars": false,
@@ -57783,7 +57783,7 @@
   {
     "id": 4128,
     "unique_id": "f2171dd1",
-    "title": "Gauss\u2013Newton algorithm - Wikipedia, the free encyclopedia",
+    "title": "Gauss–Newton algorithm - Wikipedia, the free encyclopedia",
     "url": "https://en.wikipedia.org/wiki/Gauss%E2%80%93Newton_algorithm",
     "added": "2025-01-18T07:42:55.369211+00:00",
     "stars": false,
@@ -57937,7 +57937,7 @@
   {
     "id": 4139,
     "unique_id": "e32639d8",
-    "title": "Perron\u2013Frobenius theorem - Wikipedia",
+    "title": "Perron–Frobenius theorem - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Perron%E2%80%93Frobenius_theorem",
     "added": "2025-01-18T07:42:55.369211+00:00",
     "stars": false,
@@ -58077,7 +58077,7 @@
   {
     "id": 4149,
     "unique_id": "bfa48638",
-    "title": "Nelder\u2013Mead method - Wikipedia, the free encyclopedia",
+    "title": "Nelder–Mead method - Wikipedia, the free encyclopedia",
     "url": "https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method",
     "added": "2025-01-18T07:42:55.369211+00:00",
     "stars": false,
@@ -58161,7 +58161,7 @@
   {
     "id": 4155,
     "unique_id": "9915b900",
-    "title": "Algorithm: Space Partitioning using Quadtree (C++) \u2013 Ve",
+    "title": "Algorithm: Space Partitioning using Quadtree (C++) – Ve",
     "url": "https://veendeta.wordpress.com/2012/02/07/algorithm-space-partitioning-using-quadtree/",
     "added": "2025-01-18T07:42:55.393259+00:00",
     "stars": false,
@@ -58175,7 +58175,7 @@
   {
     "id": 4156,
     "unique_id": "0c1d190c",
-    "title": "The Quantum Experiment That Simulates A Time Machine \u2014 The Physics arXiv Blog \u2014 Medium",
+    "title": "The Quantum Experiment That Simulates A Time Machine — The Physics arXiv Blog — Medium",
     "url": "https://medium.com/the-physics-arxiv-blog/the-quantum-experiment-that-simulates-a-time-machine-185a7cc9bd11#.87231sptl",
     "added": "2025-01-18T07:42:55.393259+00:00",
     "stars": false,
@@ -58189,7 +58189,7 @@
   {
     "id": 4157,
     "unique_id": "dd20576e",
-    "title": "How The Nature of Information Could Resolve One of The Great Paradoxes Of Cosmology \u2014 The Physics arXiv Blog \u2014 Medium",
+    "title": "How The Nature of Information Could Resolve One of The Great Paradoxes Of Cosmology — The Physics arXiv Blog — Medium",
     "url": "https://medium.com/the-physics-arxiv-blog/how-the-nature-of-information-could-resolve-one-of-the-great-paradoxes-of-cosmology-8c16fc714756#.v2nlti3g8",
     "added": "2025-01-18T07:42:55.393259+00:00",
     "stars": false,
@@ -58203,7 +58203,7 @@
   {
     "id": 4158,
     "unique_id": "0f7ad7a0",
-    "title": "Why Hollywood had To Fudge The Relativity-Based Wormhole Scenes in Interstellar \u2014 The Physics arXiv Blog \u2014 Medium",
+    "title": "Why Hollywood had To Fudge The Relativity-Based Wormhole Scenes in Interstellar — The Physics arXiv Blog — Medium",
     "url": "https://medium.com/the-physics-arxiv-blog/how-hollywood-used-general-relativity-to-create-the-wormhole-scenes-in-interstellar-be92be79501f#.8krivhv6x",
     "added": "2025-01-18T07:42:55.393259+00:00",
     "stars": false,
@@ -58231,7 +58231,7 @@
   {
     "id": 4160,
     "unique_id": "5d7da596",
-    "title": "Barnes\u2013Hut simulation - Wikipedia, the free encyclopedia",
+    "title": "Barnes–Hut simulation - Wikipedia, the free encyclopedia",
     "url": "https://en.wikipedia.org/wiki/Barnes%E2%80%93Hut_simulation",
     "added": "2025-01-18T07:42:55.393259+00:00",
     "stars": false,
@@ -58511,7 +58511,7 @@
   {
     "id": 4180,
     "unique_id": "45423686",
-    "title": "Barnes-Hut-Tree-N-body-Implementation-in-HTML-Js/graphics.js at master \u00b7 Elucidation/Barnes-Hut-Tree-N-body-Implementation-in-HTML-Js \u00b7 GitHub",
+    "title": "Barnes-Hut-Tree-N-body-Implementation-in-HTML-Js/graphics.js at master · Elucidation/Barnes-Hut-Tree-N-body-Implementation-in-HTML-Js · GitHub",
     "url": "https://github.com/Elucidation/Barnes-Hut-Tree-N-body-Implementation-in-HTML-Js/blob/master/graphics.js",
     "added": "2025-01-18T07:42:55.393259+00:00",
     "stars": false,
@@ -58623,7 +58623,7 @@
   {
     "id": 4188,
     "unique_id": "ab926a5b",
-    "title": "Forschungszentrum J\u00fclich - PEPC - Pretty Efficient Parallel Coulomb Solver",
+    "title": "Forschungszentrum Jülich - PEPC - Pretty Efficient Parallel Coulomb Solver",
     "url": "http://www.fz-juelich.de/ias/jsc/EN/AboutUs/Organisation/ComputationalScience/Simlabs/slpp/SoftwarePEPC/_node.html",
     "added": "2025-01-18T07:42:55.393259+00:00",
     "stars": false,
@@ -58945,7 +58945,7 @@
   {
     "id": 4211,
     "unique_id": "723a159b",
-    "title": "Radon\u2013Nikodym theorem - Wikipedia",
+    "title": "Radon–Nikodym theorem - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Radon%E2%80%93Nikodym_theorem#Radon.E2.80.93Nikodym_derivative",
     "added": "2025-01-18T07:42:56.247670+00:00",
     "stars": false,
@@ -59029,7 +59029,7 @@
   {
     "id": 4217,
     "unique_id": "fd5c2cad",
-    "title": "Good\u2013Turing frequency estimation - Wikipedia",
+    "title": "Good–Turing frequency estimation - Wikipedia",
     "url": "https://en.wikipedia.org/wiki/Good%E2%80%93Turing_frequency_estimation",
     "added": "2025-01-18T07:42:56.247670+00:00",
     "stars": false,
@@ -59421,7 +59421,7 @@
   {
     "id": 4245,
     "unique_id": "a5db0f38",
-    "title": "Cram\u00e9r\u2013Rao bound - Wikipedia, the free encyclopedia",
+    "title": "Cramér–Rao bound - Wikipedia, the free encyclopedia",
     "url": "https://en.wikipedia.org/wiki/Cram%C3%A9r%E2%80%93Rao_bound",
     "added": "2025-01-18T07:42:56.247670+00:00",
     "stars": false,
@@ -59687,7 +59687,7 @@
   {
     "id": 4264,
     "unique_id": "f725b749",
-    "title": "Metropolis\u2013Hastings algorithm - Wikipedia, the free encyclopedia",
+    "title": "Metropolis–Hastings algorithm - Wikipedia, the free encyclopedia",
     "url": "https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm",
     "added": "2025-01-18T07:42:56.247670+00:00",
     "stars": false,
@@ -59855,7 +59855,7 @@
   {
     "id": 4276,
     "unique_id": "b58d89aa",
-    "title": "CppCoreGuidelines/ctor-dtor-raii-popl12.pdf at master \u00b7 isocpp/CppCoreGuidelines \u00b7 GitHub",
+    "title": "CppCoreGuidelines/ctor-dtor-raii-popl12.pdf at master · isocpp/CppCoreGuidelines · GitHub",
     "url": "https://github.com/isocpp/CppCoreGuidelines/blob/master/docs/ctor-dtor-raii-popl12.pdf",
     "added": "2025-01-18T07:42:56.679457+00:00",
     "stars": false,
@@ -60121,7 +60121,7 @@
   {
     "id": 4295,
     "unique_id": "05c86dca",
-    "title": "Alpha\u2013beta pruning - Wikipedia, the free encyclopedia",
+    "title": "Alpha–beta pruning - Wikipedia, the free encyclopedia",
     "url": "https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning",
     "added": "2025-01-18T07:42:56.679457+00:00",
     "stars": false,

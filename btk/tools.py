@@ -145,16 +145,18 @@ def list_bookmarks(bookmarks):
         return
     table = Table(title="List of Bookmarks", show_header=True, header_style="bold magenta")
     table.add_column("ID", style="cyan", justify="right")
-    table.add_column("Unique ID", style="green")
+    #table.add_column("UID", style="green")
     table.add_column("Title", style="bold")
-    table.add_column("URL", style="underline blue")
+    # light blue color. also, the URL column must be complete and clickable, it can't be cut-off but it can be wrapped
+    table.add_column("URL", style="#ADD8E6", no_wrap=False, overflow="fold")
     table.add_column("Tags", style="yellow")
-    table.add_column("Stars", style="#FFD700")  # Using hex code for gold
+    table.add_column("Star", style="#FFD700")
     table.add_column("Visits", style="magenta")
-    table.add_column("Last Visited", style="dim")
-    table.add_column("Description", style="italic")
-    table.add_column("Favicon", style="dim")
-    table.add_column("Reachable", style="dim")
+    table.add_column("Added", style="dim")
+    table.add_column("Last Visit", style="dim")
+    table.add_column("Desc", style="italic")
+    #table.add_column("Favicon", style="dim")
+    table.add_column("Valid", style="dim")
 
     for b in bookmarks:
         stars = "⭐" if b.get('stars') else ""
@@ -162,15 +164,16 @@ def list_bookmarks(bookmarks):
         last_visited = b.get('last_visited') or "-"
         table.add_row(
             str(b['id']),
-            b['unique_id'],
+     #       b['unique_id'],
             b['title'],
             b['url'],
             tags,
             stars,
             str(b.get('visit_count', 0)),
+            b['added'].split("T")[0],
             last_visited.split("T")[0], 
             b.get('description', ""),
-            b.get('favicon', ""),
+            #b.get('favicon', ""),
             "✅" if b.get('reachable') else "❌"
         )
     

@@ -87,7 +87,7 @@ def save_bookmarks(bookmarks, src_dir, targ_dir):
         logging.error("Source and target directories are the same. Cannot save bookmarks.")
         return
     
-    if not os.path.exists(src_dir):
+    if src_dir is not None and not os.path.exists(src_dir):
         logging.error(f"Source directory '{src_dir}' does not exist. Cannot save bookmarks.")
         return
     

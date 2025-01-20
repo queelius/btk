@@ -3,6 +3,7 @@ import argparse
 import os
 import logging
 import sys
+import subprocess
 from colorama import init as colorama_init, Fore, Style
 from rich.console import Console
 from rich.panel import Panel
@@ -15,6 +16,7 @@ import btk.utils as utils
 import btk.merge as merge
 import btk.tools as tools
 import btk.llm as llm
+
 
 # Initialize colorama and rich console
 colorama_init(autoreset=True)
@@ -33,10 +35,13 @@ def main():
     import_parser.add_argument('lib_dir', type=str, help='Directory to store the imported bookmarks library')
 
     # Search command
+    SEARCH_FIELDS = ['tags', 'description', 'title', 'url']
     search_parser = subparsers.add_parser('search', help='Search bookmarks by query')
     search_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to search')
     search_parser.add_argument('query', type=str, help='Search query (searches in title and URL)')
     search_parser.add_argument('--json', action='store_true', help='Output in JSON format')
+    search_parser.add_argument('--fields', default=['title', 'description', 'tags'],
+                               type=str, nargs='+', help=f'Search fields (default: tags, description, title). The available fields are: {", ".join(SEARCH_FIELDS)}')
 
     # List-Index command
     list_parser = subparsers.add_parser('list-index', help='List the bookmarks with the given indices')
@@ -158,10 +163,8 @@ def main():
     llm_parser = subparsers.add_parser('llm', help='Query the bookmark library using a Large Language Model')
     llm_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to query')
     llm_parser.add_argument('query', type=str, help='Query string')
-    llm_parser.add_argument('--json', action='store_true', help='Output in JSON format')
-
-    # Let's have a .btkrc file to store information about the toolkit. in particular, the LLM endpoint, OpenAI
-    # compatible.
+    llm_parser.add_argument('--json', action='store_true', help='Output in JSON format if no-execute')
+    llm_parser.add_argument('--no-execute', action='store_true', help='Do not execute the query')
     
     args = parser.parse_args()
 
@@ -172,15 +175,28 @@ def main():
             sys.exit(1)
         bookmarks = utils.load_bookmarks(lib_dir)
 
-        # let's get some context about the bookmarks, and things like jmespath queries, etc 
+        while True:
+            try:
+                results = llm.query_llm(lib_dir, args.query)
+                results = json.loads(results['response'])
 
-        prompt = f"Query the bookmark library with the following prompt:\n\n{args.query}"
-
-        results = llm.query_llm(prompt)
-        if args.json:
-            console.print(JSON(json.dumps(results, indent=2)))
-        else:
-            console.print(results["response"])
+                if args.no_execute:
+                    if args.json:
+                        console.print(JSON(json.dumps(results, indent=2)))
+                    else:
+                        console.print(results)
+                    break
+                else:
+                    cmd = results["command"]
+                    arglist = results["args"]
+                    proc = ["btk"] + [cmd] + arglist
+                    console.print(f"[bold green]Executing:[/bold green] {' '.join(proc)}")  
+                    subprocess.run(proc, check=True)
+                    break
+            # catch any exceptions and continue
+            except Exception as e:
+                console.print(f"[red]Error:[/red] {e}")
+                continue
 
     elif args.command == 'export':
         lib_dir = args.lib_dir
@@ -215,9 +231,9 @@ def main():
             sys.exit(1)
 
         bookmarks = utils.load_bookmarks(lib_dir)
-        results, type = utils.jmespath_query(bookmarks, args.query)
+        results, the_type = utils.jmespath_query(bookmarks, args.query)
 
-        if type == "filter":
+        if the_type == "filter":
             if args.output:
                 utils.save_bookmarks(results, lib_dir, args.output)
             elif args.json:
@@ -260,32 +276,7 @@ def main():
         if args.json:
             console.print(JSON(bookmarks))
         if results:
-            table = Table(title=f"Search Results for '{args.query}'", show_header=True, header_style="bold magenta")
-            table.add_column("ID", style="cyan", justify="right")
-            table.add_column("Unique ID", style="green")
-            table.add_column("Title", style="bold")
-            table.add_column("URL", style="underline blue")
-            table.add_column("Tags", style="yellow")
-            table.add_column("Stars", style="#FFD700")  # Using hex code for gold
-            table.add_column("Visits", style="magenta")
-            table.add_column("Last Visited", style="dim")
-            
-            for b in results:
-                stars = "⭐" if b.get('stars') else ""
-                tags = ", ".join(b.get('tags', []))
-                last_visited = b.get('last_visited') or "-"
-                table.add_row(
-                    str(b['id']),
-                    b['unique_id'],
-                    b['title'],
-                    b['url'],
-                    tags,
-                    stars,
-                    str(b.get('visit_count', 0)),
-                    last_visited
-                )
-            
-            console.print(table)
+            tools.list_bookmarks(results)
         else:
             console.print(f"[red]No bookmarks found matching '{args.query}'.[/red]")
 

@@ -1,6 +1,7 @@
 import os
 import requests
 import configparser
+from string import Template
 
 def load_btkrc_config():
     """
@@ -32,12 +33,9 @@ def load_btkrc_config():
             "includes 'endpoint', 'api_key', and 'model' keys."
         )
     
-    #print(f"{endpoint=}, {api_key=}, {model=}, {stream=}")
-
     return endpoint, api_key, model
 
-
-def query_llm(prompt):
+def query_llm(lib_dir, prompt):
     """
     Queries an OpenAI-compatible LLM endpoint with the given prompt.
 
@@ -53,10 +51,28 @@ def query_llm(prompt):
         "Authorization": f"Bearer {api_key}"
     }
 
+    # let's prefix the prompt with the contents of the file `llm-instructions.md`
+    # however, since this is a ypi package, we need to find the path to the file
+    # we can use the `__file__` variable to get the path to this file, and then
+    # construct the path to the `llm-instructions.md` file
+    file_instr_path = os.path.join(os.path.dirname(__file__), "llm-instructions.md")    
+
+    # Read the markdown file
+    with open(file_instr_path, "r") as f:
+        template = Template(f.read())
+
+    data = {
+        "lib_dir": lib_dir
+    }
+
+    instructions = template.safe_substitute(data)
+    prompt = instructions + "\n\nQuestion: " + prompt
+
     data = {
         "model": model,
         "prompt": prompt,
-        "stream": False
+        "stream": False,
+        "format": "json"
     }
 
     try:
@@ -66,4 +82,3 @@ def query_llm(prompt):
         raise SystemError(f"Error calling LLM endpoint: {e}")
 
     return response.json()
-
