@@ -148,7 +148,7 @@ def list_bookmarks(bookmarks):
     #table.add_column("UID", style="green")
     table.add_column("Title", style="bold")
     # light blue color. also, the URL column must be complete and clickable, it can't be cut-off but it can be wrapped
-    table.add_column("URL", style="#ADD8E6", no_wrap=False, overflow="fold")
+    #table.add_column("Link")
     table.add_column("Tags", style="yellow")
     table.add_column("Star", style="#FFD700")
     table.add_column("Visits", style="magenta")
@@ -156,18 +156,21 @@ def list_bookmarks(bookmarks):
     table.add_column("Last Visit", style="dim")
     table.add_column("Desc", style="italic")
     #table.add_column("Favicon", style="dim")
-    table.add_column("Valid", style="dim")
+    #table.add_column("Valid", style="dim")
 
     for b in bookmarks:
         stars = "⭐" if b.get('stars') else ""
         tags = ", ".join(b.get('tags', []))
         last_visited = b.get('last_visited') or "-"
-        link = f"[link={b['url']}]{b['url']}[/link]"
+        if b.get('reachable'):
+            title = f"[link={b['url']}]🔗 {b['title']}[/link]"
+        else:
+            title = f"[link={b['url']}]❌ {b['title']}[/link]"
         table.add_row(
             str(b['id']),
      #       b['unique_id'],
-            b['title'],
-            link,
+            title,
+            #link,
             tags,
             stars,
             str(b.get('visit_count', 0)),
@@ -175,7 +178,7 @@ def list_bookmarks(bookmarks):
             last_visited.split("T")[0], 
             b.get('description', ""),
             #b.get('favicon', ""),
-            "✅" if b.get('reachable') else "❌"
+            #"✅" if b.get('reachable') else "❌"
         )
     
     console.print(table)

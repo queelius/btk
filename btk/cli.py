@@ -31,6 +31,9 @@ def main():
 
     # Import command
     import_parser = subparsers.add_parser('import', help='Import bookmarks from a Netscape Bookmark Format HTML file')
+
+    # let's make a subcommand, options are `netsacpe-bookmark-html`, `csv` (it'll look for the requisite fields), `json` (it'll look for the requisite fields),
+    # `chrome` (it'll look for the requisite fields), `firefox` (it'll look for the requisite fields), `safari` (it'll look for the requisite fields)
     import_parser.add_argument('html_file', type=str, help='Path to the HTML bookmark file')
     import_parser.add_argument('lib_dir', type=str, help='Directory to store the imported bookmarks library')
 
@@ -77,6 +80,9 @@ def main():
     list_parser = subparsers.add_parser('list', help='List all bookmarks with their IDs and unique IDs')
     list_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to list')
     list_parser.add_argument('--json', action='store_true', help='Output in JSON format')
+    #list_parser.add_argument('--fields', default=['title', 'url', 'tags'],
+    #                        type=str, nargs='+', help=f'Fields to display (default: title, url, tags, star, visit). The available fields are: {", ".join(tools.FIELDS)}')
+
 
     # Visit command
     visit_parser = subparsers.add_parser('visit', help='Visit a bookmark by its ID')
@@ -84,7 +90,7 @@ def main():
     visit_parser.add_argument('id', type=int, help='ID of the bookmark to visit')
     group = visit_parser.add_mutually_exclusive_group()
     group.add_argument('--browser', action='store_true', help='Visit the bookmark in the default web browser (default)')
-    group.add_argument('--console', action='store_true', help='Display the bookmark content in the console')
+    group.add_argument('--console', default=True, action='store_true', help='Display the bookmark content in the console')
 
     # Set Operations
     set_parser = subparsers.add_parser('merge', help='Perform merge (set) operations on bookmark libraries')
@@ -330,15 +336,15 @@ def main():
 
         for b in bookmarks:
             if b['id'] == args.id:
-                if args.title is not None:
+                if args.title:
                     b['title'] = args.title
-                if args.url is not None:
+                if args.url:
                     b['url'] = args.url
-                if args.stars is not None:
+                if args.stars:
                     b['stars'] = args.stars
-                if args.tags is not None:
+                if args.tags:
                     b['tags'] = [tag.strip() for tag in args.tags]
-                if args.description is not None:
+                if args.description:
                     b['description'] = args.description
                 break
 
