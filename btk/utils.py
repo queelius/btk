@@ -40,23 +40,12 @@ def jmespath_query(bookmarks, query):
     
     if not query:
         return bookmarks
-
-    try:
-        bookmarks_json = json.loads(json.dumps(bookmarks))
-        result = jmespath.search(query, bookmarks_json)
-        if is_bookmark_json(result):
-            return result, "filter"
-        else:
-            return result, "transform"
-
-    except jmespath.exceptions.JMESPathError as e:
-        logging.error(f"JMESPath query error: {e}")
-        return [], "error"
-    
-    except Exception as e:
-        logging.error(f"Error applying JMESPath query: {e}")
-        return [], "error"  
-
+    bookmarks_json = json.loads(json.dumps(bookmarks))
+    result = jmespath.search(query, bookmarks_json)
+    if is_bookmark_json(result):
+        return result, "filter"
+    else:
+        return result, "transform"
 
 def load_bookmarks(lib_dir):
     """Load bookmarks from a JSON file within the specified library directory."""
@@ -83,9 +72,9 @@ def save_bookmarks(bookmarks, src_dir, targ_dir):
         logging.error("No target directory provided. Cannot save bookmarks.")
         return
     
-    if src_dir is not None and src_dir == targ_dir:
-        logging.error("Source and target directories are the same. Cannot save bookmarks.")
-        return
+    #if src_dir is not None and src_dir == targ_dir:
+    #    logging.error("Source and target directories are the same. Cannot save bookmarks.")
+    #    return
     
     if src_dir is not None and not os.path.exists(src_dir):
         logging.error(f"Source directory '{src_dir}' does not exist. Cannot save bookmarks.")
@@ -97,7 +86,7 @@ def save_bookmarks(bookmarks, src_dir, targ_dir):
     ensure_dir(targ_dir)
 
     # iterate over favicons and save them to the favicons directory
-    if src_dir is not None:
+    if src_dir is not None and src_dir != targ_dir:
         for b in bookmarks:
             if 'favicon' in b:
                 favicon_path = b['favicon']
@@ -268,15 +257,22 @@ def purge_unreachable(bookmarks_dir, confirm=False):
         return
 
     logging.info(f"Found {total_unreachable} unreachable bookmarks.")
-    
-    if confirm:
-        response = input(f"Are you sure you want to delete {total_unreachable} unreachable bookmarks? [y/N]: ")
-        if response.lower() != 'y':
-            logging.info("Purge operation canceled by the user.")
-            return
 
-    # Remove unreachable bookmarks
-    bookmarks = [b for b in bookmarks if b.get('reachable') != False]
+    bookmarks = None
+    if confirm:
+        new_bookmarks = []
+        for b in bookmarks:
+            if b.get('reachable') == False:
+                resp = input(f"Are you sure you want to purge {b.get('title')}? [y/N]: ")
+                if resp.lower() == 'y':
+                    logging.debug("Purged bookmark: {b.get('title')}")
+                else:
+                    new_bookmarks.append(b)
+            else:
+                new_bookmarks.append(b)
+        bookmarks = new_bookmarks
+    else:
+        bookmarks = [b for b in bookmarks if b.get('reachable') != False]
     
     save_bookmarks(bookmarks, bookmarks_dir, bookmarks_dir)
     logging.info(f"Purged {total_unreachable} unreachable bookmarks successfully.")

@@ -150,6 +150,7 @@ def main():
     # Purge command
     purge_parser = subparsers.add_parser('purge', help='Remove bookmarks marked as not reachable')
     purge_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to purge')
+    purge_parser.add_argument('--output-dir', type=str, help='Directory to save the purged bookmarks')
     purge_parser.add_argument('--confirm', action='store_true', help='Ask for confirmation before purging')
     
     # Export command
@@ -171,7 +172,8 @@ def main():
     llm_parser.add_argument('query', type=str, help='Query string')
     llm_parser.add_argument('--json', action='store_true', help='Output in JSON format if no-execute')
     llm_parser.add_argument('--no-execute', action='store_true', help='Do not execute the query')
-    
+    llm_parser.add_argument('--no-show-errors', action='store_true', help='Do not show errors')
+    llm_parser.add_argument('--max-attempts', type=int, default=5, help='Maximum number of attempts to execute the query')
     args = parser.parse_args()
 
     if args.command == 'llm':
@@ -181,7 +183,7 @@ def main():
             sys.exit(1)
         bookmarks = utils.load_bookmarks(lib_dir)
 
-        while True:
+        for i in range(args.max_attempts):
             try:
                 results = llm.query_llm(lib_dir, args.query)
                 results = json.loads(results['response'])
@@ -193,16 +195,17 @@ def main():
                         console.print(results)
                     break
                 else:
-                    cmd = results["command"]
-                    arglist = results["args"]
-                    proc = ["btk"] + [cmd] + arglist
+                    proc = ["btk"] + [results["command"]] + results["args"]
                     console.print(f"[bold green]Executing:[/bold green] {' '.join(proc)}")  
                     subprocess.run(proc, check=True)
                     break
-            # catch any exceptions and continue
+            except subprocess.CalledProcessError as e:
+                if not args.no_show_errors:
+                    console.print(f"[red]Error:[/red] {e}")
+                
             except Exception as e:
-                console.print(f"[red]Error:[/red] {e}")
-                continue
+                if not args.no_show_errors:
+                    console.print(f"[red]Error:[/red] {e}")
 
     elif args.command == 'export':
         lib_dir = args.lib_dir
@@ -247,30 +250,30 @@ def main():
             else:
                 tools.list_bookmarks(results)
 
-        else: # type == "transform":
+        elif the_type == "transform":
             if args.output:
-                # save the transformed results as JSON
                 with open(args.output, 'w') as f:
                     json.dump(results, f, indent=2)
             elif args.json:
-                # dump the results as JSON
                 console.print(JSON(json.dumps(results, indent=2)))
             elif isinstance(results, list):
-                # let's transform the json into a table
-                table = Table(title="Transformed Results", show_header=True, header_style="bold magenta")
+                table = Table(title="Results", show_header=True, header_style="bold magenta")
                 for key in results[0].keys():
                     table.add_column(key, style="bold")
                 for item in results:
                     table.add_row(*[str(value) for value in item.values()])
                 console.print(table)
             elif isinstance(results, dict):
-                table = Table(title="Transformed Results", show_header=True, header_style="bold magenta")
+                table = Table(title="Results", show_header=True, header_style="bold magenta")
                 for key in results.keys():
                     table.add_column(key, style="bold")
                 table.add_row(*[str(value) for value in results.values()])
                 console.print(table)
             else:
                 console.print(results)
+
+        else:
+            raise ValueError(f"Unknown JMESPath query type: {the_type}")
 
     elif args.command == 'search':
         lib_dir = args.lib_dir
