@@ -19,12 +19,19 @@ DEFAULT_LIB_DIR = 'bookmarks'
 FAVICON_DIR_NAME = 'favicons'
 BOOKMARKS_JSON = 'bookmarks.json'
 
-# Ensure default directory structure exists
 def ensure_dir(path):
     os.makedirs(path, exist_ok=True)
 
-def is_bookmark_json(obj):
-    """Check if an object is a valid bookmark dictionary."""
+def is_bookmark_json(obj) -> bool:
+    """
+    Check if an object is a valid bookmark dictionary.
+
+    Args:
+        obj: The object to check
+
+    Returns:
+        bool: True if the object is a valid bookmark dictionary, False otherwise
+    """
 
     if not isinstance(obj, list):
         return False 
@@ -35,8 +42,17 @@ def is_bookmark_json(obj):
 
     return all(check_item(item) for item in obj)
 
-def jmespath_query(bookmarks, query):
-    """Apply a JMESPath query to a list of bookmarks."""
+def jmespath_query(bookmarks, query) -> tuple:
+    """
+    Apply a JMESPath query to a list of bookmarks.
+
+    Args:
+        bookmarks (list): A list of bookmark dictionaries
+        query (str): JMESPath query string
+
+    Returns:
+        tuple: A tuple containing the result of the query and the type of operation
+    """
     
     if not query:
         return bookmarks
@@ -47,8 +63,18 @@ def jmespath_query(bookmarks, query):
     else:
         return result, "transform"
 
-def load_bookmarks(lib_dir):
-    """Load bookmarks from a JSON file within the specified library directory."""
+def load_bookmarks(lib_dir) -> list:
+    """
+    Load bookmarks from the specified library directory.
+
+    Returns an empty list if no bookmarks are found.
+
+    Args:
+        lib_dir (str): The directory containing the bookmarks
+
+    Returns:
+        list: A list of bookmark dictionaries
+    """
     json_file = os.path.join(lib_dir, BOOKMARKS_JSON)
     if not os.path.exists(json_file):
         logging.debug(f"No existing {json_file} found. Starting with an empty bookmark list.")
@@ -71,10 +97,6 @@ def save_bookmarks(bookmarks, src_dir, targ_dir):
     if not targ_dir:
         logging.error("No target directory provided. Cannot save bookmarks.")
         return
-    
-    #if src_dir is not None and src_dir == targ_dir:
-    #    logging.error("Source and target directories are the same. Cannot save bookmarks.")
-    #    return
     
     if src_dir is not None and not os.path.exists(src_dir):
         logging.error(f"Source directory '{src_dir}' does not exist. Cannot save bookmarks.")
@@ -246,6 +268,43 @@ def check_reachable(bookmarks_dir, timeout=10, concurrency=10):
     else:
         logging.info("No updates were made to bookmarks.")
 
+
+def purge_favicons(bookmarks_dir):
+    """
+    Remove any favicon files that are no longer associated with bookmarks.
+
+    This function will remove any favicon files in the favicons directory that are not referenced
+    by any bookmark in the bookmarks.json file. This can occur if a bookmark is deleted or its
+    favicon is changed.
+
+    Args:
+        bookmarks_dir (str): The directory containing the bookmarks
+
+    Side effects:
+        Removes unused favicon files from the favicons directory
+    """
+
+    bookmarks = load_bookmarks(bookmarks_dir)
+    favicon_dir = os.path.join(bookmarks_dir, FAVICON_DIR_NAME)
+    if not os.path.exists(favicon_dir):
+        logging.info("No favicon directory found. Skipping cleanup.")
+        return
+    
+    existing_favicons = set()
+    for b in bookmarks:
+        if 'favicon' in b:
+            existing_favicons.add(b['favicon'])
+
+    removed_favicons = 0
+    for filename in os.listdir(favicon_dir):
+        if filename not in existing_favicons:
+            filepath = os.path.join(favicon_dir, filename)
+            os.remove(filepath)
+            removed_favicons += 1
+            logging.debug(f"Removed unused favicon: {filename}")
+
+    logging.info(f"Removed {removed_favicons} unused favicon files.")
+
 def purge_unreachable(bookmarks_dir, confirm=False):
     """Purge all bookmarks marked as not reachable."""
     bookmarks = load_bookmarks(bookmarks_dir)
@@ -258,14 +317,13 @@ def purge_unreachable(bookmarks_dir, confirm=False):
 
     logging.info(f"Found {total_unreachable} unreachable bookmarks.")
 
-    bookmarks = None
     if confirm:
         new_bookmarks = []
         for b in bookmarks:
             if b.get('reachable') == False:
                 resp = input(f"Are you sure you want to purge {b.get('title')}? [y/N]: ")
                 if resp.lower() == 'y':
-                    logging.debug("Purged bookmark: {b.get('title')}")
+                    logging.debug(f"Purged: {b.get('title')}")
                 else:
                     new_bookmarks.append(b)
             else:

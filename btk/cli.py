@@ -10,13 +10,12 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.table import Table
 from rich.json import JSON
-import btk.cloud as cloud
+import btk.viz as viz
 import networkx as nx
 import btk.utils as utils
 import btk.merge as merge
 import btk.tools as tools
 import btk.llm as llm
-
 
 # Initialize colorama and rich console
 colorama_init(autoreset=True)
@@ -30,12 +29,43 @@ def main():
     subparsers = parser.add_subparsers(dest='command', required=True, help='Available commands')
 
     # Import command
-    import_parser = subparsers.add_parser('import', help='Import bookmarks from a Netscape Bookmark Format HTML file')
+    import_parser = subparsers.add_parser('import', help='Import bookmarks')
+    import_subparsers = import_parser.add_subparsers(dest='type_command', required=True, help='The format of the bookmarks to import')
 
-    # let's make a subcommand, options are `netsacpe-bookmark-html`, `csv` (it'll look for the requisite fields), `json` (it'll look for the requisite fields),
-    # `chrome` (it'll look for the requisite fields), `firefox` (it'll look for the requisite fields), `safari` (it'll look for the requisite fields)
-    import_parser.add_argument('html_file', type=str, help='Path to the HTML bookmark file')
-    import_parser.add_argument('lib_dir', type=str, help='Directory to store the imported bookmarks library')
+    # Import nbf (Netscape Bookmark Format HTML file)
+    nbf_import = import_subparsers.add_parser('nbf', help='Netscape Bookmark Format HTML file. File ends with .html')
+    nbf_import.add_argument('file', type=str, help='Path to the HTML bookmark file')
+    nbf_import.add_argument('--lib-dir', type=str, help='Directory to store the imported bookmarks library. If not specified, {file}-btk will be used. If that already exists, we will add _j where j is the smallest integer such that {file}-btk_{j} does not exist.')
+
+    # Import csv (CSV file), format: url, title, tags, description, stars by default, but you can change the order
+    csv_import = import_subparsers.add_parser('csv', help='CSV file. File ends with .csv')
+    csv_import.add_argument('file', type=str, help='Path to the CSV bookmark file')
+    csv_import.add_argument('--lib-dir', type=str, help='Directory to store the imported bookmarks library. If not specified, {file}-btk will be used. If that already exists, we will add _j where j is the smallest integer such that {file}-btk_{j} does not exist.')
+    csv_import.add_argument('--fields', type=str, nargs='+', default=['url', 'title', 'tags', 'description', 'stars'], help='Fields in the CSV file. The default order is url, title, tags, description, stars. The available fields are: url, title, tags, description, stars')
+
+    # Import json (JSON file). Looks for a list of dictionaries with an optioal set of fields. By default, it looks for url, title, tags, description, stars
+    json_import = import_subparsers.add_parser('json', help='JSON file. File ends with .json')
+    json_import.add_argument('file', type=str, help='Path to the JSON bookmark file')
+    json_import.add_argument('--lib-dir', type=str, help='Directory to store the imported bookmarks library. If not specified, {file}-btk will be used. If that already exists, we will add _j where j is the smallest integer such that {file}-btk_{j} does not exist.')
+
+    # Merge Operations
+    set_parser = subparsers.add_parser('merge', help='Perform merge (set) operations on bookmark libraries')
+    set_subparsers = set_parser.add_subparsers(dest='merge_command', required=True, help='Set operation commands')
+
+    # Merge: Union
+    union_parser = set_subparsers.add_parser('union', help='Perform set union of multiple bookmark libraries')
+    union_parser.add_argument('lib_dirs', type=str, nargs='+', help='Directories of the bookmark libraries to union')
+    union_parser.add_argument('--output', type=str, help='Directory to store the union library. If not specified, the union will be saved in `union_{lib_dirs[0]}_{lib_dirs[1]}_...`. If that already exists, we will add `_j` where `j` is the smallest integer such that `union_{lib_dirs[0]}_{lib_dirs[1]}_..._{j}` does not exist.')
+
+    # Merge: Intersection
+    intersection_parser = set_subparsers.add_parser('intersection', help='Perform set intersection of multiple bookmark libraries')
+    intersection_parser.add_argument('lib_dirs', type=str, nargs='+', help='Directories of the bookmark libraries to intersect')
+    intersection_parser.add_argument('--output', type=str, help='Directory to store the intersection library. If not specified, the intersection will be saved in `intersection_{lib_dirs[0]}_{lib_dirs[1]}_...`. If that already exists, we will add `_j` where `j` is the smallest integer such that `intersection_{lib_dirs[0]}_{lib_dirs[1]}_..._{j}` does not exist.')
+
+    # Merge: Difference
+    difference_parser = set_subparsers.add_parser('difference', help='Perform set difference (first minus others) of bookmark libraries')
+    difference_parser.add_argument('lib_dirs', type=str, nargs='+', help='Directories of the bookmark libraries (first library minus the rest)')
+    difference_parser.add_argument('--output', type=str, help='Directory to store the difference library. If not specified, the difference will be saved in `difference_{lib_dirs[0]}_{lib_dirs[1]}_...`. If that already exists, we will add `_j` where `j` is the smallest integer such that `difference_{lib_dirs[0]}_{lib_dirs[1]}_..._{j}` does not exist.')
 
     # Search command
     SEARCH_FIELDS = ['tags', 'description', 'title', 'url']
@@ -46,17 +76,11 @@ def main():
     search_parser.add_argument('--fields', default=['title', 'description', 'tags'],
                                type=str, nargs='+', help=f'Search fields (default: tags, description, title). The available fields are: {", ".join(SEARCH_FIELDS)}')
 
-    # List-Index command
-    list_parser = subparsers.add_parser('list-index', help='List the bookmarks with the given indices')
-    list_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library')
-    list_parser.add_argument('indices', type=int, nargs='+', help='Indices of the bookmarks to list')
-    list_parser.add_argument('--json', action='store_true', help='Output in JSON format')
-
     # Add command
     add_parser = subparsers.add_parser('add', help='Add a new bookmark')
     add_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to add to')
-    add_parser.add_argument('title', type=str, help='Title of the bookmark')
     add_parser.add_argument('url', type=str, help='URL of the bookmark')
+    add_parser.add_argument('--title', type=str, help='Title of the bookmark. If not specified, the title will be fetched from the URL')
     add_parser.add_argument('--star', action='store_true', help='Mark the bookmark as favorite')
     add_parser.add_argument('--tags', type=str, help='Comma-separated tags for the bookmark')
     add_parser.add_argument('--description', type=str, help='Description or notes for the bookmark')
@@ -80,9 +104,7 @@ def main():
     list_parser = subparsers.add_parser('list', help='List all bookmarks with their IDs and unique IDs')
     list_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to list')
     list_parser.add_argument('--json', action='store_true', help='Output in JSON format')
-    #list_parser.add_argument('--fields', default=['title', 'url', 'tags'],
-    #                        type=str, nargs='+', help=f'Fields to display (default: title, url, tags, star, visit). The available fields are: {", ".join(tools.FIELDS)}')
-
+    list_parser.add_argument('--indices', type=int, nargs='*', default=None, help='Indices of the bookmarks to list')
 
     # Visit command
     visit_parser = subparsers.add_parser('visit', help='Visit a bookmark by its ID')
@@ -92,54 +114,25 @@ def main():
     group.add_argument('--browser', action='store_true', help='Visit the bookmark in the default web browser (default)')
     group.add_argument('--console', default=True, action='store_true', help='Display the bookmark content in the console')
 
-    # Set Operations
-    set_parser = subparsers.add_parser('merge', help='Perform merge (set) operations on bookmark libraries')
-    set_subparsers = set_parser.add_subparsers(dest='merge_command', required=True, help='Set operation commands')
-
-    # Union
-    union_parser = set_subparsers.add_parser('union', help='Perform set union of multiple bookmark libraries')
-    union_parser.add_argument('lib_dirs', type=str, nargs='+', help='Directories of the bookmark libraries to union')
-    union_parser.add_argument('output_dir', type=str, help='Directory to store the union result')
-
-    # Intersection
-    intersection_parser = set_subparsers.add_parser('intersection', help='Perform set intersection of multiple bookmark libraries')
-    intersection_parser.add_argument('lib_dirs', type=str, nargs='+', help='Directories of the bookmark libraries to intersect')
-    intersection_parser.add_argument('output_dir', type=str, help='Directory to store the intersection result')
-
-    # Difference
-    difference_parser = set_subparsers.add_parser('difference', help='Perform set difference (first minus others) of bookmark libraries')
-    difference_parser.add_argument('lib_dirs', type=str, nargs='+', help='Directories of the bookmark libraries (first library minus the rest)')
-    difference_parser.add_argument('output_dir', type=str, help='Directory to store the difference result')
-
-    # Cloud command
-    cloud_parser = subparsers.add_parser('cloud', help='Generate a URL mention graph from bookmarks')
-    cloud_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to analyze')
-    cloud_parser.add_argument('--output-file', type=str, help='Path to save the graph image (e.g., graph.png or graph.html)')
-    cloud_parser.add_argument('--max-bookmarks', type=int, default=100, help='Maximum number of bookmarks to process')
-    cloud_parser.add_argument(
+    # Visulization command
+    viz_parser = subparsers.add_parser('viz', help='Generate a URL mention graph from bookmarks')
+    viz_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to analyze')
+    viz_parser.add_argument('--output', type=str, help='Path to save the graph image (e.g., graph.png or graph.html)')
+    viz_parser.add_argument('--max-bookmarks', type=int, default=5000, help='Maximum number of bookmarks to process')
+    viz_parser.add_argument(
         '--no-only-in-library',
         action='store_false',
         dest='only_in_library',
         help='Include all mentioned URLs as nodes, regardless of their presence in the library')
-    cloud_parser.add_argument(
+    viz_parser.add_argument(
         '--ignore-ssl',
         action='store_true',
         help='Ignore SSL certificate verification (not recommended)')
-    cloud_parser.add_argument('--stats', action='store_true', help='Display graph statistics')
-    cloud_parser.add_argument('--links-url', action='store_true', default=True, help='Links are URL mentions')
-    cloud_parser.add_argument('--links-tag', action='store_true', default=False, help='Links are overlapping tags')
-    cloud_parser.add_argument('--links-creation-timestamp', action='store_true', default=False, help='Links are creation timestamps within a threshold')
-
-    cloud_parser.add_argument('--links-creation-timestamp-threshold', type=int, default=30, help='Threshold for links creation timestamp (in days)')
-
-    cloud_parser.add_argument('--links-visit-count', action='store_true', default=False, help='Links are visit counts within a threshold')
-    cloud_parser.add_argument('--links-visit-count-threshold', type=int, default=5, help='Threshold for links visit count')
-
-    cloud_parser.add_argument('--links-last-visited', action='store_true', default=False, help='Links are last visited timestamps within a threshold')
-    cloud_parser.add_argument('--links-last-visited-threshold', type=int, default=30, help='Threshold for links last visited timestamp (in days)')
-
-    cloud_parser.add_argument('--nodes-bookmarks', action='store_true', default=True, help='Nodes are bookmarks')
-    cloud_parser.add_argument('--nodes-tags', action='store_true', default=False, help='Nodes are tags')
+    viz_parser.add_argument('--stats', action='store_true', help='Display graph statistics')
+    viz_parser.add_argument('--links-url-mentions', action='store_true', default=True, help='Links are URL mentions')
+    viz_parser.add_argument('--links-url-mentions-hops', type=int, default=1, help='Number of URL hops to consider as a link. These hops can go outside of the URLs mentioned in the library, but if `only_in_library` is set, the end of the hop must be in the library.')
+    viz_parser.add_argument('--links-bookmarks-creation-timestamp', action='store_true', default=False, help='Links are creation timestamps within a threshold')
+    viz_parser.add_argument('--links-bookmarks-creation-timestamp-threshold', type=int, default=30, help='Threshold for links creation timestamp (in days)')
  
     # Reachable command
     reachable_parser = subparsers.add_parser('reachable', help='Check and mark bookmarks as reachable or not')
@@ -148,16 +141,17 @@ def main():
     reachable_parser.add_argument('--concurrency', type=int, default=10, help='Number of concurrent HTTP requests')
     
     # Purge command
-    purge_parser = subparsers.add_parser('purge', help='Remove bookmarks marked as not reachable')
+    purge_parser = subparsers.add_parser('purge', help='Purge bookmarks flagged as unreachable (see `reachable` command)')
     purge_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to purge')
-    purge_parser.add_argument('--output-dir', type=str, help='Directory to save the purged bookmarks')
+    purge_parser.add_argument('--unreachable', action='store_true', help='Purge unreachable bookmarks')
+    purge_parser.add_argument('--output-purged', type=str, help='Directory to save the purged bookmarks')
     purge_parser.add_argument('--confirm', action='store_true', help='Ask for confirmation before purging')
     
     # Export command
     export_parser = subparsers.add_parser('export', help='Export bookmarks to a different format')
     export_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library to export')
-    export_parser.add_argument('format', type=str, help='Export format (e.g., html, csv, zip)')
-    export_parser.add_argument('output', type=str, help='Path to save the exported directory or file')
+    export_parser.add_argument('format', choices=['html', 'csv', 'zip'], help='Export format')
+    export_parser.add_argument('--output', type=str, help='Path to save the exported directory or file')
 
     # JMESPath command
     jmespath_parser = subparsers.add_parser('jmespath', help='Query bookmarks using JMESPath')
@@ -225,13 +219,16 @@ def main():
             logging.error(f"Unknown export format '{export_format}'.")
 
     elif args.command == 'import':
-        lib_dir = args.lib_dir
-        utils.ensure_dir(lib_dir)
-        utils.ensure_dir(os.path.join(lib_dir, utils.FAVICON_DIR_NAME))
-        bookmarks = utils.load_bookmarks(lib_dir)
-        bookmarks = tools.import_bookmarks(bookmarks, args.html_file, lib_dir)
-        utils.save_bookmarks(bookmarks, None, lib_dir)
-
+        
+        if args.type_command == 'nbf':
+            lib_dir = args.lib_dir
+            utils.ensure_dir(lib_dir)
+            utils.ensure_dir(os.path.join(lib_dir, utils.FAVICON_DIR_NAME))
+            bookmarks = utils.load_bookmarks(lib_dir)
+            bookmarks = tools.import_bookmarks(bookmarks, args.file, lib_dir)
+            utils.save_bookmarks(bookmarks, None, lib_dir)
+        else:
+            logging.error(f"No import support for '{args.type_command}'.")
 
     elif args.command == 'jmespath':
         lib_dir = args.lib_dir
@@ -324,11 +321,15 @@ def main():
             logging.error(f"The specified library directory '{lib_dir}' does not exist or is not a directory.")
             sys.exit(1)
         bookmarks = utils.load_bookmarks(lib_dir)
+        if args.indices is not None:
+            bookmarks = [b for i, b in enumerate(bookmarks) if i in args.indices]
+
         if args.json:
             json_data = json.dumps(bookmarks)
             console.print(JSON(json_data))
         else:
-            tools.list_bookmarks(bookmarks)
+            indices = args.indices if args.indices is not None else range(len(bookmarks))
+            tools.list_bookmarks(bookmarks, indices)
 
     elif args.command == 'edit':
         lib_dir = args.lib_dir
@@ -353,19 +354,6 @@ def main():
 
         utils.save_bookmarks(bookmarks, None, lib_dir)
       
-    elif args.command == 'list-index':
-        lib_dir = args.lib_dir
-        if not os.path.isdir(lib_dir):
-            logging.error(f"The specified library directory '{lib_dir}' does not exist or is not a directory.")
-            sys.exit(1)
-        bookmarks = utils.load_bookmarks(lib_dir)
-        if args.json:
-            results = [b for b in bookmarks if b['id'] in args.indices]
-            json_data = json.dumps(results)
-            console.print(JSON(json_data))
-        else:
-            tools.list_bookmarks([b for b in bookmarks if b['id'] in args.indices])
-
     elif args.command == 'visit':
         lib_dir = args.lib_dir
         if not os.path.isdir(lib_dir):
@@ -397,7 +385,7 @@ def main():
         else:
             logging.error(f"Unknown set command '{merge_command}'.")
 
-    elif args.command == 'cloud':
+    elif args.command == 'viz':
             lib_dir = args.lib_dir
             output_file = args.output_file
             max_bookmarks = args.max_bookmarks
@@ -418,25 +406,25 @@ def main():
                 logging.error(f"No bookmarks found in '{lib_dir}'.")
                 sys.exit(1)
             
-            graph = cloud.generate_url_graph(
+            graph = viz.generate_url_graph(
                 bookmarks,
                 max_bookmarks=max_bookmarks,
                 only_in_library=only_in_library,
                 ignore_ssl=ignore_ssl)
             
             if stats:
-                cloud.display_graph_stats(graph)
+                viz.display_graph_stats(graph)
             # Optional: Visualize the graph
             if output_file:
                 if output_file.endswith('.html'):
                     # Interactive visualization with pyvis
-                    cloud.visualize_graph_pyvis(graph, output_file)
+                    viz.visualize_graph_pyvis(graph, output_file)
                 elif output_file.endswith('.json'):
                     graph_json = nx.node_link_data(graph)  # Convert to node-link format
                     console.print(JSON(json.dumps(graph_json, indent=2)))
                 else: # file.endswith('.png'):
                     # Static visualization with matplotlib
-                    cloud.visualize_graph_png(graph, output_file)
+                    viz.visualize_graph_png(graph, output_file)
             else:
                 # If no output file specified, print graph stats
                 console.print(f"[bold green]Graph generated successfully![/bold green]")
@@ -444,11 +432,9 @@ def main():
                 console.print(f"Edges: {graph.number_of_edges()}")
 
     elif args.command == 'reachable':
-        # Call reachable function
         utils.check_reachable(bookmarks_dir=args.lib_dir, timeout=args.timeout, concurrency=args.concurrency)
     
     elif args.command == 'purge':
-        # Call purge function
         utils.purge_unreachable(bookmarks_dir=args.lib_dir, confirm=args.confirm)
 
     else:
