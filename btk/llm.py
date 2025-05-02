@@ -25,7 +25,7 @@ def load_btkrc_config():
 
     endpoint = parser["llm"].get("endpoint", "")
     api_key = parser["llm"].get("api_key", "")
-    model = parser["llm"].get("model", "gpt-3.5-turbo")
+    model = parser["llm"].get("model", "")
 
     if not endpoint or not api_key or not model:
         raise ValueError(
