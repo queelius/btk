@@ -6,3 +6,16 @@ dev
 dist
 build
 lib
+venv
+.venv
+env
+.env
+.coverage
+htmlcov
+.pytest_cache
+.mypy_cache
+*.egg
+bookmarks
+test_export.py
+test_export.html
+test_export.csv

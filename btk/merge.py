@@ -1,4 +1,6 @@
 import logging
+import os
+import json
 import btk.utils as utils
 
 logging.basicConfig(level=logging.INFO)
@@ -11,7 +13,10 @@ def union_libraries(libs, output_dir):
         for b in bookmarks:
             all_bookmarks[b['unique_id']] = b
     union_bookmarks = list(all_bookmarks.values())
-    utils.save_bookmarks(union_bookmarks, output_dir)
+    utils.ensure_dir(output_dir)
+    with open(os.path.join(output_dir, 'bookmarks.json'), 'w') as f:
+        import json
+        json.dump(union_bookmarks, f, indent=2)
     logging.info(f"Union of {len(libs)} libraries saved to {output_dir} with {len(union_bookmarks)} bookmarks.")
 
 def intersection_libraries(libs, output_dir):
@@ -32,7 +37,10 @@ def intersection_libraries(libs, output_dir):
         for b in bookmarks:
             bookmark_map[b['unique_id']] = b
     intersection_bookmarks = [bookmark_map[uid] for uid in common_unique_ids]
-    utils.save_bookmarks(intersection_bookmarks, output_dir)
+    utils.ensure_dir(output_dir)
+    with open(os.path.join(output_dir, 'bookmarks.json'), 'w') as f:
+        import json
+        json.dump(intersection_bookmarks, f, indent=2)
     logging.info(f"Intersection of {len(libs)} libraries saved to {output_dir} with {len(intersection_bookmarks)} bookmarks.")
 
 def difference_libraries(libs, output_dir):
@@ -48,5 +56,8 @@ def difference_libraries(libs, output_dir):
         bookmarks = utils.load_bookmarks(lib)
         other_unique_ids.update(b['unique_id'] for b in bookmarks)
     difference_bookmarks = [b for b in first_bookmarks if b['unique_id'] not in other_unique_ids]
-    utils.save_bookmarks(difference_bookmarks, output_dir)
+    utils.ensure_dir(output_dir)
+    with open(os.path.join(output_dir, 'bookmarks.json'), 'w') as f:
+        import json
+        json.dump(difference_bookmarks, f, indent=2)
     logging.info(f"Difference (from {first_lib} minus others) saved to {output_dir} with {len(difference_bookmarks)} bookmarks.")

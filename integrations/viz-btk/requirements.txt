@@ -1,0 +1,10 @@
+# BTK Visualization Requirements
+networkx>=3.0
+matplotlib>=3.7
+pyvis>=0.3.2
+beautifulsoup4>=4.12
+lxml>=4.9
+requests>=2.31
+rich>=13.0
+colorama>=0.4
+urllib3>=2.0

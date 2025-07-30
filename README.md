@@ -65,10 +65,6 @@ btk --help
   btk merge union lib1 lib2 lib3 --output merged
   ```
 
-- **cloud**: Generate a URL mention graph from bookmarks.
-  ```sh
-  btk cloud mybookmarks --output graph.png
-  ```
 
 - **reachable**: Check and mark bookmarks as reachable or not.
   ```sh
@@ -105,15 +101,6 @@ btk --help
   btk version
   ```
 
-- **llm**: Use a large language model (LLM) to automatically generate appropriate queries from natural language prompts.
-  ```sh
-  btk llm mybookmarks "Find bookmarks that are starred and have a visit count greater than 0."
-  ```
-
-  Or, more complex:
-  ```sh
-  btk llm bookmarks "search for bookmarks with chatgpt in the title and has been visited at least once or it also has awesome in the title in addition to chatgpt. or, finally, it was added after 2022"
-  ```
 
 ## Example JMESPath Queries
 

@@ -1,0 +1,19 @@
+[run]
+source = btk
+branch = True
+omit = 
+    */tests/*
+    */test_*
+    */__init__.py
+    */setup.py
+
+[report]
+precision = 2
+show_missing = True
+skip_covered = False
+
+[html]
+directory = htmlcov
+
+[xml]
+output = coverage.xml
