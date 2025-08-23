@@ -100,13 +100,24 @@ def deduplicate_bookmarks(bookmarks: List[Dict],
     
     Args:
         bookmarks: List of bookmark dictionaries
-        strategy: Deduplication strategy ('merge', 'keep_first', 'keep_last', 'keep_most_visited', 'interactive')
-        key: Key to use for deduplication
+        strategy: Deduplication strategy:
+            - 'merge': Combine metadata from all duplicates (union tags, sum visits, etc.)
+            - 'keep_first': Keep the first occurrence
+            - 'keep_last': Keep the last occurrence  
+            - 'keep_most_visited': Keep the bookmark with highest visit_count
+            - 'interactive': Use custom select_func to choose
+        key: Key to use for finding duplicates (default: 'url')
         interactive: Whether to prompt for each duplicate (only for 'interactive' strategy)
-        select_func: Custom function to select which bookmark to keep (for 'interactive' strategy)
+        select_func: Function(List[Dict]) -> Dict to select which bookmark to keep
     
     Returns:
         Tuple of (deduplicated bookmarks, removed bookmarks)
+    
+    Example:
+        >>> bookmarks = [{'url': 'http://example.com', 'title': 'Ex1'}, 
+        ...              {'url': 'http://example.com', 'title': 'Ex2'}]
+        >>> deduped, removed = deduplicate_bookmarks(bookmarks, strategy='merge')
+        >>> len(deduped) == 1  # True
     """
     duplicates = find_duplicates(bookmarks, key)
     

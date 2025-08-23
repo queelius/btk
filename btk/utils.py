@@ -55,7 +55,7 @@ def jmespath_query(bookmarks, query) -> tuple:
     """
     
     if not query:
-        return bookmarks
+        return bookmarks, "filter"  # Return consistent tuple type
     bookmarks_json = json.loads(json.dumps(bookmarks))
     result = jmespath.search(query, bookmarks_json)
     if is_bookmark_json(result):
@@ -124,7 +124,9 @@ def get_next_id(bookmarks):
     """Get the next unique integer ID for a new bookmark."""
     if not bookmarks:
         return 1
-    return max(b['id'] for b in bookmarks) + 1
+    # Filter out bookmarks without 'id' field and handle gracefully
+    ids = [b.get('id', 0) for b in bookmarks if 'id' in b]
+    return max(ids) + 1 if ids else 1
 
 def generate_unique_id(url, title):
     """Generate a SHA-256 hash as a unique identifier based on URL and title."""
@@ -139,9 +141,9 @@ def is_remote_url(url):
     return parsed.scheme in ('http', 'https')
 
 def generate_unique_filename(url, default_ext='.ico'):
-    """Generate a unique filename based on the URL's MD5 hash."""
-    hash_object = hashlib.md5(url.encode())
-    filename = hash_object.hexdigest()
+    """Generate a unique filename based on the URL's SHA-256 hash."""
+    hash_object = hashlib.sha256(url.encode())
+    filename = hash_object.hexdigest()[:32]  # Use first 32 chars to keep filenames reasonable
     parsed = urlparse(url)
     file_ext = os.path.splitext(parsed.path)[1]
     if not file_ext:

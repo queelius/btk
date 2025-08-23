@@ -158,7 +158,14 @@ def rename_tag_hierarchy(bookmarks: List[Dict], old_tag: str, new_tag: str,
     
     Returns:
         Tuple of (updated bookmarks, number of bookmarks affected)
+    
+    Raises:
+        ValueError: If new_tag contains the separator multiple times consecutively
     """
+    # Validate new_tag doesn't have invalid patterns
+    if separator * 2 in new_tag:
+        raise ValueError(f"Invalid tag: '{new_tag}' contains consecutive separators")
+    
     affected_count = 0
     
     for bookmark in bookmarks:

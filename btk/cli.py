@@ -25,6 +25,7 @@ console = Console()
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
 
 def main():
+    """Main entry point for the BTK command-line interface."""
     parser = argparse.ArgumentParser(description='Bookmark Toolkit (btk) - Manage and analyze bookmarks')
     subparsers = parser.add_subparsers(dest='command', required=True, help='Available commands')
 
@@ -110,7 +111,7 @@ def main():
     edit_parser.add_argument('id', type=int, help='ID of the bookmark to edit')
     edit_parser.add_argument('--title', type=str, help='New title of the bookmark')
     edit_parser.add_argument('--url', type=str, help='New URL of the bookmark')
-    edit_parser.add_argument('--stars', action='store_true', help='Mark the bookmark as favorite')
+    edit_parser.add_argument('--stars', choices=['true', 'false'], help='Set starred status (true/false)')
     edit_parser.add_argument('--tags', type=str, nargs='+', help='Comma-separated tags for the bookmark')
     edit_parser.add_argument('--description', type=str, help='Description or notes for the bookmark')
     edit_parser.add_argument('--json', action='store_true', help='Output result in JSON format')
@@ -536,7 +537,7 @@ def main():
                 if args.url:
                     b['url'] = args.url
                 if args.stars:
-                    b['stars'] = args.stars
+                    b['stars'] = args.stars == 'true'
                 if args.tags:
                     b['tags'] = [tag.strip() for tag in args.tags]
                 if args.description:
@@ -565,9 +566,9 @@ def main():
         utils.save_bookmarks(bookmarks, None, lib_dir)
 
     elif args.command == 'merge':
-        merge_command = args.set_command
+        merge_command = args.merge_command
         lib_dirs = args.lib_dirs
-        output_dir = args.output_dir
+        output_dir = args.output
         utils.ensure_dir(output_dir)
 
         # Validate all input library directories

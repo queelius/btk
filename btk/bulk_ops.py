@@ -9,11 +9,19 @@ import concurrent.futures
 import requests
 from bs4 import BeautifulSoup
 
-from btk import utils
+from btk import utils, constants
 
 
 def normalize_url(url: str) -> str:
-    """Normalize URL for comparison."""
+    """
+    Normalize URL for comparison.
+    
+    Args:
+        url: URL to normalize
+        
+    Returns:
+        Normalized URL (lowercase, no trailing slash)
+    """
     # Simple normalization - just lowercase and remove trailing slash
     url = url.lower().rstrip('/')
     return url
@@ -52,8 +60,10 @@ def bulk_add_from_file(file_path: str, bookmarks: List[Dict], lib_dir: str,
         for line in f:
             line = line.strip()
             if line and not line.startswith('#'):  # Skip empty lines and comments
-                # Basic URL validation
-                if '://' in line or line.startswith('//'):
+                # Basic URL validation - ensure it's http/https
+                if line.startswith(('http://', 'https://', '//')):
+                    if line.startswith('//'):
+                        line = 'https:' + line  # Convert protocol-relative to https
                     urls.append(line)
     
     if not urls:
@@ -109,7 +119,7 @@ def bulk_add_from_file(file_path: str, bookmarks: List[Dict], lib_dir: str,
             
             # Create new bookmark
             new_bookmark = {
-                'id': len(bookmarks) + 1,
+                'id': utils.get_next_id(bookmarks),
                 'unique_id': utils.generate_unique_id(url, title),
                 'url': url,
                 'title': title,
@@ -133,17 +143,20 @@ def bulk_add_from_file(file_path: str, bookmarks: List[Dict], lib_dir: str,
     return bookmarks, success_count, failed_urls
 
 
-def fetch_url_title(url: str, timeout: int = 10) -> Optional[str]:
+def fetch_url_title(url: str, timeout: int = None) -> Optional[str]:
     """
     Fetch the title from a URL.
     
     Args:
         url: URL to fetch title from
-        timeout: Request timeout in seconds
+        timeout: Request timeout in seconds (default from constants)
     
     Returns:
         Title string or None if failed
     """
+    if timeout is None:
+        timeout = constants.DEFAULT_REQUEST_TIMEOUT
+        
     try:
         response = requests.get(url, timeout=timeout, headers={
             'User-Agent': 'Mozilla/5.0 (compatible; BTK/1.0)'
