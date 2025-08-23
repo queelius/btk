@@ -17,6 +17,7 @@ import btk.tag_utils as tag_utils
 import btk.dedup as dedup
 import btk.bulk_ops as bulk_ops
 import btk.auto_tag as auto_tag
+import btk.content_extractor  # Import to register plugins
 
 # Initialize colorama and rich console
 colorama_init(autoreset=True)

@@ -243,6 +243,7 @@ def enrich_bookmark_content(bookmark: Dict[str, Any]) -> Dict[str, Any]:
     extractors = plugins.get_plugins('content_extractor')
     
     if not extractors:
+        logger.warning("No content extractors available")
         return bookmark
     
     # Use the first available extractor
@@ -258,6 +259,16 @@ def enrich_bookmark_content(bookmark: Dict[str, Any]) -> Dict[str, Any]:
             bookmark['meta_keywords'] = extracted['keywords']
         if extracted.get('reading_time'):
             bookmark['reading_time'] = extracted['reading_time']
+        if extracted.get('word_count'):
+            bookmark['word_count'] = extracted['word_count']
+        
+        # Update title if we got a better one
+        if not bookmark.get('title') and extracted.get('title'):
+            bookmark['title'] = extracted['title']
+        
+        # Update description if we don't have one
+        if not bookmark.get('description') and extracted.get('description'):
+            bookmark['description'] = extracted['description']
         
         logger.info(f"Enriched bookmark with content from {extractor.name}")
         
