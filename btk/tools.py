@@ -15,6 +15,7 @@ import re
 import requests
 from colorama import init as colorama_init, Fore, Style
 import btk.utils as utils
+from btk.progress import with_progress, spinner
 
 # Initialize colorama and rich console
 colorama_init(autoreset=True)
@@ -946,6 +947,7 @@ def import_bookmarks_html_generic(html_file, bookmarks, lib_dir):
     return bookmarks
 
 
+@with_progress("Scanning directory for bookmarks")
 def import_bookmarks_directory(directory, bookmarks, lib_dir, recursive=True, formats=None):
     """Import bookmarks from all supported files in a directory.
     

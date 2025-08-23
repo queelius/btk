@@ -10,6 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from btk import utils, constants
+from btk.progress import with_progress, spinner
 
 
 def normalize_url(url: str) -> str:
@@ -175,6 +176,7 @@ def fetch_url_title(url: str, timeout: int = None) -> Optional[str]:
     return None
 
 
+@with_progress("Editing bookmarks")
 def bulk_edit_bookmarks(bookmarks: List[Dict], filter_func: callable,
                        add_tags: Optional[List[str]] = None,
                        remove_tags: Optional[List[str]] = None,
