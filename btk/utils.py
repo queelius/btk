@@ -129,6 +129,22 @@ def get_next_id(bookmarks):
     ids = [b.get('id', 0) for b in bookmarks if 'id' in b]
     return max(ids) + 1 if ids else 1
 
+
+def find_bookmark(bookmarks, bookmark_id):
+    """Find a bookmark by its ID.
+    
+    Args:
+        bookmarks: List of bookmark dictionaries
+        bookmark_id: The ID to search for
+        
+    Returns:
+        The bookmark dictionary if found, None otherwise
+    """
+    for bookmark in bookmarks:
+        if bookmark.get('id') == bookmark_id:
+            return bookmark
+    return None
+
 def generate_unique_id(url, title):
     """Generate a SHA-256 hash as a unique identifier based on URL and title."""
     unique_string = f"{url}{title}"

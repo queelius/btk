@@ -16,6 +16,7 @@ import btk.tools as tools
 import btk.tag_utils as tag_utils
 import btk.dedup as dedup
 import btk.bulk_ops as bulk_ops
+import btk.auto_tag as auto_tag
 
 # Initialize colorama and rich console
 colorama_init(autoreset=True)
@@ -248,6 +249,19 @@ def main():
     jmespath_parser.add_argument('--json', action='store_true', help='Output in JSON format')
     jmespath_parser.add_argument('--output', type=str, help='Directory to save the output bookmarks')
 
+    # Auto-tag command
+    autotag_parser = subparsers.add_parser('auto-tag', help='Automatically tag bookmarks using AI/NLP')
+    autotag_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library')
+    autotag_parser.add_argument('--id', type=int, help='Tag specific bookmark by ID')
+    autotag_parser.add_argument('--all', action='store_true', help='Tag all bookmarks')
+    autotag_parser.add_argument('--untagged', action='store_true', help='Only tag bookmarks without tags')
+    autotag_parser.add_argument('--filter-url', type=str, help='Only tag bookmarks matching URL pattern')
+    autotag_parser.add_argument('--filter-domain', type=str, help='Only tag bookmarks from domain')
+    autotag_parser.add_argument('--replace', action='store_true', help='Replace existing tags instead of appending')
+    autotag_parser.add_argument('--dry-run', action='store_true', help='Preview tags without applying')
+    autotag_parser.add_argument('--analyze', action='store_true', help='Analyze tagging coverage')
+    autotag_parser.add_argument('--enrich', action='store_true', help='Extract content before tagging')
+
     args = parser.parse_args()
 
     if args.command == 'export':
@@ -447,6 +461,111 @@ def main():
 
         else:
             raise ValueError(f"Unknown JMESPath query type: {the_type}")
+
+    elif args.command == 'auto-tag':
+        lib_dir = args.lib_dir
+        if not os.path.isdir(lib_dir):
+            logging.error(f"The specified library directory '{lib_dir}' does not exist or is not a directory.")
+            sys.exit(1)
+        
+        bookmarks = utils.load_bookmarks(lib_dir)
+        
+        # Analyze mode
+        if args.analyze:
+            stats = auto_tag.analyze_tagging_coverage(bookmarks)
+            console.print(Panel("[bold cyan]Tagging Coverage Analysis[/bold cyan]", expand=False))
+            console.print(f"Total bookmarks: {stats['total_bookmarks']}")
+            console.print(f"Tagged bookmarks: {stats['tagged_bookmarks']} ({stats['coverage_percentage']:.1f}%)")
+            console.print(f"Untagged bookmarks: {stats['untagged_bookmarks']}")
+            console.print(f"Unique tags: {stats['total_unique_tags']}")
+            console.print(f"Average tags per bookmark: {stats['average_tags_per_bookmark']:.2f}")
+            console.print(f"Single-use tags: {stats['single_use_tags']}")
+            
+            if stats['most_used_tags']:
+                console.print("\n[bold]Most used tags:[/bold]")
+                for tag, count in stats['most_used_tags'][:10]:
+                    console.print(f"  {tag}: {count} bookmarks")
+            
+            if stats['auto_tag_candidates']:
+                console.print(f"\n[bold]Found {stats['total_candidates']} candidates for auto-tagging[/bold]")
+                console.print("Top candidates:")
+                for candidate in stats['auto_tag_candidates'][:5]:
+                    console.print(f"  #{candidate['id']}: {candidate['title'][:50]}...")
+                    console.print(f"    Current tags: {candidate['current_tags'] or 'none'}")
+            
+            sys.exit(0)
+        
+        # Tag specific bookmark
+        if args.id:
+            bookmark = utils.find_bookmark(bookmarks, args.id)
+            if not bookmark:
+                console.print(f"[red]Bookmark with ID {args.id} not found.[/red]")
+                sys.exit(1)
+            
+            if args.enrich:
+                bookmark = auto_tag.enrich_bookmark_content(bookmark)
+            
+            if args.dry_run:
+                suggested_tags = auto_tag.suggest_tags_for_bookmark(bookmark)
+                console.print(f"[cyan]Suggested tags for bookmark #{args.id}:[/cyan]")
+                console.print(f"  Current: {bookmark.get('tags', [])}")
+                console.print(f"  Suggested: {suggested_tags}")
+                new_tags = [t for t in suggested_tags if t not in bookmark.get('tags', [])]
+                if new_tags:
+                    console.print(f"  New tags to add: {new_tags}")
+            else:
+                original_tags = bookmark.get('tags', []).copy()
+                bookmark = auto_tag.auto_tag_bookmark(bookmark, replace=args.replace)
+                new_tags = [t for t in bookmark.get('tags', []) if t not in original_tags]
+                
+                if new_tags:
+                    utils.save_bookmarks(bookmarks, None, lib_dir)
+                    console.print(f"[green]Tagged bookmark #{args.id} with: {new_tags}[/green]")
+                else:
+                    console.print(f"[yellow]No new tags suggested for bookmark #{args.id}[/yellow]")
+        
+        # Tag multiple bookmarks
+        elif args.all or args.untagged or args.filter_url or args.filter_domain:
+            # Create filter
+            filter_func = auto_tag.create_filter_for_auto_tag(
+                untagged_only=args.untagged,
+                url_pattern=args.filter_url,
+                domain=args.filter_domain
+            )
+            
+            # Enrich if requested
+            if args.enrich:
+                console.print("[cyan]Enriching bookmarks with content...[/cyan]")
+                for i, bookmark in enumerate(bookmarks):
+                    if filter_func(bookmark):
+                        bookmarks[i] = auto_tag.enrich_bookmark_content(bookmark)
+            
+            # Tag bookmarks
+            modified_bookmarks, stats = auto_tag.auto_tag_bookmarks(
+                bookmarks,
+                filter_func=filter_func if not args.all else None,
+                replace=args.replace,
+                dry_run=args.dry_run
+            )
+            
+            # Display results
+            console.print(Panel(f"[bold]{'Preview' if args.dry_run else 'Results'}[/bold]", expand=False))
+            console.print(f"Processed: {stats['total_processed']} bookmarks")
+            console.print(f"Tagged: {stats['total_tagged']} bookmarks")
+            console.print(f"Tags added: {stats['total_tags_added']}")
+            
+            if stats['most_common_tags']:
+                console.print("\n[bold]Most common new tags:[/bold]")
+                for tag, count in list(stats['most_common_tags'].items())[:10]:
+                    console.print(f"  {tag}: {count} bookmarks")
+            
+            if not args.dry_run and stats['total_tagged'] > 0:
+                utils.save_bookmarks(modified_bookmarks, None, lib_dir)
+                console.print(f"\n[green]Successfully auto-tagged {stats['total_tagged']} bookmarks![/green]")
+        
+        else:
+            console.print("[yellow]Please specify --id, --all, --untagged, or a filter option.[/yellow]")
+            sys.exit(1)
 
     elif args.command == 'search':
         lib_dir = args.lib_dir
