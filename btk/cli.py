@@ -18,6 +18,8 @@ import btk.dedup as dedup
 import btk.bulk_ops as bulk_ops
 import btk.auto_tag as auto_tag
 import btk.content_extractor  # Import to register plugins
+import btk.archiver as archiver
+import btk.content_cache as content_cache
 
 # Initialize colorama and rich console
 colorama_init(autoreset=True)
@@ -262,6 +264,16 @@ def main():
     autotag_parser.add_argument('--dry-run', action='store_true', help='Preview tags without applying')
     autotag_parser.add_argument('--analyze', action='store_true', help='Analyze tagging coverage')
     autotag_parser.add_argument('--enrich', action='store_true', help='Extract content before tagging')
+
+    # Archive command
+    archive_parser = subparsers.add_parser('archive', help='Archive bookmark content permanently')
+    archive_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library')
+    archive_parser.add_argument('--id', type=int, help='Archive specific bookmark by ID')
+    archive_parser.add_argument('--all', action='store_true', help='Archive all bookmarks')
+    archive_parser.add_argument('--wayback', action='store_true', help='Also save to Wayback Machine')
+    archive_parser.add_argument('--summary', action='store_true', help='Show archive summary')
+    archive_parser.add_argument('--cache-stats', action='store_true', help='Show cache statistics')
+    archive_parser.add_argument('--search', type=str, help='Search in cached content')
 
     args = parser.parse_args()
 
@@ -566,6 +578,91 @@ def main():
         
         else:
             console.print("[yellow]Please specify --id, --all, --untagged, or a filter option.[/yellow]")
+            sys.exit(1)
+
+    elif args.command == 'archive':
+        lib_dir = args.lib_dir
+        if not os.path.isdir(lib_dir):
+            logging.error(f"The specified library directory '{lib_dir}' does not exist or is not a directory.")
+            sys.exit(1)
+        
+        bookmarks = utils.load_bookmarks(lib_dir)
+        arch = archiver.get_archiver()
+        cache = content_cache.get_cache()
+        
+        # Show cache statistics
+        if args.cache_stats:
+            stats = cache.get_stats()
+            console.print(Panel("[bold cyan]Cache Statistics[/bold cyan]", expand=False))
+            console.print(f"Memory items: {stats['memory_items']}")
+            console.print(f"Disk items: {stats['disk_items']}")
+            console.print(f"Cache hits: {stats['hits']}")
+            console.print(f"Cache misses: {stats['misses']}")
+            console.print(f"Hit rate: {stats['hit_rate']:.1%}")
+            console.print(f"Evictions: {stats['evictions']}")
+            console.print(f"Cache directory: {stats['cache_dir']}")
+            sys.exit(0)
+        
+        # Show archive summary
+        if args.summary:
+            summary = arch.export_archive_summary()
+            console.print(summary)
+            sys.exit(0)
+        
+        # Search in cached content
+        if args.search:
+            results = content_cache.search_cached_content(args.search, bookmarks)
+            if results:
+                console.print(Panel(f"[bold]Found {len(results)} matches in cached content[/bold]", expand=False))
+                for result in results[:10]:
+                    bookmark = result['bookmark']
+                    console.print(f"\n[bold cyan]#{bookmark['id']}: {bookmark['title']}[/bold cyan]")
+                    console.print(f"URL: {bookmark['url']}")
+                    console.print(f"Score: {result['score']}, Matches in: {', '.join(result['matches'])}")
+                    if result['snippet']:
+                        console.print(f"Snippet: ...{result['snippet']}...")
+            else:
+                console.print("[yellow]No matches found in cached content.[/yellow]")
+            sys.exit(0)
+        
+        # Archive specific bookmark
+        if args.id:
+            bookmark = utils.find_bookmark(bookmarks, args.id)
+            if not bookmark:
+                console.print(f"[red]Bookmark with ID {args.id} not found.[/red]")
+                sys.exit(1)
+            
+            console.print(f"[cyan]Archiving bookmark #{args.id}...[/cyan]")
+            result = arch.archive_bookmark(bookmark, save_to_wayback=args.wayback)
+            
+            if result:
+                console.print(f"[green]Successfully archived bookmark #{args.id}[/green]")
+                console.print(f"Archive key: {result['archive_key']}")
+                console.print(f"Timestamp: {result['timestamp']}")
+                if result.get('wayback_url'):
+                    console.print(f"Wayback URL: {result['wayback_url']}")
+            else:
+                console.print(f"[red]Failed to archive bookmark #{args.id}[/red]")
+        
+        # Archive multiple bookmarks
+        elif args.all:
+            console.print(f"[cyan]Archiving {len(bookmarks)} bookmarks...[/cyan]")
+            
+            def progress(current, total, url):
+                console.print(f"[{current}/{total}] Archiving {url[:50]}...")
+            
+            stats = arch.bulk_archive(bookmarks, progress_callback=progress)
+            
+            console.print(Panel("[bold]Archive Results[/bold]", expand=False))
+            console.print(f"Total: {stats['total']}")
+            console.print(f"Archived: {stats['archived']}")
+            console.print(f"Already archived: {stats['already_archived']}")
+            console.print(f"Failed: {stats['failed']}")
+            if args.wayback:
+                console.print(f"Saved to Wayback: {stats['wayback_saved']}")
+        
+        else:
+            console.print("[yellow]Please specify --id, --all, --summary, --cache-stats, or --search.[/yellow]")
             sys.exit(1)
 
     elif args.command == 'search':

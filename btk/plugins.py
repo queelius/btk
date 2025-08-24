@@ -1,156 +1,135 @@
 """
 BTK Plugin Architecture
 
-This module provides the plugin system for BTK, allowing integrations to extend
-core functionality without modifying the core codebase.
+A clean, secure plugin system for extending BTK functionality.
 
-The plugin system uses abstract base classes to define interfaces that integrations
-can implement. Core BTK can then use these implementations when available.
+Key features:
+- Instantiable registry (not global) for better testing
+- No import-time side effects
+- Version compatibility checking
+- Comprehensive error handling and validation
+- Type-safe interfaces using ABCs
+- Priority-based plugin selection
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional, Set, Callable
-from dataclasses import dataclass
+from typing import List, Dict, Any, Optional, Set, Callable, Type
+from dataclasses import dataclass, field
 import logging
-from pathlib import Path
+from enum import Enum
+import inspect
 
 logger = logging.getLogger(__name__)
+
+# Version compatibility
+BTK_PLUGIN_API_VERSION = "1.0"
+
+
+# ============================================================================
+# Plugin Metadata
+# ============================================================================
+
+@dataclass
+class PluginMetadata:
+    """Metadata for a plugin."""
+    name: str
+    version: str
+    author: str = ""
+    description: str = ""
+    btk_version_required: str = BTK_PLUGIN_API_VERSION
+    dependencies: List[str] = field(default_factory=list)
+    priority: int = 50  # 0-100, with 50 as default
+    enabled: bool = True
+
+
+class PluginPriority(Enum):
+    """Standard priority levels for plugins."""
+    LOWEST = 0
+    LOW = 25
+    NORMAL = 50
+    HIGH = 75
+    HIGHEST = 100
 
 
 # ============================================================================
 # Plugin Interfaces
 # ============================================================================
 
-class TagSuggester(ABC):
+class Plugin(ABC):
+    """Base class for all plugins."""
+    
+    @property
+    @abstractmethod
+    def metadata(self) -> PluginMetadata:
+        """Return plugin metadata."""
+        pass
+    
+    def validate(self) -> bool:
+        """
+        Validate that the plugin is properly configured.
+        Override for custom validation logic.
+        """
+        return True
+    
+    def on_register(self, registry: 'PluginRegistry') -> None:
+        """
+        Called when plugin is registered.
+        Override for initialization logic.
+        """
+        pass
+    
+    def on_unregister(self, registry: 'PluginRegistry') -> None:
+        """
+        Called when plugin is unregistered.
+        Override for cleanup logic.
+        """
+        pass
+
+
+class TagSuggester(Plugin):
     """Interface for tag suggestion implementations."""
     
     @abstractmethod
     def suggest_tags(self, url: str, title: str = None, content: str = None, 
                     description: str = None) -> List[str]:
-        """
-        Suggest tags for a bookmark based on its content.
-        
-        Args:
-            url: The bookmark URL
-            title: Optional page title
-            content: Optional page content (text)
-            description: Optional bookmark description
-            
-        Returns:
-            List of suggested tags
-        """
-        pass
-    
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        """Return the name of this tag suggester."""
+        """Suggest tags for a bookmark based on its content."""
         pass
 
 
-class ContentExtractor(ABC):
+class ContentExtractor(Plugin):
     """Interface for content extraction implementations."""
     
     @abstractmethod
-    def extract(self, url: str) -> Dict[str, Any]:
-        """
-        Extract content from a URL.
-        
-        Args:
-            url: The URL to extract content from
-            
-        Returns:
-            Dictionary with extracted content:
-                - title: Page title
-                - text: Main text content
-                - description: Meta description
-                - keywords: Meta keywords
-                - author: Author if available
-                - published_date: Publication date if available
-                - reading_time: Estimated reading time in minutes
-                - word_count: Number of words
-                - language: Detected language
-                - images: List of image URLs
-        """
-        pass
-    
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        """Return the name of this content extractor."""
+    def extract(self, url: str, **kwargs) -> Dict[str, Any]:
+        """Extract content from a URL."""
         pass
 
 
-class SimilarityFinder(ABC):
+class SimilarityFinder(Plugin):
     """Interface for finding similar bookmarks."""
     
     @abstractmethod
     def find_similar(self, bookmark: Dict[str, Any], bookmarks: List[Dict[str, Any]], 
                     threshold: float = 0.7) -> List[Dict[str, Any]]:
-        """
-        Find bookmarks similar to the given bookmark.
-        
-        Args:
-            bookmark: The reference bookmark
-            bookmarks: List of bookmarks to search
-            threshold: Similarity threshold (0-1)
-            
-        Returns:
-            List of similar bookmarks with similarity scores
-        """
-        pass
-    
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        """Return the name of this similarity finder."""
+        """Find bookmarks similar to the given bookmark."""
         pass
 
 
-class SearchEnhancer(ABC):
+class SearchEnhancer(Plugin):
     """Interface for enhanced search implementations."""
     
     @abstractmethod
     def search(self, query: str, bookmarks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Perform enhanced search on bookmarks.
-        
-        Args:
-            query: Search query (can be natural language)
-            bookmarks: List of bookmarks to search
-            
-        Returns:
-            List of matching bookmarks ranked by relevance
-        """
-        pass
-    
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        """Return the name of this search enhancer."""
+        """Perform enhanced search on bookmarks."""
         pass
 
 
-class BookmarkEnricher(ABC):
-    """Interface for bookmark enrichment (adding metadata)."""
+class BookmarkEnricher(Plugin):
+    """Interface for bookmark enrichment."""
     
     @abstractmethod
     def enrich(self, bookmark: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Enrich a bookmark with additional metadata.
-        
-        Args:
-            bookmark: The bookmark to enrich
-            
-        Returns:
-            Enriched bookmark with additional fields
-        """
-        pass
-    
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        """Return the name of this enricher."""
+        """Enrich a bookmark with additional metadata."""
         pass
 
 
@@ -158,103 +137,193 @@ class BookmarkEnricher(ABC):
 # Plugin Registry
 # ============================================================================
 
-@dataclass
-class Plugin:
-    """Container for plugin metadata."""
-    name: str
-    type: str
-    instance: Any
-    priority: int = 0  # Higher priority plugins are used first
-    enabled: bool = True
+class PluginError(Exception):
+    """Base exception for plugin-related errors."""
+    pass
+
+
+class PluginVersionError(PluginError):
+    """Raised when plugin version is incompatible."""
+    pass
+
+
+class PluginValidationError(PluginError):
+    """Raised when plugin validation fails."""
+    pass
 
 
 class PluginRegistry:
-    """Central registry for all plugins."""
+    """
+    Central registry for all plugins.
+    Now instantiable for better testing and isolation.
+    """
     
-    def __init__(self):
+    # Plugin type to interface mapping
+    PLUGIN_INTERFACES = {
+        'tag_suggester': TagSuggester,
+        'content_extractor': ContentExtractor,
+        'similarity_finder': SimilarityFinder,
+        'search_enhancer': SearchEnhancer,
+        'bookmark_enricher': BookmarkEnricher,
+    }
+    
+    def __init__(self, validate_strict: bool = True):
+        """
+        Initialize the plugin registry.
+        
+        Args:
+            validate_strict: If True, raise errors on validation failures.
+                           If False, log warnings and skip invalid plugins.
+        """
         self._plugins: Dict[str, List[Plugin]] = {
-            'tag_suggester': [],
-            'content_extractor': [],
-            'similarity_finder': [],
-            'search_enhancer': [],
-            'bookmark_enricher': [],
+            plugin_type: [] for plugin_type in self.PLUGIN_INTERFACES
         }
         self._features: Set[str] = set()
         self._hooks: Dict[str, List[Callable]] = {}
+        self.validate_strict = validate_strict
     
-    def register(self, plugin_type: str, instance: Any, name: str = None, 
-                priority: int = 0) -> None:
+    def register(self, plugin: Plugin, plugin_type: str = None) -> None:
         """
         Register a plugin instance.
         
         Args:
-            plugin_type: Type of plugin (e.g., 'tag_suggester')
-            instance: The plugin instance
-            name: Optional name override
-            priority: Plugin priority (higher = used first)
+            plugin: The plugin instance
+            plugin_type: Type of plugin (auto-detected if not provided)
+            
+        Raises:
+            PluginError: If plugin type is invalid or validation fails
+            PluginVersionError: If plugin requires incompatible BTK version
+            PluginValidationError: If plugin validation fails
         """
-        if plugin_type not in self._plugins:
-            raise ValueError(f"Unknown plugin type: {plugin_type}")
+        # Auto-detect plugin type if not provided
+        if plugin_type is None:
+            plugin_type = self._detect_plugin_type(plugin)
         
-        plugin_name = name or getattr(instance, 'name', instance.__class__.__name__)
+        if plugin_type not in self.PLUGIN_INTERFACES:
+            raise PluginError(f"Unknown plugin type: {plugin_type}")
         
-        plugin = Plugin(
-            name=plugin_name,
-            type=plugin_type,
-            instance=instance,
-            priority=priority,
-            enabled=True
+        # Validate plugin implements correct interface
+        expected_interface = self.PLUGIN_INTERFACES[plugin_type]
+        if not isinstance(plugin, expected_interface):
+            raise PluginError(
+                f"Plugin {plugin.metadata.name} does not implement {expected_interface.__name__}"
+            )
+        
+        # Check version compatibility
+        if not self._check_version_compatibility(plugin.metadata.btk_version_required):
+            error_msg = (
+                f"Plugin {plugin.metadata.name} requires BTK API version "
+                f"{plugin.metadata.btk_version_required}, but current version is "
+                f"{BTK_PLUGIN_API_VERSION}"
+            )
+            if self.validate_strict:
+                raise PluginVersionError(error_msg)
+            else:
+                logger.warning(error_msg)
+                return
+        
+        # Validate plugin
+        try:
+            if not plugin.validate():
+                error_msg = f"Plugin {plugin.metadata.name} validation failed"
+                if self.validate_strict:
+                    raise PluginValidationError(error_msg)
+                else:
+                    logger.warning(error_msg)
+                    return
+        except Exception as e:
+            error_msg = f"Plugin {plugin.metadata.name} validation error: {e}"
+            if self.validate_strict:
+                raise PluginValidationError(error_msg) from e
+            else:
+                logger.warning(error_msg)
+                return
+        
+        # Check for duplicate names
+        for existing in self._plugins[plugin_type]:
+            if existing.metadata.name == plugin.metadata.name:
+                logger.warning(
+                    f"Plugin {plugin.metadata.name} already registered for {plugin_type}, "
+                    f"replacing"
+                )
+                self._plugins[plugin_type].remove(existing)
+                existing.on_unregister(self)
+                break
+        
+        # Register the plugin
+        self._plugins[plugin_type].append(plugin)
+        self._plugins[plugin_type].sort(
+            key=lambda p: p.metadata.priority, 
+            reverse=True
         )
         
-        self._plugins[plugin_type].append(plugin)
-        self._plugins[plugin_type].sort(key=lambda p: p.priority, reverse=True)
-        
-        # Add feature flag
+        # Update features
         self._features.add(plugin_type)
-        self._features.add(f"{plugin_type}:{plugin_name}")
+        self._features.add(f"{plugin_type}:{plugin.metadata.name}")
         
-        logger.info(f"Registered {plugin_type}: {plugin_name} (priority: {priority})")
+        # Call registration hook
+        plugin.on_register(self)
+        
+        logger.info(
+            f"Registered {plugin_type}: {plugin.metadata.name} "
+            f"(priority: {plugin.metadata.priority})"
+        )
     
-    def get_plugins(self, plugin_type: str, enabled_only: bool = True) -> List[Any]:
+    def unregister(self, plugin_type: str, name: str) -> bool:
         """
-        Get all plugins of a specific type.
+        Unregister a plugin.
         
         Args:
-            plugin_type: Type of plugin to retrieve
-            enabled_only: Only return enabled plugins
+            plugin_type: Type of plugin
+            name: Plugin name
             
         Returns:
-            List of plugin instances
+            True if plugin was found and unregistered
         """
+        if plugin_type not in self._plugins:
+            return False
+        
+        for plugin in self._plugins[plugin_type]:
+            if plugin.metadata.name == name:
+                plugin.on_unregister(self)
+                self._plugins[plugin_type].remove(plugin)
+                
+                # Update features
+                feature_key = f"{plugin_type}:{name}"
+                if feature_key in self._features:
+                    self._features.remove(feature_key)
+                
+                # Check if any plugins of this type remain
+                if not self._plugins[plugin_type]:
+                    self._features.discard(plugin_type)
+                
+                logger.info(f"Unregistered {plugin_type}: {name}")
+                return True
+        
+        return False
+    
+    def get_plugins(self, plugin_type: str, enabled_only: bool = True) -> List[Plugin]:
+        """Get all plugins of a specific type."""
         if plugin_type not in self._plugins:
             return []
         
         plugins = self._plugins[plugin_type]
         if enabled_only:
-            plugins = [p for p in plugins if p.enabled]
+            plugins = [p for p in plugins if p.metadata.enabled]
         
-        return [p.instance for p in plugins]
+        return plugins
     
-    def get_plugin(self, plugin_type: str, name: str = None) -> Optional[Any]:
-        """
-        Get a specific plugin or the highest priority one.
-        
-        Args:
-            plugin_type: Type of plugin
-            name: Optional specific plugin name
-            
-        Returns:
-            Plugin instance or None
-        """
+    def get_plugin(self, plugin_type: str, name: str = None) -> Optional[Plugin]:
+        """Get a specific plugin or the highest priority one."""
         plugins = self.get_plugins(plugin_type)
         
         if not plugins:
             return None
         
         if name:
-            for plugin in self._plugins[plugin_type]:
-                if plugin.name == name and plugin.enabled:
-                    return plugin.instance
+            for plugin in plugins:
+                if plugin.metadata.name == name:
+                    return plugin
             return None
         
         return plugins[0]  # Return highest priority
@@ -267,28 +336,31 @@ class PluginRegistry:
         """List all available features."""
         return sorted(list(self._features))
     
-    def disable_plugin(self, plugin_type: str, name: str) -> bool:
-        """Disable a specific plugin."""
-        for plugin in self._plugins[plugin_type]:
-            if plugin.name == name:
-                plugin.enabled = False
+    def set_plugin_enabled(self, plugin_type: str, name: str, enabled: bool) -> bool:
+        """Enable or disable a plugin."""
+        for plugin in self._plugins.get(plugin_type, []):
+            if plugin.metadata.name == name:
+                plugin.metadata.enabled = enabled
+                logger.info(f"{'Enabled' if enabled else 'Disabled'} {plugin_type}: {name}")
                 return True
         return False
     
-    def enable_plugin(self, plugin_type: str, name: str) -> bool:
-        """Enable a specific plugin."""
-        for plugin in self._plugins[plugin_type]:
-            if plugin.name == name:
-                plugin.enabled = True
-                return True
-        return False
-    
-    # Hook system for event-based plugins
     def register_hook(self, event: str, callback: Callable) -> None:
         """Register a callback for an event."""
         if event not in self._hooks:
             self._hooks[event] = []
         self._hooks[event].append(callback)
+        logger.debug(f"Registered hook for event: {event}")
+    
+    def unregister_hook(self, event: str, callback: Callable) -> bool:
+        """Unregister a callback for an event."""
+        if event in self._hooks and callback in self._hooks[event]:
+            self._hooks[event].remove(callback)
+            if not self._hooks[event]:
+                del self._hooks[event]
+            logger.debug(f"Unregistered hook for event: {event}")
+            return True
+        return False
     
     def trigger_hook(self, event: str, *args, **kwargs) -> List[Any]:
         """Trigger all callbacks for an event."""
@@ -299,217 +371,104 @@ class PluginRegistry:
                 results.append(result)
             except Exception as e:
                 logger.error(f"Hook {callback.__name__} failed for event {event}: {e}")
+                if self.validate_strict:
+                    raise
         return results
-
-
-# Global registry instance
-_registry = PluginRegistry()
-
-
-# ============================================================================
-# Public API
-# ============================================================================
-
-def register_plugin(plugin_type: str, instance: Any, name: str = None, 
-                   priority: int = 0) -> None:
-    """Register a plugin with the global registry."""
-    _registry.register(plugin_type, instance, name, priority)
-
-
-def get_plugins(plugin_type: str) -> List[Any]:
-    """Get all plugins of a specific type."""
-    return _registry.get_plugins(plugin_type)
-
-
-def get_plugin(plugin_type: str, name: str = None) -> Optional[Any]:
-    """Get a specific plugin or the highest priority one."""
-    return _registry.get_plugin(plugin_type, name)
-
-
-def has_feature(feature: str) -> bool:
-    """Check if a feature is available."""
-    return _registry.has_feature(feature)
-
-
-def list_features() -> List[str]:
-    """List all available features."""
-    return _registry.list_features()
-
-
-def register_hook(event: str, callback: Callable) -> None:
-    """Register a callback for an event."""
-    _registry.register_hook(event, callback)
-
-
-def trigger_hook(event: str, *args, **kwargs) -> List[Any]:
-    """Trigger all callbacks for an event."""
-    return _registry.trigger_hook(event, *args, **kwargs)
-
-
-# ============================================================================
-# Built-in Core Implementations
-# ============================================================================
-
-class DomainBasedTagSuggester(TagSuggester):
-    """Simple domain-based tag suggester (built into core)."""
     
-    def __init__(self):
-        self.domain_rules = {
-            'github.com': ['code', 'development'],
-            'stackoverflow.com': ['qa', 'programming'],
-            'arxiv.org': ['research', 'paper'],
-            'youtube.com': ['video'],
-            'wikipedia.org': ['reference'],
-            'reddit.com': ['discussion', 'community'],
-            'medium.com': ['article', 'blog'],
-            'twitter.com': ['social'],
-            'linkedin.com': ['professional', 'network'],
-            'news.ycombinator.com': ['tech', 'news'],
-        }
+    def get_plugin_info(self, plugin_type: str = None) -> Dict[str, Any]:
+        """Get information about registered plugins."""
+        info = {}
+        
+        types_to_check = [plugin_type] if plugin_type else self._plugins.keys()
+        
+        for ptype in types_to_check:
+            info[ptype] = []
+            for plugin in self._plugins.get(ptype, []):
+                info[ptype].append({
+                    'name': plugin.metadata.name,
+                    'version': plugin.metadata.version,
+                    'author': plugin.metadata.author,
+                    'description': plugin.metadata.description,
+                    'priority': plugin.metadata.priority,
+                    'enabled': plugin.metadata.enabled,
+                    'dependencies': plugin.metadata.dependencies,
+                })
+        
+        return info
     
-    def suggest_tags(self, url: str, title: str = None, content: str = None,
-                    description: str = None) -> List[str]:
-        """Suggest tags based on domain."""
-        tags = []
-        
-        # Extract domain
-        from urllib.parse import urlparse
-        domain = urlparse(url).netloc.lower()
-        domain = domain.replace('www.', '')
-        
-        # Apply domain rules
-        if domain in self.domain_rules:
-            tags.extend(self.domain_rules[domain])
-        
-        # Extract from URL path
-        path = urlparse(url).path.lower()
-        if '/blog/' in path or '/posts/' in path:
-            tags.append('blog')
-        if '/docs/' in path or '/documentation/' in path:
-            tags.append('documentation')
-        if '/api/' in path:
-            tags.append('api')
-        if '/tutorial/' in path or '/guide/' in path:
-            tags.append('tutorial')
-        
-        # Simple keyword extraction from title
-        if title:
-            title_lower = title.lower()
-            keywords = {
-                'python': 'python',
-                'javascript': 'javascript',
-                'react': 'react',
-                'vue': 'vue',
-                'machine learning': 'ml',
-                'artificial intelligence': 'ai',
-                'data science': 'data-science',
-                'web development': 'webdev',
-                'tutorial': 'tutorial',
-                'guide': 'guide',
-                'introduction': 'intro',
-                'advanced': 'advanced',
-            }
-            for keyword, tag in keywords.items():
-                if keyword in title_lower:
-                    tags.append(tag)
-        
-        return list(set(tags))  # Remove duplicates
+    def _detect_plugin_type(self, plugin: Plugin) -> str:
+        """Auto-detect plugin type based on inheritance."""
+        for plugin_type, interface in self.PLUGIN_INTERFACES.items():
+            if isinstance(plugin, interface):
+                return plugin_type
+        raise PluginError(f"Could not detect plugin type for {plugin.__class__.__name__}")
     
-    @property
-    def name(self) -> str:
-        return "domain_based"
-
-
-class KeywordTagSuggester(TagSuggester):
-    """Simple keyword-based tag suggester (built into core)."""
+    def _check_version_compatibility(self, required_version: str) -> bool:
+        """Check if required version is compatible with current API version."""
+        # Simple major version check for now
+        # Could be extended with semantic versioning
+        current_major = BTK_PLUGIN_API_VERSION.split('.')[0]
+        required_major = required_version.split('.')[0]
+        return current_major == required_major
     
-    def suggest_tags(self, url: str, title: str = None, content: str = None,
-                    description: str = None) -> List[str]:
-        """Extract tags from keywords in title and description."""
-        tags = []
-        
-        # Combine all text
-        text = ' '.join(filter(None, [title, description]))
-        if not text:
-            return tags
-        
-        # Simple keyword frequency analysis
-        import re
-        from collections import Counter
-        
-        # Extract words
-        words = re.findall(r'\b[a-z]+\b', text.lower())
-        
-        # Filter common words
-        stopwords = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 
-                    'for', 'of', 'with', 'by', 'from', 'up', 'about', 'into', 'through',
-                    'during', 'how', 'when', 'where', 'why', 'what', 'which', 'who',
-                    'is', 'are', 'was', 'were', 'been', 'be', 'have', 'has', 'had',
-                    'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may',
-                    'might', 'must', 'can', 'this', 'that', 'these', 'those', 'i',
-                    'you', 'he', 'she', 'it', 'we', 'they', 'them', 'their', 'as'}
-        
-        words = [w for w in words if w not in stopwords and len(w) > 2]
-        
-        # Get most common words as tags
-        word_freq = Counter(words)
-        tags = [word for word, _ in word_freq.most_common(5)]
-        
-        return tags
-    
-    @property
-    def name(self) -> str:
-        return "keyword_based"
-
-
-# Register built-in plugins
-register_plugin('tag_suggester', DomainBasedTagSuggester(), priority=10)
-register_plugin('tag_suggester', KeywordTagSuggester(), priority=5)
+    def clear(self) -> None:
+        """Clear all registered plugins. Useful for testing."""
+        for plugin_type in self._plugins:
+            for plugin in list(self._plugins[plugin_type]):
+                plugin.on_unregister(self)
+            self._plugins[plugin_type].clear()
+        self._features.clear()
+        self._hooks.clear()
+        logger.info("Cleared all plugins from registry")
 
 
 # ============================================================================
-# Plugin Discovery
+# Default Registry Instance (Optional)
 # ============================================================================
 
-def discover_plugins(plugin_dir: Path = None) -> None:
+def create_default_registry() -> PluginRegistry:
     """
-    Discover and load plugins from a directory.
+    Create a default registry instance.
+    This is now a factory function instead of a global variable.
+    """
+    registry = PluginRegistry(validate_strict=False)
+    
+    # Load built-in plugins from integrations if available
+    try:
+        from integrations import load_builtin_plugins
+        load_builtin_plugins(registry)
+    except ImportError:
+        logger.debug("No built-in integrations found")
+    
+    return registry
+
+
+# ============================================================================
+# Plugin Loading from Integrations
+# ============================================================================
+
+def load_integration_plugins(registry: PluginRegistry, integration_names: List[str]) -> None:
+    """
+    Load plugins from specified integrations.
     
     Args:
-        plugin_dir: Directory to search for plugins (default: ~/.btk/plugins)
+        registry: The plugin registry to register to
+        integration_names: List of integration names (e.g., ['cache', 'archive'])
     """
-    if plugin_dir is None:
-        plugin_dir = Path.home() / '.btk' / 'plugins'
-    
-    if not plugin_dir.exists():
-        return
-    
-    import importlib.util
-    import sys
-    
-    for plugin_file in plugin_dir.glob('*.py'):
-        if plugin_file.name.startswith('_'):
-            continue
-        
+    for name in integration_names:
         try:
-            # Load the module
-            spec = importlib.util.spec_from_file_location(
-                f"btk_plugin_{plugin_file.stem}", 
-                plugin_file
-            )
-            module = importlib.util.module_from_spec(spec)
-            sys.modules[spec.name] = module
-            spec.loader.exec_module(module)
+            # Try to import the integration module
+            import importlib
+            module = importlib.import_module(f'integrations.{name}')
             
-            # Module should register itself
-            logger.info(f"Loaded plugin from {plugin_file}")
-            
+            # Look for a register_plugins function
+            if hasattr(module, 'register_plugins'):
+                module.register_plugins(registry)
+                logger.info(f"Loaded plugins from integration: {name}")
+            else:
+                logger.warning(f"Integration {name} has no register_plugins function")
+                
+        except ImportError as e:
+            logger.debug(f"Integration {name} not available: {e}")
         except Exception as e:
-            logger.error(f"Failed to load plugin {plugin_file}: {e}")
-
-
-# Auto-discover plugins on import
-try:
-    discover_plugins()
-except Exception as e:
-    logger.warning(f"Plugin discovery failed: {e}")
+            logger.error(f"Failed to load integration {name}: {e}")

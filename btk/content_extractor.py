@@ -13,29 +13,43 @@ from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from . import plugins
+from .plugins import ContentExtractor, TagSuggester, PluginMetadata
 from .constants import DEFAULT_REQUEST_TIMEOUT
+from . import content_cache
 
 logger = logging.getLogger(__name__)
 
 
-class BasicContentExtractor(plugins.ContentExtractor):
+class BasicContentExtractor(ContentExtractor):
     """Basic content extractor using BeautifulSoup (built into core)."""
     
-    def __init__(self, timeout: int = DEFAULT_REQUEST_TIMEOUT):
+    def __init__(self, timeout: int = DEFAULT_REQUEST_TIMEOUT, use_cache: bool = True):
         self.timeout = timeout
+        self.use_cache = use_cache
+        self.cache = content_cache.get_cache() if use_cache else None
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (compatible; BTK/1.0; +https://github.com/queelius/btk)'
         })
     
-    def extract(self, url: str) -> Dict[str, Any]:
+    def extract(self, url: str, force_fetch: bool = False) -> Dict[str, Any]:
         """
         Extract content from a URL.
+        
+        Args:
+            url: URL to extract from
+            force_fetch: Force fetching even if cached
         
         Returns:
             Dictionary with extracted content
         """
+        # Check cache first if not forcing fetch
+        if self.cache and not force_fetch:
+            cached = self.cache.get(url)
+            if cached:
+                logger.debug(f"Using cached content for {url}")
+                return cached
+        
         result = {
             'url': url,
             'title': None,
@@ -143,6 +157,10 @@ class BasicContentExtractor(plugins.ContentExtractor):
             
             logger.info(f"Successfully extracted content from {url}")
             
+            # Cache the result
+            if self.cache:
+                self.cache.set(url, result)
+            
         except requests.RequestException as e:
             logger.error(f"Failed to fetch {url}: {e}")
         except Exception as e:
@@ -202,11 +220,16 @@ class BasicContentExtractor(plugins.ContentExtractor):
         return text[:10000]
     
     @property
-    def name(self) -> str:
-        return "basic_content_extractor"
+    def metadata(self) -> PluginMetadata:
+        return PluginMetadata(
+            name="basic_content_extractor",
+            version="1.0.0",
+            description="Basic content extractor using BeautifulSoup",
+            dependencies=["beautifulsoup4", "requests"]
+        )
 
 
-class EnhancedTagSuggester(plugins.TagSuggester):
+class EnhancedTagSuggester(TagSuggester):
     """Enhanced tag suggester that uses extracted content."""
     
     def suggest_tags(self, url: str, title: str = None, content: str = None,
@@ -291,10 +314,14 @@ class EnhancedTagSuggester(plugins.TagSuggester):
         return list(set(tags))  # Remove duplicates
     
     @property
-    def name(self) -> str:
-        return "enhanced_content"
+    def metadata(self) -> PluginMetadata:
+        return PluginMetadata(
+            name="enhanced_content",
+            version="1.0.0",
+            description="Enhanced tag suggester using content analysis",
+            priority=20
+        )
 
 
-# Register the extractors and enhanced tagger
-plugins.register_plugin('content_extractor', BasicContentExtractor(), priority=10)
-plugins.register_plugin('tag_suggester', EnhancedTagSuggester(), priority=20)
+# Note: Plugins should be registered by the application when needed,
+# not at import time. This allows for better testing and configuration.
