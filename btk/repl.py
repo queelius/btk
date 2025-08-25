@@ -142,6 +142,8 @@ class BtkReplCore:
             "plugin": self.cmd_plugin,
             "autotag": self.cmd_autotag,
             "enrich": self.cmd_enrich,
+            "extract": self.cmd_extract,
+            "check-links": self.cmd_check_links,
         }
         
         # Command aliases
@@ -367,10 +369,14 @@ Collection Operations:
 Plugin Operations:
   plugins         List all available plugins
   plugin <name>   Show plugin details or execute method
+    plugin <name> <method> <id|url>  Execute plugin method
+  
   autotag [range] Auto-tag bookmarks using AI/NLP
     --plugin=NAME   Use specific auto-tagger plugin
   enrich [range]  Enrich bookmarks with metadata
     --plugin=NAME   Use specific enricher plugin
+  extract <id|url> Extract content from bookmark or URL
+  check-links [range] Check if bookmarks are reachable
 
 Special Prefixes:
   !<command>      Execute shell command
@@ -1230,9 +1236,96 @@ Top 5 tags:
         
         try:
             method = getattr(found_plugin, method_name)
-            # Simple execution - may need enhancement for complex plugins
+            
+            # Special handling for common plugin methods
+            if method_name in ['extract', 'enrich', 'tag', 'generate_tags']:
+                if not method_args:
+                    return CommandResult(False, error=f"Usage: plugin {plugin_name} {method_name} <bookmark_id|url>")
+                
+                arg = method_args[0]
+                
+                # Check if it's a bookmark ID
+                if arg.isdigit() and self.context.current_lib:
+                    bookmark_id = int(arg)
+                    bookmarks = utils.load_bookmarks(self.context.current_lib)
+                    bookmark = next((b for b in bookmarks if b.get('id') == bookmark_id), None)
+                    
+                    if not bookmark:
+                        return CommandResult(False, error=f"Bookmark #{bookmark_id} not found")
+                    
+                    # Call method with appropriate argument
+                    if method_name == 'extract':
+                        # Content extractors expect URL
+                        result = method(bookmark['url'])
+                        output = [f"Extracted content from bookmark #{bookmark_id}:\n"]
+                        if isinstance(result, dict):
+                            for key, value in result.items():
+                                if key != 'content' or len(str(value)) < 500:
+                                    output.append(f"  {key}: {str(value)[:200]}")
+                                else:
+                                    output.append(f"  content: {str(value)[:500]}...")
+                        else:
+                            output.append(str(result))
+                        return CommandResult(True, output='\n'.join(output))
+                    
+                    elif method_name == 'enrich':
+                        # Enrichers expect bookmark dict
+                        enriched = method(bookmark)
+                        
+                        # Show what changed
+                        output = [f"Enriched bookmark #{bookmark_id}:"]
+                        for key in enriched:
+                            if key not in bookmark or enriched[key] != bookmark.get(key):
+                                if key not in ['id', 'url', 'unique_id']:
+                                    value = str(enriched[key])[:100]
+                                    output.append(f"  + {key}: {value}")
+                        
+                        # Optionally save
+                        output.append("\nSave changes? Use 'edit <id> <field> <value>' to update specific fields")
+                        return CommandResult(True, output='\n'.join(output))
+                    
+                    elif method_name in ['tag', 'generate_tags']:
+                        # Tag suggesters expect bookmark dict
+                        suggested_tags = method(bookmark)
+                        output = [f"Suggested tags for bookmark #{bookmark_id}:"]
+                        if suggested_tags:
+                            output.append(f"  {', '.join(suggested_tags)}")
+                            output.append(f"\nAdd tags? Use 'tag {bookmark_id} {','.join(suggested_tags)}'")
+                        else:
+                            output.append("  No tags suggested")
+                        return CommandResult(True, output='\n'.join(output))
+                
+                # Otherwise treat as URL or direct argument
+                elif method_name == 'extract' and (arg.startswith('http://') or arg.startswith('https://')):
+                    result = method(arg)
+                    output = ["Extracted content:\n"]
+                    if isinstance(result, dict):
+                        for key, value in result.items():
+                            if key != 'content' or len(str(value)) < 500:
+                                output.append(f"  {key}: {str(value)[:200]}")
+                            else:
+                                output.append(f"  content: {str(value)[:500]}...")
+                    else:
+                        output.append(str(result))
+                    return CommandResult(True, output='\n'.join(output))
+            
+            # Default execution for other methods
             result = method(*method_args) if method_args else method()
             return CommandResult(True, output=str(result))
+            
+        except TypeError as e:
+            # Provide helpful usage hints
+            import inspect
+            sig = inspect.signature(method)
+            params = list(sig.parameters.keys())
+            if 'self' in params:
+                params.remove('self')
+            
+            usage = f"Usage: plugin {plugin_name} {method_name}"
+            if params:
+                usage += f" <{', '.join(params)}>"
+            
+            return CommandResult(False, error=f"{e}\n{usage}")
         except Exception as e:
             return CommandResult(False, error=f"Plugin execution error: {e}")
     
@@ -1389,6 +1482,118 @@ Top 5 tags:
             
         except Exception as e:
             return CommandResult(False, error=f"Enrichment error: {e}")
+    
+    def cmd_extract(self, args: List[str]) -> CommandResult:
+        """Extract content from a bookmark or URL."""
+        if not args:
+            return CommandResult(False, error="Usage: extract <bookmark_id|url>")
+        
+        # Find readability extractor
+        extractors = self.plugin_registry.get_plugins('content_extractor')
+        if not extractors:
+            return CommandResult(False, error="No content extractor plugins available")
+        
+        extractor = extractors[0]  # Use first available
+        
+        arg = args[0]
+        
+        # Check if it's a bookmark ID
+        if arg.isdigit() and self.context.current_lib:
+            bookmark_id = int(arg)
+            bookmarks = utils.load_bookmarks(self.context.current_lib)
+            bookmark = next((b for b in bookmarks if b.get('id') == bookmark_id), None)
+            
+            if not bookmark:
+                return CommandResult(False, error=f"Bookmark #{bookmark_id} not found")
+            
+            url = bookmark['url']
+            title = bookmark.get('title', 'Untitled')
+            output = [f"Extracting content from bookmark #{bookmark_id}: {title}\n"]
+        elif arg.startswith('http://') or arg.startswith('https://'):
+            url = arg
+            output = [f"Extracting content from URL: {url}\n"]
+        else:
+            return CommandResult(False, error="Please provide a bookmark ID or URL")
+        
+        try:
+            result = extractor.extract(url)
+            
+            if isinstance(result, dict):
+                for key, value in result.items():
+                    if key == 'content':
+                        # Show preview of content
+                        content = str(value)
+                        if len(content) > 500:
+                            output.append(f"Content preview:\n{content[:500]}...\n")
+                            output.append(f"(Total length: {len(content)} characters)")
+                        else:
+                            output.append(f"Content:\n{content}")
+                    else:
+                        output.append(f"{key}: {str(value)[:200]}")
+            else:
+                output.append(str(result))
+            
+            return CommandResult(True, output='\n'.join(output))
+            
+        except Exception as e:
+            return CommandResult(False, error=f"Extraction error: {e}")
+    
+    def cmd_check_links(self, args: List[str]) -> CommandResult:
+        """Check if bookmarks are reachable."""
+        if not self.context.current_lib:
+            return CommandResult(False, error="No library selected")
+        
+        # Find link checker
+        enrichers = self.plugin_registry.get_plugins('bookmark_enricher')
+        link_checker = next((e for e in enrichers if e.metadata.name == 'link_checker'), None)
+        
+        if not link_checker:
+            return CommandResult(False, error="Link checker plugin not available")
+        
+        try:
+            bookmarks = utils.load_bookmarks(self.context.current_lib)
+            
+            # Filter bookmarks if range specified
+            if args and '-' in args[0]:
+                start, end = map(int, args[0].split('-'))
+                bookmarks = [b for b in bookmarks if start <= b.get('id', 0) <= end]
+            elif args and args[0].isdigit():
+                target_id = int(args[0])
+                bookmarks = [b for b in bookmarks if b.get('id') == target_id]
+            else:
+                # Limit to first 10 if no range specified
+                bookmarks = bookmarks[:10]
+            
+            output = [f"Checking {len(bookmarks)} bookmarks...\n"]
+            reachable_count = 0
+            broken = []
+            
+            for bookmark in bookmarks:
+                result = link_checker.check_url(bookmark['url'])
+                
+                if result['reachable']:
+                    reachable_count += 1
+                    status = "✓"
+                else:
+                    broken.append(bookmark)
+                    status = "✗"
+                
+                output.append(f"{status} [{bookmark.get('id')}] {bookmark.get('title', 'Untitled')[:40]}")
+                
+                if result.get('redirect_url'):
+                    output.append(f"  → Redirects to: {result['redirect_url']}")
+                elif not result['reachable']:
+                    output.append(f"  Error: {result.get('error', 'Unknown')}")
+            
+            output.append(f"\nSummary: {reachable_count}/{len(bookmarks)} reachable")
+            
+            if broken:
+                output.append(f"\nBroken links: {[b.get('id') for b in broken]}")
+            
+            return CommandResult(True, output='\n'.join(output))
+            
+        except Exception as e:
+            return CommandResult(False, error=f"Link checking error: {e}")
 
 
 class BtkRepl:
