@@ -709,6 +709,14 @@ def main():
 
     elif args.command == 'repl':
         # Start interactive REPL
+        import sys
+        from pathlib import Path
+        
+        # Ensure integrations are in path for plugin loading
+        btk_path = Path(__file__).parent.parent
+        if str(btk_path) not in sys.path:
+            sys.path.insert(0, str(btk_path))
+        
         from . import repl
         repl.run_repl(args.lib)
     

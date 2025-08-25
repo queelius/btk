@@ -157,31 +157,69 @@ class BtkReplCore:
     
     def _load_plugins(self):
         """Load available plugins."""
+        import importlib
+        from pathlib import Path
+        import sys
+        
+        # Try multiple approaches to find and load plugins
+        
+        # Approach 1: Direct import of known plugins
+        plugin_modules = [
+            'integrations.auto_tag_nlp',
+            'integrations.auto_tag_llm', 
+            'integrations.readability_extractor',
+            'integrations.wayback_archiver',
+            'integrations.social_metadata',
+            'integrations.link_checker',
+            'integrations.semantic_search',
+            'integrations.browser_sync',
+            'integrations.bookmark_scheduler',
+            'integrations.duplicate_finder',
+        ]
+        
+        for module_name in plugin_modules:
+            try:
+                # First check if module is already imported
+                if module_name in sys.modules:
+                    module = sys.modules[module_name]
+                else:
+                    # Try to import
+                    module = importlib.import_module(module_name)
+                
+                # Register plugins if register_plugins function exists
+                if hasattr(module, 'register_plugins'):
+                    module.register_plugins(self.plugin_registry)
+                    logger.debug(f"Loaded plugin module: {module_name}")
+            except ImportError as e:
+                logger.debug(f"Could not import plugin {module_name}: {e}")
+            except Exception as e:
+                logger.debug(f"Error loading plugin {module_name}: {e}")
+        
+        # Approach 2: Try filesystem discovery as fallback
         try:
-            # Try to load integration plugins
-            import importlib
-            from pathlib import Path
-            
-            # Find integrations directory
             btk_path = Path(__file__).parent.parent
             integrations_path = btk_path / 'integrations'
             
             if integrations_path.exists():
+                # Add to path if needed
+                if str(btk_path) not in sys.path:
+                    sys.path.insert(0, str(btk_path))
+                
                 # Load each integration module
                 for item in integrations_path.iterdir():
                     if item.is_dir() and (item / '__init__.py').exists():
-                        try:
-                            module_name = f'integrations.{item.name}'
-                            module = importlib.import_module(module_name)
-                            
-                            # Register plugins if register_plugins function exists
-                            if hasattr(module, 'register_plugins'):
-                                module.register_plugins(self.plugin_registry)
-                                logger.debug(f"Loaded plugin module: {module_name}")
-                        except Exception as e:
-                            logger.debug(f"Could not load plugin {item.name}: {e}")
+                        module_name = f'integrations.{item.name}'
+                        if module_name not in sys.modules:  # Skip if already loaded
+                            try:
+                                module = importlib.import_module(module_name)
+                                
+                                if hasattr(module, 'register_plugins'):
+                                    module.register_plugins(self.plugin_registry)
+                                    logger.debug(f"Loaded plugin module via filesystem: {module_name}")
+                            except Exception as e:
+                                logger.debug(f"Could not load plugin {item.name}: {e}")
         except Exception as e:
-            logger.debug(f"Error loading plugins: {e}")
+            logger.debug(f"Error in filesystem plugin discovery: {e}")
     
     def execute_command(self, command_line: str) -> CommandResult:
         """
