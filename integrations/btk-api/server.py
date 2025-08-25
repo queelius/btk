@@ -15,11 +15,13 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 import logging
 
-from fastapi import FastAPI, HTTPException, Query, File, UploadFile, Body
+from fastapi import FastAPI, HTTPException, Query, File, UploadFile, Body, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field, HttpUrl
 import uvicorn
+import asyncio
+import json as json_module
 
 # Add BTK to path
 btk_path = Path(__file__).parent.parent.parent
@@ -30,6 +32,7 @@ import btk.tools as tools
 import btk.dedup as dedup
 import btk.tag_utils as tag_utils
 from btk.bulk_ops import bulk_add_from_file, bulk_edit_bookmarks, bulk_remove_bookmarks, create_filter_from_criteria
+from btk.repl import BtkReplCore, WebSocketReplHandler
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -551,6 +554,60 @@ async def search_bookmarks(
     results = tools.search_bookmarks(bookmarks, query)
     
     return results[:limit]
+
+
+# WebSocket endpoint for REPL
+@app.websocket("/ws/repl")
+async def websocket_repl(websocket: WebSocket):
+    """WebSocket endpoint for BTK REPL interaction."""
+    await websocket.accept()
+    
+    # Create REPL handler
+    handler = WebSocketReplHandler()
+    
+    try:
+        # Send initial welcome message
+        await websocket.send_json({
+            "type": "output",
+            "content": "BTK REPL WebSocket Connected\nType 'help' for available commands\n"
+        })
+        
+        while True:
+            # Receive command from client
+            data = await websocket.receive_text()
+            
+            try:
+                # Parse the command
+                command_data = json_module.loads(data)
+                command = command_data.get("command", "")
+                
+                # Execute command through the handler
+                response = await handler.handle_message({
+                    "type": "command",
+                    "data": command
+                })
+                
+                # Send response back to client
+                await websocket.send_json(response)
+                
+            except json_module.JSONDecodeError:
+                # If not JSON, treat as raw command
+                response = await handler.handle_message({
+                    "type": "command", 
+                    "data": data
+                })
+                await websocket.send_json(response)
+            except Exception as e:
+                await websocket.send_json({
+                    "type": "error",
+                    "content": f"Error processing command: {str(e)}"
+                })
+    
+    except WebSocketDisconnect:
+        logger.info("WebSocket REPL client disconnected")
+    except Exception as e:
+        logger.error(f"WebSocket REPL error: {e}")
+        await websocket.close()
 
 
 if __name__ == "__main__":

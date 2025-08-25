@@ -1,0 +1,36 @@
+[
+  {
+    "id": 1,
+    "unique_id": "44a35792",
+    "title": "Python",
+    "url": "https://python.org",
+    "added": "2025-08-24T18:41:05.108050+00:00",
+    "stars": false,
+    "tags": [
+      "programming",
+      "python"
+    ],
+    "visit_count": 0,
+    "description": "",
+    "favicon": "favicons/25d3e0d8d7300b27b0350bca7dcc6390.ico",
+    "last_visited": null,
+    "reachable": null
+  },
+  {
+    "id": 2,
+    "unique_id": "261ce347",
+    "title": "GitHub",
+    "url": "https://github.com",
+    "added": "2025-08-24T18:41:13.239345+00:00",
+    "stars": false,
+    "tags": [
+      "development",
+      "git"
+    ],
+    "visit_count": 0,
+    "description": "",
+    "favicon": "favicons/996e1f714b08e971ec79e3bea686287e.ico",
+    "last_visited": null,
+    "reachable": null
+  }
+]

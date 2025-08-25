@@ -145,12 +145,37 @@ def find_bookmark(bookmarks, bookmark_id):
             return bookmark
     return None
 
-def generate_unique_id(url, title):
-    """Generate a SHA-256 hash as a unique identifier based on URL and title."""
-    unique_string = f"{url}{title}"
+def generate_unique_id(url=None, title=None):
+    """Generate a SHA-256 hash as a unique identifier.
+    
+    Args:
+        url: Optional URL for the bookmark
+        title: Optional title for the bookmark
+        
+    Returns:
+        8-character hash string
+    """
+    # If no arguments provided, generate a random unique ID
+    if url is None and title is None:
+        import uuid
+        unique_string = str(uuid.uuid4())
+    else:
+        unique_string = f"{url or ''}{title or ''}"
+    
     hash = hashlib.sha256(unique_string.encode('utf-8')).hexdigest()
     # let's truncate to 8 characters for brevity
     return hash[:8]
+
+def generate_id(bookmarks):
+    """Generate a new integer ID for a bookmark.
+    
+    Args:
+        bookmarks: List of existing bookmarks
+        
+    Returns:
+        Next available integer ID
+    """
+    return get_next_id(bookmarks)
 
 def is_remote_url(url):
     """Determine if a URL is remote (http/https) or local."""

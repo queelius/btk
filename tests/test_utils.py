@@ -80,8 +80,9 @@ class TestJMESPathQuery:
     
     def test_jmespath_query_empty(self, sample_bookmarks):
         """Test empty query returns original bookmarks."""
-        result = jmespath_query(sample_bookmarks, "")
+        result, operation_type = jmespath_query(sample_bookmarks, "")
         assert result == sample_bookmarks
+        assert operation_type == "filter"
     
     def test_jmespath_query_complex(self, sample_bookmarks):
         """Test complex JMESPath query."""

@@ -14,6 +14,43 @@ from . import utils
 
 logger = logging.getLogger(__name__)
 
+# Global plugin registry (created on first use)
+_registry = None
+
+def _get_registry():
+    """Get or create the plugin registry."""
+    global _registry
+    if _registry is None:
+        _registry = plugins.PluginRegistry(validate_strict=False)
+        _load_default_plugins(_registry)
+    return _registry
+
+def _load_default_plugins(registry):
+    """Load default tag suggester plugins."""
+    # Try to load built-in integrations
+    try:
+        # Try NLP tagger - use underscore in import
+        import sys
+        import os
+        # Add integrations to path if needed
+        integrations_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'integrations')
+        if integrations_path not in sys.path:
+            sys.path.insert(0, integrations_path)
+        
+        from auto_tag_nlp import register_plugins as register_nlp
+        register_nlp(registry)
+        logger.info("Loaded NLP tag suggester")
+    except ImportError as e:
+        logger.debug(f"NLP tag suggester not available: {e}")
+    
+    try:
+        # Try LLM tagger
+        from auto_tag_llm import register_plugins as register_llm
+        register_llm(registry)
+        logger.info("Loaded LLM tag suggester")
+    except ImportError as e:
+        logger.debug(f"LLM tag suggester not available: {e}")
+
 
 def suggest_tags_for_bookmark(bookmark: Dict[str, Any], 
                              use_plugins: List[str] = None) -> List[str]:
@@ -30,7 +67,8 @@ def suggest_tags_for_bookmark(bookmark: Dict[str, Any],
     all_tags = []
     
     # Get all available tag suggesters
-    suggesters = plugins.get_plugins('tag_suggester')
+    registry = _get_registry()
+    suggesters = registry.get_plugins('tag_suggester')
     
     if not suggesters:
         logger.warning("No tag suggesters available")
@@ -58,7 +96,8 @@ def suggest_tags_for_bookmark(bookmark: Dict[str, Any],
     unique_tags = sorted(list(set(all_tags)))
     
     # Trigger hook for tag post-processing
-    hook_results = plugins.trigger_hook('tags_suggested', bookmark, unique_tags)
+    registry = _get_registry()
+    hook_results = registry.trigger_hook('tags_suggested', bookmark, unique_tags)
     if hook_results:
         # Allow hooks to modify the tag list
         for result in hook_results:
@@ -101,7 +140,8 @@ def auto_tag_bookmark(bookmark: Dict[str, Any],
         logger.info(f"Added tags: {[t for t in suggested_tags if t not in existing_tags]}")
     
     # Trigger hook for bookmark modification
-    plugins.trigger_hook('bookmark_auto_tagged', bookmark)
+    registry = _get_registry()
+    registry.trigger_hook('bookmark_auto_tagged', bookmark)
     
     return bookmark
 

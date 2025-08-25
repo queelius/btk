@@ -20,6 +20,7 @@ import btk.auto_tag as auto_tag
 import btk.content_extractor  # Import to register plugins
 import btk.archiver as archiver
 import btk.content_cache as content_cache
+import btk.collections as collections
 
 # Initialize colorama and rich console
 colorama_init(autoreset=True)
@@ -70,6 +71,20 @@ def main():
     dir_import.add_argument('--no-recursive', action='store_true', help='Do not scan subdirectories')
     dir_import.add_argument('--formats', nargs='+', choices=['html', 'markdown', 'json', 'csv', 'nbf'], 
                            help='Specific formats to import (default: all formats)')
+    
+    # Import browser bookmarks and history
+    browser_import = import_subparsers.add_parser('browser', help='Import bookmarks and history from web browsers')
+    browser_import.add_argument('browser', nargs='?', choices=['chrome', 'firefox', 'safari', 'edge', 'brave', 'all'],
+                               default='all', help='Browser to import from (default: all)')
+    browser_import.add_argument('--lib-dir', type=str,
+                               help='Directory to store the imported bookmarks library (required unless using --list-profiles)')
+    browser_import.add_argument('--profile', type=str, help='Path to specific browser profile')
+    browser_import.add_argument('--include-history', action='store_true',
+                               help='Also import browsing history')
+    browser_import.add_argument('--history-limit', type=int, default=1000,
+                               help='Maximum number of history items to import per browser (default: 1000)')
+    browser_import.add_argument('--list-profiles', action='store_true',
+                               help='List all detected browser profiles and exit')
 
     # Merge Operations
     set_parser = subparsers.add_parser('merge', help='Perform merge (set) operations on bookmark libraries')
@@ -265,6 +280,10 @@ def main():
     autotag_parser.add_argument('--analyze', action='store_true', help='Analyze tagging coverage')
     autotag_parser.add_argument('--enrich', action='store_true', help='Extract content before tagging')
 
+    # REPL command
+    repl_parser = subparsers.add_parser('repl', help='Start interactive BTK REPL')
+    repl_parser.add_argument('--lib', type=str, help='Initial library directory to use')
+    
     # Archive command
     archive_parser = subparsers.add_parser('archive', help='Archive bookmark content permanently')
     archive_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library')
@@ -274,6 +293,45 @@ def main():
     archive_parser.add_argument('--summary', action='store_true', help='Show archive summary')
     archive_parser.add_argument('--cache-stats', action='store_true', help='Show cache statistics')
     archive_parser.add_argument('--search', type=str, help='Search in cached content')
+
+    # Collections command
+    collections_parser = subparsers.add_parser('collections', help='Manage bookmark collections')
+    collections_subparsers = collections_parser.add_subparsers(dest='collections_command', help='Collections operations')
+    
+    # List collections
+    collections_list = collections_subparsers.add_parser('list', help='List all collections')
+    collections_list.add_argument('--root', type=str, help='Root directory to search for collections')
+    collections_list.add_argument('--stats', action='store_true', help='Show statistics for each collection')
+    
+    # Discover collections
+    collections_discover = collections_subparsers.add_parser('discover', help='Discover collections in a directory')
+    collections_discover.add_argument('path', type=str, help='Directory to search')
+    collections_discover.add_argument('--recursive', action='store_true', default=True, help='Search recursively')
+    
+    # Create collection
+    collections_create = collections_subparsers.add_parser('create', help='Create a new collection')
+    collections_create.add_argument('path', type=str, help='Path for the new collection')
+    collections_create.add_argument('--name', type=str, help='Collection name')
+    collections_create.add_argument('--description', type=str, help='Collection description')
+    
+    # Merge collections
+    collections_merge = collections_subparsers.add_parser('merge', help='Merge multiple collections')
+    collections_merge.add_argument('collections', nargs='+', help='Collection paths to merge')
+    collections_merge.add_argument('--target', type=str, required=True, help='Target path for merged collection')
+    collections_merge.add_argument('--operation', choices=['union', 'intersection', 'difference'], default='union', help='Merge operation')
+    collections_merge.add_argument('--name', type=str, help='Name for merged collection')
+    
+    # Search across collections
+    collections_search = collections_subparsers.add_parser('search', help='Search across multiple collections')
+    collections_search.add_argument('query', type=str, help='Search query')
+    collections_search.add_argument('collections', nargs='+', help='Collection paths to search')
+    
+    # Copy/move bookmarks between collections
+    collections_copy = collections_subparsers.add_parser('copy', help='Copy bookmarks between collections')
+    collections_copy.add_argument('source', type=str, help='Source collection path')
+    collections_copy.add_argument('target', type=str, help='Target collection path')
+    collections_copy.add_argument('--filter', type=str, help='Filter bookmarks by query')
+    collections_copy.add_argument('--move', action='store_true', help='Move instead of copy')
 
     args = parser.parse_args()
 
@@ -424,6 +482,75 @@ def main():
             bookmarks = tools.import_bookmarks_directory(args.directory, bookmarks, lib_dir, 
                                                         recursive=recursive, formats=formats)
             utils.save_bookmarks(bookmarks, None, lib_dir)
+        elif args.type_command == 'browser':
+            # Import browser bookmarks and history
+            from . import browser_import
+            
+            # List profiles if requested
+            if args.list_profiles:
+                profile_list = browser_import.list_browser_profiles()
+                
+                if not profile_list:
+                    console.print("[yellow]No browser profiles found on this system.[/yellow]")
+                    sys.exit(0)
+                
+                table = Table(title="Detected Browser Profiles")
+                table.add_column("Browser", style="cyan")
+                table.add_column("Profile", style="green")
+                table.add_column("Path", style="white")
+                table.add_column("Default", style="yellow")
+                
+                for profile in profile_list:
+                    table.add_row(
+                        profile['browser'],
+                        profile['profile_name'],
+                        profile['path'],
+                        "✓" if profile['is_default'] else ""
+                    )
+                
+                console.print(table)
+                sys.exit(0)
+            
+            # Import bookmarks using the high-level API
+            lib_dir = args.lib_dir
+            if not lib_dir:
+                console.print("[red]Error: --lib-dir is required for importing bookmarks[/red]")
+                sys.exit(1)
+            
+            try:
+                stats = browser_import.import_browser_bookmarks_to_library(
+                    lib_dir=lib_dir,
+                    browser=args.browser,
+                    profile_path=args.profile,
+                    include_history=args.include_history,
+                    history_limit=args.history_limit
+                )
+                
+                # Display results
+                if stats['total_imported'] > 0:
+                    console.print(Panel(f"[bold green]Import Complete[/bold green]", expand=False))
+                    
+                    # Show per-browser stats
+                    for browser_name, browser_stats in stats['browsers'].items():
+                        console.print(f"[cyan]{browser_name}:[/cyan]")
+                        console.print(f"  Found: {browser_stats['found']} items")
+                        console.print(f"  Imported: {browser_stats['imported']} new items")
+                    
+                    console.print(f"\n[bold]Total imported:[/bold] {stats['total_imported']}")
+                    if stats['duplicates_skipped'] > 0:
+                        console.print(f"[yellow]Duplicates skipped:[/yellow] {stats['duplicates_skipped']}")
+                else:
+                    console.print("[yellow]No new bookmarks to import.[/yellow]")
+                    if stats['duplicates_skipped'] > 0:
+                        console.print(f"[dim]All {stats['duplicates_skipped']} items were already in the library.[/dim]")
+                        
+            except ValueError as e:
+                console.print(f"[red]Error: {e}[/red]")
+                sys.exit(1)
+            except Exception as e:
+                logging.error(f"Failed to import browser bookmarks: {e}")
+                console.print(f"[red]Import failed: {e}[/red]")
+                sys.exit(1)
         else:
             logging.error(f"No import support for '{args.type_command}'.")
 
@@ -580,6 +707,11 @@ def main():
             console.print("[yellow]Please specify --id, --all, --untagged, or a filter option.[/yellow]")
             sys.exit(1)
 
+    elif args.command == 'repl':
+        # Start interactive REPL
+        from . import repl
+        repl.run_repl(args.lib)
+    
     elif args.command == 'archive':
         lib_dir = args.lib_dir
         if not os.path.isdir(lib_dir):
@@ -664,6 +796,181 @@ def main():
         else:
             console.print("[yellow]Please specify --id, --all, --summary, --cache-stats, or --search.[/yellow]")
             sys.exit(1)
+
+    elif args.command == 'collections':
+        if not hasattr(args, 'collections_command') or not args.collections_command:
+            console.print("[yellow]Please specify a collections subcommand (list, discover, create, merge, search, copy)[/yellow]")
+            sys.exit(1)
+        
+        if args.collections_command == 'list':
+            # List collections
+            collection_set = collections.CollectionSet()
+            if args.root:
+                collection_set.discover_collections(args.root, recursive=True)
+            else:
+                # Find collections in current directory
+                collection_set.discover_collections(".", recursive=True)
+            
+            if not collection_set.collections:
+                console.print("[yellow]No collections found[/yellow]")
+            else:
+                if args.stats:
+                    # Show detailed stats
+                    stats = collection_set.get_stats()
+                    console.print(Panel(f"[bold]Found {stats['total_collections']} collections with {stats['total_bookmarks']} total bookmarks[/bold]"))
+                    
+                    for name, coll_stats in stats['collections'].items():
+                        table = Table(title=f"Collection: {name}", show_header=False)
+                        table.add_column("Property", style="cyan")
+                        table.add_column("Value", style="white")
+                        
+                        table.add_row("Path", coll_stats['path'])
+                        table.add_row("Bookmarks", str(coll_stats['total_bookmarks']))
+                        table.add_row("Starred", str(coll_stats['starred']))
+                        table.add_row("Tags", str(coll_stats['total_tags']))
+                        table.add_row("Modified", coll_stats['modified'])
+                        
+                        console.print(table)
+                        console.print()
+                else:
+                    # Simple list
+                    console.print(f"[bold]Found {len(collection_set.collections)} collections:[/bold]")
+                    for name, coll in collection_set.collections.items():
+                        bookmarks = coll.get_bookmarks()
+                        console.print(f"  • {name}: {len(bookmarks)} bookmarks ({coll.path})")
+        
+        elif args.collections_command == 'discover':
+            # Discover collections
+            found = collections.find_collections(args.path)
+            if found:
+                console.print(f"[bold]Found {len(found)} collections:[/bold]")
+                for path in found:
+                    coll = collections.BookmarkCollection(path)
+                    bookmarks = coll.get_bookmarks()
+                    console.print(f"  • {path}: {len(bookmarks)} bookmarks")
+            else:
+                console.print(f"[yellow]No collections found in {args.path}[/yellow]")
+        
+        elif args.collections_command == 'create':
+            # Create new collection
+            try:
+                coll = collections.BookmarkCollection(args.path)
+                if args.name:
+                    coll.info.name = args.name
+                if args.description:
+                    coll.info.description = args.description
+                coll._save_info()
+                console.print(f"[green]Created collection at {args.path}[/green]")
+            except Exception as e:
+                console.print(f"[red]Failed to create collection: {e}[/red]")
+                sys.exit(1)
+        
+        elif args.collections_command == 'merge':
+            # Merge collections
+            collection_set = collections.CollectionSet()
+            
+            # Add all source collections
+            for path in args.collections:
+                try:
+                    collection_set.add_collection(path)
+                except Exception as e:
+                    console.print(f"[red]Failed to add collection {path}: {e}[/red]")
+                    sys.exit(1)
+            
+            # Perform merge
+            try:
+                merged = collection_set.merge_collections(
+                    list(collection_set.collections.keys()),
+                    args.target,
+                    operation=args.operation,
+                    target_name=args.name
+                )
+                bookmarks = merged.get_bookmarks()
+                console.print(f"[green]Merged {len(args.collections)} collections into {args.target}[/green]")
+                console.print(f"[cyan]Operation: {args.operation}[/cyan]")
+                console.print(f"[cyan]Result: {len(bookmarks)} bookmarks[/cyan]")
+            except Exception as e:
+                console.print(f"[red]Failed to merge collections: {e}[/red]")
+                sys.exit(1)
+        
+        elif args.collections_command == 'search':
+            # Search across collections
+            collection_set = collections.CollectionSet()
+            
+            # Add all collections to search
+            for path in args.collections:
+                try:
+                    collection_set.add_collection(path)
+                except Exception as e:
+                    console.print(f"[yellow]Warning: Could not add collection {path}: {e}[/yellow]")
+            
+            if not collection_set.collections:
+                console.print("[red]No valid collections to search[/red]")
+                sys.exit(1)
+            
+            # Perform search
+            results = collection_set.search_all(args.query)
+            
+            if results:
+                total_matches = sum(len(matches) for matches in results.values())
+                console.print(f"[bold]Found {total_matches} matches across {len(results)} collections:[/bold]\n")
+                
+                for coll_name, matches in results.items():
+                    console.print(f"[cyan]{coll_name}:[/cyan] {len(matches)} matches")
+                    for bookmark in matches[:3]:  # Show first 3 matches
+                        console.print(f"  • {bookmark.get('title', 'No title')} - {bookmark.get('url')}")
+                    if len(matches) > 3:
+                        console.print(f"    ... and {len(matches) - 3} more")
+                    console.print()
+            else:
+                console.print(f"[yellow]No matches found for '{args.query}'[/yellow]")
+        
+        elif args.collections_command == 'copy':
+            # Copy/move bookmarks between collections
+            try:
+                source_coll = collections.BookmarkCollection(args.source)
+                target_coll = collections.BookmarkCollection(args.target)
+                
+                # Get source bookmarks
+                if args.filter:
+                    source_bookmarks = source_coll.search(args.filter)
+                else:
+                    source_bookmarks = source_coll.get_bookmarks()
+                
+                if not source_bookmarks:
+                    console.print("[yellow]No bookmarks to copy[/yellow]")
+                    sys.exit(0)
+                
+                # Copy to target
+                target_bookmarks = target_coll.get_bookmarks()
+                existing_urls = {b.get('url') for b in target_bookmarks}
+                
+                copied = 0
+                for bookmark in source_bookmarks:
+                    if bookmark.get('url') not in existing_urls:
+                        target_bookmarks.append(bookmark)
+                        copied += 1
+                
+                if copied > 0:
+                    target_coll.save_bookmarks(target_bookmarks)
+                    console.print(f"[green]Copied {copied} bookmarks from {args.source} to {args.target}[/green]")
+                    
+                    # Remove from source if moving
+                    if args.move:
+                        if args.filter:
+                            # Keep only non-matching bookmarks
+                            remaining = [b for b in source_coll.get_bookmarks() 
+                                       if b not in source_bookmarks]
+                        else:
+                            remaining = []
+                        source_coll.save_bookmarks(remaining)
+                        console.print(f"[cyan]Removed {len(source_bookmarks)} bookmarks from source[/cyan]")
+                else:
+                    console.print("[yellow]All bookmarks already exist in target[/yellow]")
+                    
+            except Exception as e:
+                console.print(f"[red]Failed to copy bookmarks: {e}[/red]")
+                sys.exit(1)
 
     elif args.command == 'search':
         lib_dir = args.lib_dir

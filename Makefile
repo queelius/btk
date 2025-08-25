@@ -75,7 +75,11 @@ install: venv
 install-dev: venv
 	$(VENV_BIN)/pip install -e .
 	$(VENV_BIN)/pip install -r requirements-dev.txt
-	$(VENV_BIN)/pre-commit install
+	@if [ -f "$(VENV_BIN)/pre-commit" ]; then \
+		$(VENV_BIN)/pre-commit install; \
+	else \
+		echo "pre-commit not installed, skipping hook installation"; \
+	fi
 
 # Install MCP server dependencies
 install-mcp:

@@ -14,12 +14,11 @@ from btk.plugins import (
 
 
 # Test plugin implementations
-class TestTagSuggesterPlugin(TagSuggester):
+class MockTagSuggesterPlugin(TagSuggester):
     """Test implementation of TagSuggester."""
     
-    @property
-    def metadata(self):
-        return PluginMetadata(
+    def __init__(self):
+        self._metadata = PluginMetadata(
             name="test_tagger",
             version="1.0.0",
             author="Test Author",
@@ -27,20 +26,27 @@ class TestTagSuggesterPlugin(TagSuggester):
             priority=50
         )
     
+    @property
+    def metadata(self):
+        return self._metadata
+    
     def suggest_tags(self, url, title=None, content=None, description=None):
         return ["test", "tag"]
 
 
-class TestContentExtractorPlugin(ContentExtractor):
+class MockContentExtractorPlugin(ContentExtractor):
     """Test implementation of ContentExtractor."""
     
-    @property
-    def metadata(self):
-        return PluginMetadata(
+    def __init__(self):
+        self._metadata = PluginMetadata(
             name="test_extractor",
             version="1.0.0",
             description="Test content extractor"
         )
+    
+    @property
+    def metadata(self):
+        return self._metadata
     
     def extract(self, url, **kwargs):
         return {"title": "Test", "content": "Test content"}
@@ -105,7 +111,7 @@ class TestPluginRegistry:
     
     def test_register_valid_plugin(self, registry):
         """Test registering a valid plugin."""
-        plugin = TestTagSuggesterPlugin()
+        plugin = MockTagSuggesterPlugin()
         registry.register(plugin)
         
         assert registry.has_feature("tag_suggester")
@@ -114,21 +120,21 @@ class TestPluginRegistry:
     
     def test_register_auto_detect_type(self, registry):
         """Test auto-detection of plugin type."""
-        plugin = TestTagSuggesterPlugin()
+        plugin = MockTagSuggesterPlugin()
         registry.register(plugin)  # No type specified
         
         assert registry.get_plugin("tag_suggester") == plugin
     
     def test_register_invalid_type(self, registry):
         """Test registering with invalid plugin type."""
-        plugin = TestTagSuggesterPlugin()
+        plugin = MockTagSuggesterPlugin()
         
         with pytest.raises(PluginError, match="Unknown plugin type"):
             registry.register(plugin, "invalid_type")
     
     def test_register_wrong_interface(self, registry):
         """Test registering plugin with wrong interface."""
-        plugin = TestTagSuggesterPlugin()
+        plugin = MockTagSuggesterPlugin()
         
         with pytest.raises(PluginError, match="does not implement"):
             registry.register(plugin, "content_extractor")
@@ -165,8 +171,8 @@ class TestPluginRegistry:
     
     def test_duplicate_plugin_replacement(self, registry):
         """Test replacing duplicate plugins."""
-        plugin1 = TestTagSuggesterPlugin()
-        plugin2 = TestTagSuggesterPlugin()
+        plugin1 = MockTagSuggesterPlugin()
+        plugin2 = MockTagSuggesterPlugin()
         
         registry.register(plugin1)
         registry.register(plugin2)  # Should replace plugin1
@@ -203,7 +209,7 @@ class TestPluginRegistry:
     
     def test_get_plugin_by_name(self, registry):
         """Test getting plugin by name."""
-        plugin = TestTagSuggesterPlugin()
+        plugin = MockTagSuggesterPlugin()
         registry.register(plugin)
         
         result = registry.get_plugin("tag_suggester", "test_tagger")
@@ -214,7 +220,7 @@ class TestPluginRegistry:
     
     def test_unregister_plugin(self, registry):
         """Test unregistering a plugin."""
-        plugin = TestTagSuggesterPlugin()
+        plugin = MockTagSuggesterPlugin()
         registry.register(plugin)
         
         success = registry.unregister("tag_suggester", "test_tagger")
@@ -227,14 +233,14 @@ class TestPluginRegistry:
     
     def test_enable_disable_plugin(self, registry):
         """Test enabling and disabling plugins."""
-        plugin = TestTagSuggesterPlugin()
+        plugin = MockTagSuggesterPlugin()
         registry.register(plugin)
         
         # Disable
         success = registry.set_plugin_enabled("tag_suggester", "test_tagger", False)
         assert success == True
         
-        # Check the plugin's metadata was updated
+        # Check the plugin's metadata was updated directly
         assert plugin.metadata.enabled == False
         
         # Get plugins should filter disabled ones
@@ -247,12 +253,15 @@ class TestPluginRegistry:
         success = registry.set_plugin_enabled("tag_suggester", "test_tagger", True)
         assert success == True
         assert plugin.metadata.enabled == True
-        assert len(registry.get_plugins("tag_suggester", enabled_only=True)) == 1
+        
+        # Check again from registry
+        enabled_plugins = registry.get_plugins("tag_suggester", enabled_only=True)
+        assert len(enabled_plugins) == 1
     
     def test_list_features(self, registry):
         """Test listing features."""
-        plugin1 = TestTagSuggesterPlugin()
-        plugin2 = TestContentExtractorPlugin()
+        plugin1 = MockTagSuggesterPlugin()
+        plugin2 = MockContentExtractorPlugin()
         
         registry.register(plugin1)
         registry.register(plugin2)
@@ -265,7 +274,7 @@ class TestPluginRegistry:
     
     def test_plugin_lifecycle_hooks(self, registry):
         """Test on_register and on_unregister hooks."""
-        plugin = TestTagSuggesterPlugin()
+        plugin = MockTagSuggesterPlugin()
         plugin.on_register = Mock()
         plugin.on_unregister = Mock()
         
@@ -327,7 +336,7 @@ class TestPluginRegistry:
     
     def test_get_plugin_info(self, registry):
         """Test getting plugin information."""
-        plugin = TestTagSuggesterPlugin()
+        plugin = MockTagSuggesterPlugin()
         registry.register(plugin)
         
         info = registry.get_plugin_info()
@@ -339,7 +348,7 @@ class TestPluginRegistry:
     
     def test_clear_registry(self, registry):
         """Test clearing the registry."""
-        plugin = TestTagSuggesterPlugin()
+        plugin = MockTagSuggesterPlugin()
         plugin.on_unregister = Mock()
         
         registry.register(plugin)

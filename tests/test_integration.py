@@ -16,6 +16,7 @@ class TestBTKIntegration:
         """Test a complete workflow: import, tag, dedupe, export."""
         # 1. Create test data
         lib_dir = os.path.join(temp_lib_dir, 'test_lib')
+        os.makedirs(lib_dir, exist_ok=True)
         urls_file = os.path.join(temp_lib_dir, 'urls.txt')
         
         with open(urls_file, 'w') as f:
@@ -38,14 +39,14 @@ https://stackoverflow.com
         assert result.returncode == 0
         assert 'Successfully added 4 bookmarks' in result.stdout
         
-        # 3. Check for duplicates
+        # 3. Check for duplicates (bulk add already deduplicates, so should be 0)
         result = subprocess.run([
             sys.executable, '-m', 'btk.cli', 'dedupe', lib_dir,
             '--stats'
         ], capture_output=True, text=True)
         
         assert result.returncode == 0
-        assert 'Duplicate groups: 1' in result.stdout
+        assert 'Duplicate groups: 0' in result.stdout
         
         # 4. Add tags using bulk edit
         result = subprocess.run([
