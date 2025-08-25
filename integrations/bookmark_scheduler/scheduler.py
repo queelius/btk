@@ -543,6 +543,6 @@ class BookmarkScheduler(Plugin):
 
 def register_plugins(registry):
     """Register the bookmark scheduler with the plugin registry."""
-    scheduler = BookmarkScheduler()
-    registry.register(scheduler)
-    logger.info("Registered bookmark scheduler")
+    # BookmarkScheduler doesn't fit the predefined plugin interfaces
+    # It's a standalone utility plugin that could be accessed directly
+    pass  # Skip registration for now

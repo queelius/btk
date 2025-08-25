@@ -13,12 +13,12 @@ from urllib.parse import urlparse, urljoin
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from btk.plugins import Plugin, PluginMetadata, PluginPriority
+from btk.plugins import BookmarkEnricher, PluginMetadata, PluginPriority
 
 logger = logging.getLogger(__name__)
 
 
-class LinkChecker(Plugin):
+class LinkChecker(BookmarkEnricher):
     """
     Check bookmark URLs for availability and issues.
     
@@ -406,10 +406,43 @@ class LinkChecker(Plugin):
             )
         
         return report
+    
+    def enrich(self, bookmark: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Enrich a bookmark with link status information.
+        
+        This implements the BookmarkEnricher interface.
+        
+        Args:
+            bookmark: The bookmark to enrich
+            
+        Returns:
+            Enriched bookmark with link status
+        """
+        url = bookmark.get('url')
+        if not url:
+            return bookmark
+        
+        # Check the URL
+        result = self.check_url(url)
+        
+        # Add status information to bookmark
+        bookmark['link_status'] = {
+            'reachable': result['reachable'],
+            'status_code': result.get('status_code'),
+            'error': result.get('error'),
+            'redirect_url': result.get('redirect_url'),
+            'last_checked': datetime.now().isoformat()
+        }
+        
+        # Update reachable field if it exists
+        bookmark['reachable'] = result['reachable']
+        
+        return bookmark
 
 
 def register_plugins(registry):
     """Register the link checker with the plugin registry."""
     checker = LinkChecker()
-    registry.register(checker, 'plugin')  # Generic plugin type
-    logger.info("Registered link checker")
+    registry.register(checker, 'bookmark_enricher')
+    logger.info("Registered link checker as bookmark enricher")

@@ -513,12 +513,6 @@ class BrowserSync(Plugin):
 
 def register_plugins(registry):
     """Register the browser sync plugin with the plugin registry."""
-    # Could register multiple browser sync instances
-    for browser in [Browser.CHROME, Browser.FIREFOX, Browser.EDGE]:
-        try:
-            sync = BrowserSync(browser=browser)
-            if sync.bookmark_file:
-                registry.register(sync)
-                logger.info(f"Registered browser sync for {browser.value}")
-        except Exception as e:
-            logger.debug(f"Could not register sync for {browser.value}: {e}")
+    # BrowserSync doesn't fit the predefined plugin interfaces
+    # It's a standalone sync utility that could be accessed directly
+    pass  # Skip registration for now

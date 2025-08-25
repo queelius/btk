@@ -12,7 +12,7 @@ from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 from collections import defaultdict
 import hashlib
 
-from btk.plugins import Plugin, PluginMetadata, PluginPriority
+from btk.plugins import SimilarityFinder, PluginMetadata, PluginPriority
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ except ImportError:
     logger.debug("fuzzywuzzy not available. Install with: pip install fuzzywuzzy")
 
 
-class DuplicateFinder(Plugin):
+class DuplicateFinder(SimilarityFinder):
     """
     Advanced duplicate finder for bookmarks.
     
@@ -426,10 +426,64 @@ class DuplicateFinder(Plugin):
         stats['duplicate_percentage'] = (len(total_duplicates) / len(bookmarks) * 100) if bookmarks else 0
         
         return stats
+    
+    def find_similar(self, bookmark: Dict[str, Any], 
+                    bookmarks: List[Dict[str, Any]], 
+                    threshold: float = 0.8) -> List[Tuple[Dict[str, Any], float]]:
+        """
+        Find bookmarks similar to a given bookmark.
+        
+        This implements the SimilarityFinder interface.
+        
+        Args:
+            bookmark: Reference bookmark
+            bookmarks: List of bookmarks to search
+            threshold: Similarity threshold (0-1)
+            
+        Returns:
+            List of tuples (bookmark, similarity_score)
+        """
+        similar = []
+        ref_url = bookmark.get('url', '')
+        ref_title = bookmark.get('title', '')
+        
+        if not ref_url:
+            return similar
+        
+        # Normalize reference URL
+        ref_url_normalized = self._normalize_url(ref_url)
+        
+        for other in bookmarks:
+            # Skip self
+            if other.get('id') == bookmark.get('id'):
+                continue
+            
+            other_url = other.get('url', '')
+            if not other_url:
+                continue
+            
+            # Calculate URL similarity
+            other_url_normalized = self._normalize_url(other_url)
+            url_similarity = 1.0 if ref_url_normalized == other_url_normalized else 0.0
+            
+            # Calculate title similarity if available
+            title_similarity = 0.0
+            if ref_title and other.get('title') and FUZZYWUZZY_AVAILABLE:
+                title_similarity = fuzz.ratio(ref_title, other['title']) / 100.0
+            
+            # Combined similarity (weighted average)
+            combined_similarity = (url_similarity * 0.7 + title_similarity * 0.3)
+            
+            if combined_similarity >= threshold:
+                similar.append((other, combined_similarity))
+        
+        # Sort by similarity score
+        similar.sort(key=lambda x: x[1], reverse=True)
+        return similar
 
 
 def register_plugins(registry):
     """Register the duplicate finder with the plugin registry."""
     finder = DuplicateFinder()
-    registry.register(finder, 'duplicate_finder')
-    logger.info("Registered advanced duplicate finder")
+    registry.register(finder, 'similarity_finder')
+    logger.info("Registered duplicate finder as similarity finder")
