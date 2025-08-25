@@ -38,6 +38,8 @@ from . import collections
 from . import merge
 from . import tag_utils
 from . import bulk_ops
+from . import plugins
+from . import repl_commands
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +98,10 @@ class BtkReplCore:
         self.context = ReplContext(current_lib=initial_lib)
         self.console = Console()
         
+        # Initialize plugin registry
+        self.plugin_registry = plugins.PluginRegistry()
+        self._load_plugins()
+        
         # Command registry
         self.commands: Dict[str, Callable] = {
             # Built-in commands
@@ -130,6 +136,12 @@ class BtkReplCore:
             "discover": self.cmd_discover,
             "switch": self.cmd_switch,
             "search-all": self.cmd_search_all,
+            
+            # Plugin commands
+            "plugins": self.cmd_plugins,
+            "plugin": self.cmd_plugin,
+            "autotag": self.cmd_autotag,
+            "enrich": self.cmd_enrich,
         }
         
         # Command aliases
@@ -140,7 +152,36 @@ class BtkReplCore:
             "del": "remove",
             "q": "quit",
             "?": "help",
+            "pl": "plugins",
         }
+    
+    def _load_plugins(self):
+        """Load available plugins."""
+        try:
+            # Try to load integration plugins
+            import importlib
+            from pathlib import Path
+            
+            # Find integrations directory
+            btk_path = Path(__file__).parent.parent
+            integrations_path = btk_path / 'integrations'
+            
+            if integrations_path.exists():
+                # Load each integration module
+                for item in integrations_path.iterdir():
+                    if item.is_dir() and (item / '__init__.py').exists():
+                        try:
+                            module_name = f'integrations.{item.name}'
+                            module = importlib.import_module(module_name)
+                            
+                            # Register plugins if register_plugins function exists
+                            if hasattr(module, 'register_plugins'):
+                                module.register_plugins(self.plugin_registry)
+                                logger.debug(f"Loaded plugin module: {module_name}")
+                        except Exception as e:
+                            logger.debug(f"Could not load plugin {item.name}: {e}")
+        except Exception as e:
+            logger.debug(f"Error loading plugins: {e}")
     
     def execute_command(self, command_line: str) -> CommandResult:
         """
@@ -247,8 +288,23 @@ Built-in Commands:
   get <var>       Get a variable value
 
 BTK Operations:
-  list [filter]   List bookmarks in current library
+  list [options]  List bookmarks with paging and filtering
+    -l, --limit N   Show N items per page (default: 20)
+    -p, --page N    Show page N
+    -a, --all       Show all without paging
+    -s, --sort BY   Sort by: id, title, url, added, visits
+    -r, --reverse   Reverse sort order
+    --starred       Show only starred
+    --unstarred     Show only unstarred
+    -t, --tag TAGS  Filter by tags (comma-separated)
+    -g, --group BY  Group by: tag, domain, starred, date
+    1-10, 1:10      Show range of IDs
+    
   search <query>  Search bookmarks in current library
+    -l, --limit N   Limit results (default: 10)
+    -c, --case      Case-sensitive search
+    -r, --regex     Use regex patterns
+    
   add <url>       Add a bookmark
   remove <id>     Remove a bookmark
   edit <id>       Edit a bookmark
@@ -269,6 +325,14 @@ Collection Operations:
   
   collections create <path>  Create new collection
   collections merge <names...> <op>  Merge collections
+
+Plugin Operations:
+  plugins         List all available plugins
+  plugin <name>   Show plugin details or execute method
+  autotag [range] Auto-tag bookmarks using AI/NLP
+    --plugin=NAME   Use specific auto-tagger plugin
+  enrich [range]  Enrich bookmarks with metadata
+    --plugin=NAME   Use specific enricher plugin
 
 Special Prefixes:
   !<command>      Execute shell command
@@ -405,40 +469,108 @@ Unique tags: {unique_tags}
     # BTK commands
     
     def cmd_list(self, args: List[str]) -> CommandResult:
-        """List bookmarks."""
+        """List bookmarks with enhanced options."""
         if not self.context.current_lib:
             return CommandResult(False, error="No library selected")
         
         try:
+            # Parse options
+            options, remaining = repl_commands.CommandParser.parse_list_options(args)
+            
+            # Load bookmarks
             bookmarks = utils.load_bookmarks(self.context.current_lib)
             
-            # Apply filter if provided
-            if args:
-                filter_str = ' '.join(args)
-                # Simple tag filter
-                if filter_str.startswith('tag:'):
-                    tag = filter_str[4:]
-                    bookmarks = [b for b in bookmarks if tag in b.get('tags', [])]
-                elif filter_str == 'starred':
-                    bookmarks = [b for b in bookmarks if b.get('stars')]
+            # Apply filters
+            bookmarks = repl_commands.apply_filters(bookmarks, options)
             
-            # Store in context for further processing
+            # Apply text filter from remaining args
+            if remaining:
+                options.filter_text = ' '.join(remaining)
+                bookmarks = repl_commands.apply_filters(bookmarks, options)
+            
+            # Sort bookmarks
+            bookmarks = repl_commands.sort_bookmarks(bookmarks, options.sort_by, options.reverse)
+            
+            # Store full results in context
             self.context.last_result = bookmarks
             
-            # Format output
             if not bookmarks:
                 return CommandResult(True, output="No bookmarks found")
             
-            # Create a simple listing
-            output = []
-            for i, b in enumerate(bookmarks[:20]):  # Limit to 20 for REPL
-                stars = "★" if b.get('stars') else " "
-                output.append(f"{stars} [{b.get('id', i)}] {b.get('title', 'Untitled')} - {b.get('url', '')}")
+            # Handle grouping
+            if options.group_by:
+                groups = repl_commands.group_bookmarks(bookmarks, options.group_by)
+                output = []
+                for group_name, group_bookmarks in sorted(groups.items()):
+                    output.append(f"\n[{group_name}] ({len(group_bookmarks)} bookmarks)")
+                    for b in group_bookmarks[:5]:  # Show first 5 in each group
+                        formatted = repl_commands.format_bookmark_compact(b, not options.no_color)
+                        if isinstance(formatted, str):
+                            output.append(f"  {formatted}")
+                        else:
+                            self.console.print(f"  ", formatted)
+                    if len(group_bookmarks) > 5:
+                        output.append(f"  ... and {len(group_bookmarks) - 5} more")
+                return CommandResult(True, output='\n'.join(output) if output else None)
             
-            if len(bookmarks) > 20:
-                output.append(f"\n... and {len(bookmarks) - 20} more")
+            # Handle paging
+            if not options.all and options.limit:
+                # Create paginator
+                paginator = repl_commands.Paginator(bookmarks, options.limit)
+                
+                # Get requested page
+                if options.page:
+                    page_items = paginator.get_page(options.page)
+                else:
+                    # Apply offset if no page specified
+                    start = options.offset
+                    end = start + options.limit if options.limit else len(bookmarks)
+                    page_items = bookmarks[start:end]
+                
+                # Format items
+                output = []
+                for bookmark in page_items:
+                    if options.format == repl_commands.OutputFormat.DETAILED:
+                        formatted = repl_commands.format_bookmark_detailed(bookmark, not options.no_color)
+                    else:
+                        formatted = repl_commands.format_bookmark_compact(bookmark, not options.no_color)
+                    
+                    if isinstance(formatted, str):
+                        output.append(formatted)
+                    else:
+                        # Rich formatted text
+                        self.console.print(formatted)
+                
+                # Add page info
+                if options.page:
+                    page_info = paginator.get_page_info()
+                    output.append(f"\n{page_info}")
+                    if paginator.current_page < paginator.total_pages:
+                        output.append(f"Use 'list -p {paginator.current_page + 1}' for next page")
+                else:
+                    shown = min(options.limit, len(bookmarks) - options.offset)
+                    remaining = len(bookmarks) - options.offset - shown
+                    if remaining > 0:
+                        output.append(f"\n... and {remaining} more. Use 'list -a' to show all or 'list -p 2' for next page")
+                
+                return CommandResult(True, output='\n'.join(output) if output else None)
             
-            return CommandResult(True, output='\n'.join(output))
+            else:
+                # Show all bookmarks
+                output = []
+                for bookmark in bookmarks:
+                    if options.format == repl_commands.OutputFormat.DETAILED:
+                        formatted = repl_commands.format_bookmark_detailed(bookmark, not options.no_color)
+                    else:
+                        formatted = repl_commands.format_bookmark_compact(bookmark, not options.no_color)
+                    
+                    if isinstance(formatted, str):
+                        output.append(formatted)
+                    else:
+                        self.console.print(formatted)
+                
+                output.append(f"\nTotal: {len(bookmarks)} bookmarks")
+                return CommandResult(True, output='\n'.join(output) if output else None)
             
         except Exception as e:
             return CommandResult(False, error=str(e))
@@ -978,6 +1110,240 @@ Top 5 tags:
         self.context.last_result = results
         
         return CommandResult(True, output='\n'.join(output))
+    
+    # Plugin commands
+    
+    def cmd_plugins(self, args: List[str]) -> CommandResult:
+        """List available plugins or show plugin details."""
+        if not args:
+            # List all plugins
+            output = ["Available plugins:\n"]
+            
+            for plugin_type in self.plugin_registry.list_types():
+                plugins = self.plugin_registry.get_plugins(plugin_type)
+                if plugins:
+                    output.append(f"\n{plugin_type}:")
+                    for plugin in plugins:
+                        metadata = plugin.metadata
+                        output.append(f"  • {metadata.name} (v{metadata.version})")
+                        output.append(f"    {metadata.description}")
+            
+            if len(output) == 1:
+                return CommandResult(True, output="No plugins loaded")
+            
+            output.append("\nUse 'plugin <name>' for details or 'plugin <name> <command>' to use")
+            return CommandResult(True, output='\n'.join(output))
+        
+        # Show specific plugin or execute plugin command
+        plugin_name = args[0]
+        
+        # Find plugin by name
+        found_plugin = None
+        for plugin_type in self.plugin_registry.list_types():
+            for plugin in self.plugin_registry.get_plugins(plugin_type):
+                if plugin.metadata.name == plugin_name:
+                    found_plugin = plugin
+                    break
+            if found_plugin:
+                break
+        
+        if not found_plugin:
+            return CommandResult(False, error=f"Plugin '{plugin_name}' not found")
+        
+        if len(args) == 1:
+            # Show plugin details
+            metadata = found_plugin.metadata
+            output = [
+                f"Plugin: {metadata.name}",
+                f"Version: {metadata.version}",
+                f"Author: {metadata.author}",
+                f"Description: {metadata.description}",
+                f"Priority: {metadata.priority}",
+                f"Type: {plugin.__class__.__name__}"
+            ]
+            
+            # Show available methods
+            methods = []
+            for attr in dir(found_plugin):
+                if not attr.startswith('_') and callable(getattr(found_plugin, attr)):
+                    if attr not in ['metadata', 'name', 'validate']:
+                        methods.append(attr)
+            
+            if methods:
+                output.append(f"\nAvailable methods:")
+                for method in methods:
+                    output.append(f"  • {method}")
+            
+            return CommandResult(True, output='\n'.join(output))
+        
+        # Execute plugin method
+        method_name = args[1]
+        method_args = args[2:]
+        
+        if not hasattr(found_plugin, method_name):
+            return CommandResult(False, error=f"Plugin '{plugin_name}' has no method '{method_name}'")
+        
+        try:
+            method = getattr(found_plugin, method_name)
+            # Simple execution - may need enhancement for complex plugins
+            result = method(*method_args) if method_args else method()
+            return CommandResult(True, output=str(result))
+        except Exception as e:
+            return CommandResult(False, error=f"Plugin execution error: {e}")
+    
+    def cmd_plugin(self, args: List[str]) -> CommandResult:
+        """Alias for plugins command."""
+        return self.cmd_plugins(args)
+    
+    def cmd_autotag(self, args: List[str]) -> CommandResult:
+        """Auto-tag bookmarks using available taggers."""
+        if not self.context.current_lib:
+            return CommandResult(False, error="No library selected")
+        
+        # Parse arguments
+        plugin_name = None
+        if args and args[0].startswith('--plugin='):
+            plugin_name = args[0].split('=')[1]
+            args = args[1:]
+        
+        # Get auto-taggers
+        taggers = self.plugin_registry.get_plugins('auto_tagger')
+        if not taggers:
+            return CommandResult(False, error="No auto-tagger plugins available")
+        
+        # Select tagger
+        if plugin_name:
+            tagger = next((t for t in taggers if t.metadata.name == plugin_name), None)
+            if not tagger:
+                return CommandResult(False, error=f"Auto-tagger '{plugin_name}' not found")
+        else:
+            # Use first available tagger
+            tagger = taggers[0]
+        
+        try:
+            # Load bookmarks
+            bookmarks = utils.load_bookmarks(self.context.current_lib)
+            
+            # Filter bookmarks if range or filter specified
+            if args:
+                # Simple ID range support
+                if '-' in args[0]:
+                    start, end = map(int, args[0].split('-'))
+                    bookmarks = [b for b in bookmarks if start <= b.get('id', 0) <= end]
+                elif args[0].isdigit():
+                    target_id = int(args[0])
+                    bookmarks = [b for b in bookmarks if b.get('id') == target_id]
+            
+            output = [f"Using auto-tagger: {tagger.metadata.name}\n"]
+            tagged_count = 0
+            
+            # Tag each bookmark
+            for bookmark in bookmarks:
+                original_tags = set(bookmark.get('tags', []))
+                
+                # Apply tagger
+                if hasattr(tagger, 'tag'):
+                    suggested_tags = tagger.tag(bookmark)
+                elif hasattr(tagger, 'generate_tags'):
+                    suggested_tags = tagger.generate_tags(bookmark)
+                else:
+                    continue
+                
+                if suggested_tags:
+                    # Add new tags
+                    new_tags = set(suggested_tags) - original_tags
+                    if new_tags:
+                        bookmark['tags'] = sorted(list(original_tags | new_tags))
+                        tagged_count += 1
+                        output.append(f"  Tagged [{bookmark.get('id')}] {bookmark.get('title', 'Untitled')[:40]}")
+                        output.append(f"    New tags: {', '.join(new_tags)}")
+            
+            if tagged_count > 0:
+                # Save bookmarks
+                utils.save_bookmarks(bookmarks, None, self.context.current_lib)
+                output.append(f"\nTagged {tagged_count} bookmarks")
+            else:
+                output.append("No new tags added")
+            
+            return CommandResult(True, output='\n'.join(output))
+            
+        except Exception as e:
+            return CommandResult(False, error=f"Auto-tagging error: {e}")
+    
+    def cmd_enrich(self, args: List[str]) -> CommandResult:
+        """Enrich bookmarks using available enrichers."""
+        if not self.context.current_lib:
+            return CommandResult(False, error="No library selected")
+        
+        # Parse arguments
+        plugin_name = None
+        if args and args[0].startswith('--plugin='):
+            plugin_name = args[0].split('=')[1]
+            args = args[1:]
+        
+        # Get enrichers
+        enrichers = self.plugin_registry.get_plugins('bookmark_enricher')
+        if not enrichers:
+            return CommandResult(False, error="No enricher plugins available")
+        
+        # Select enricher
+        if plugin_name:
+            enricher = next((e for e in enrichers if e.metadata.name == plugin_name), None)
+            if not enricher:
+                return CommandResult(False, error=f"Enricher '{plugin_name}' not found")
+        else:
+            # Use first available enricher
+            enricher = enrichers[0]
+        
+        try:
+            # Load bookmarks
+            bookmarks = utils.load_bookmarks(self.context.current_lib)
+            
+            # Filter bookmarks if specified
+            if args:
+                if '-' in args[0]:
+                    start, end = map(int, args[0].split('-'))
+                    bookmarks = [b for b in bookmarks if start <= b.get('id', 0) <= end]
+                elif args[0].isdigit():
+                    target_id = int(args[0])
+                    bookmarks = [b for b in bookmarks if b.get('id') == target_id]
+            
+            output = [f"Using enricher: {enricher.metadata.name}\n"]
+            enriched_count = 0
+            
+            # Enrich each bookmark
+            for i, bookmark in enumerate(bookmarks):
+                try:
+                    # Apply enricher
+                    enriched = enricher.enrich(bookmark)
+                    
+                    # Check if enriched
+                    if enriched != bookmark:
+                        bookmarks[i] = enriched
+                        enriched_count += 1
+                        output.append(f"  Enriched [{enriched.get('id')}] {enriched.get('title', 'Untitled')[:40]}")
+                        
+                        # Show what was added
+                        for key in enriched:
+                            if key not in bookmark or enriched[key] != bookmark.get(key):
+                                if key not in ['id', 'url', 'unique_id']:
+                                    value = str(enriched[key])[:50]
+                                    output.append(f"    + {key}: {value}")
+                
+                except Exception as e:
+                    output.append(f"  Error enriching [{bookmark.get('id')}]: {e}")
+            
+            if enriched_count > 0:
+                # Save bookmarks
+                utils.save_bookmarks(bookmarks, None, self.context.current_lib)
+                output.append(f"\nEnriched {enriched_count} bookmarks")
+            else:
+                output.append("No bookmarks enriched")
+            
+            return CommandResult(True, output='\n'.join(output))
+            
+        except Exception as e:
+            return CommandResult(False, error=f"Enrichment error: {e}")
 
 
 class BtkRepl:
