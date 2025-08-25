@@ -1119,10 +1119,14 @@ Top 5 tags:
             # List all plugins
             output = ["Available plugins:\n"]
             
-            for plugin_type in self.plugin_registry.list_types():
+            # Use predefined plugin types from PLUGIN_INTERFACES
+            plugin_types = ['tag_suggester', 'content_extractor', 'similarity_finder', 
+                          'search_enhancer', 'bookmark_enricher']
+            
+            for plugin_type in plugin_types:
                 plugins = self.plugin_registry.get_plugins(plugin_type)
                 if plugins:
-                    output.append(f"\n{plugin_type}:")
+                    output.append(f"\n{plugin_type.replace('_', ' ').title()}:")
                     for plugin in plugins:
                         metadata = plugin.metadata
                         output.append(f"  • {metadata.name} (v{metadata.version})")
@@ -1139,7 +1143,10 @@ Top 5 tags:
         
         # Find plugin by name
         found_plugin = None
-        for plugin_type in self.plugin_registry.list_types():
+        plugin_types = ['tag_suggester', 'content_extractor', 'similarity_finder', 
+                      'search_enhancer', 'bookmark_enricher']
+        
+        for plugin_type in plugin_types:
             for plugin in self.plugin_registry.get_plugins(plugin_type):
                 if plugin.metadata.name == plugin_name:
                     found_plugin = plugin
@@ -1206,8 +1213,8 @@ Top 5 tags:
             plugin_name = args[0].split('=')[1]
             args = args[1:]
         
-        # Get auto-taggers
-        taggers = self.plugin_registry.get_plugins('auto_tagger')
+        # Get auto-taggers (using tag_suggester type)
+        taggers = self.plugin_registry.get_plugins('tag_suggester')
         if not taggers:
             return CommandResult(False, error="No auto-tagger plugins available")
         
