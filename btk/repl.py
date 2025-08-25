@@ -502,7 +502,7 @@ Unique tags: {unique_tags}
                 'tags': [],
                 'stars': False,
                 'visit_count': 0,
-                'added': utils.datetime.now(utils.timezone.utc).isoformat()
+                'added': datetime.now().isoformat()
             }
             
             bookmarks.append(new_bookmark)
