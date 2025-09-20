@@ -1238,76 +1238,125 @@ Top 5 tags:
             method = getattr(found_plugin, method_name)
             
             # Special handling for common plugin methods
-            if method_name in ['extract', 'enrich', 'tag', 'generate_tags']:
+            if method_name in ['extract', 'enrich', 'tag', 'generate_tags', 'extract_all_metadata', 'extract_meta_tags']:
                 if not method_args:
                     return CommandResult(False, error=f"Usage: plugin {plugin_name} {method_name} <bookmark_id|url>")
                 
                 arg = method_args[0]
                 
-                # Check if it's a bookmark ID
-                if arg.isdigit() and self.context.current_lib:
-                    bookmark_id = int(arg)
+                # Check if it's a bookmark ID or special keyword that requires a library
+                if arg.isdigit() or arg in ['all', 'bookmarks']:
+                    # These require a library to be selected
+                    if not self.context.current_lib:
+                        return CommandResult(False, error="No library selected. Use 'use <library>' or 'cd <library>' first")
+                    
                     bookmarks = utils.load_bookmarks(self.context.current_lib)
-                    bookmark = next((b for b in bookmarks if b.get('id') == bookmark_id), None)
                     
-                    if not bookmark:
-                        return CommandResult(False, error=f"Bookmark #{bookmark_id} not found")
-                    
-                    # Call method with appropriate argument
-                    if method_name == 'extract':
-                        # Content extractors expect URL
-                        result = method(bookmark['url'])
-                        output = [f"Extracted content from bookmark #{bookmark_id}:\n"]
-                        if isinstance(result, dict):
-                            for key, value in result.items():
-                                if key != 'content' or len(str(value)) < 500:
-                                    output.append(f"  {key}: {str(value)[:200]}")
-                                else:
-                                    output.append(f"  content: {str(value)[:500]}...")
-                        else:
-                            output.append(str(result))
-                        return CommandResult(True, output='\n'.join(output))
-                    
-                    elif method_name == 'enrich':
-                        # Enrichers expect bookmark dict
-                        enriched = method(bookmark)
-                        
-                        # Show what changed
-                        output = [f"Enriched bookmark #{bookmark_id}:"]
-                        for key in enriched:
-                            if key not in bookmark or enriched[key] != bookmark.get(key):
-                                if key not in ['id', 'url', 'unique_id']:
-                                    value = str(enriched[key])[:100]
-                                    output.append(f"  + {key}: {value}")
-                        
-                        # Optionally save
-                        output.append("\nSave changes? Use 'edit <id> <field> <value>' to update specific fields")
-                        return CommandResult(True, output='\n'.join(output))
-                    
-                    elif method_name in ['tag', 'generate_tags']:
-                        # Tag suggesters expect bookmark dict
-                        suggested_tags = method(bookmark)
-                        output = [f"Suggested tags for bookmark #{bookmark_id}:"]
-                        if suggested_tags:
-                            output.append(f"  {', '.join(suggested_tags)}")
-                            output.append(f"\nAdd tags? Use 'tag {bookmark_id} {','.join(suggested_tags)}'")
-                        else:
-                            output.append("  No tags suggested")
-                        return CommandResult(True, output='\n'.join(output))
-                
-                # Otherwise treat as URL or direct argument
-                elif method_name == 'extract' and (arg.startswith('http://') or arg.startswith('https://')):
-                    result = method(arg)
-                    output = ["Extracted content:\n"]
-                    if isinstance(result, dict):
-                        for key, value in result.items():
-                            if key != 'content' or len(str(value)) < 500:
-                                output.append(f"  {key}: {str(value)[:200]}")
-                            else:
-                                output.append(f"  content: {str(value)[:500]}...")
+                    # Determine which bookmarks to process
+                    if arg == 'all' or arg == 'bookmarks':
+                        # Process first 5 bookmarks
+                        target_bookmarks = bookmarks[:5]
+                        output = [f"Processing first 5 bookmarks with {plugin_name}.{method_name}:\n"]
+                    elif arg.isdigit():
+                        bookmark_id = int(arg)
+                        bookmark = next((b for b in bookmarks if b.get('id') == bookmark_id), None)
+                        if not bookmark:
+                            return CommandResult(False, error=f"Bookmark #{bookmark_id} not found")
+                        target_bookmarks = [bookmark]
+                        output = [f"Processing bookmark #{bookmark_id} with {plugin_name}.{method_name}:\n"]
                     else:
-                        output.append(str(result))
+                        target_bookmarks = []
+                        output = []
+                    
+                    # Process each bookmark
+                    for bookmark in target_bookmarks:
+                        try:
+                            # Call method with appropriate argument based on method signature
+                            if method_name in ['extract', 'extract_all_metadata', 'extract_meta_tags']:
+                                # These methods typically expect URL
+                                result = method(bookmark['url'])
+                                output.append(f"[{bookmark.get('id')}] {bookmark.get('title', 'Untitled')[:40]}:")
+                                if isinstance(result, dict):
+                                    for key, value in result.items():
+                                        if value:  # Only show non-empty values
+                                            if isinstance(value, (list, dict)):
+                                                value_str = json.dumps(value, indent=2)[:200]
+                                            else:
+                                                value_str = str(value)[:200]
+                                            if key != 'content' or len(value_str) < 500:
+                                                output.append(f"  {key}: {value_str}")
+                                            else:
+                                                output.append(f"  {key}: {value_str[:500]}...")
+                                else:
+                                    output.append(f"  Result: {str(result)[:200]}")
+                                output.append("")
+                            
+                            elif method_name == 'enrich':
+                                # Enrichers expect bookmark dict
+                                enriched = method(bookmark.copy())  # Use copy to avoid modifying original
+                                
+                                # Show what changed
+                                output.append(f"[{bookmark.get('id')}] {bookmark.get('title', 'Untitled')[:40]}:")
+                                changes_found = False
+                                for key in enriched:
+                                    if key not in bookmark or enriched[key] != bookmark.get(key):
+                                        if key not in ['id', 'url', 'unique_id']:
+                                            value = str(enriched[key])[:100]
+                                            output.append(f"  + {key}: {value}")
+                                            changes_found = True
+                                if not changes_found:
+                                    output.append("  No changes")
+                                output.append("")
+                            
+                            elif method_name in ['tag', 'generate_tags']:
+                                # Tag suggesters expect bookmark dict
+                                suggested_tags = method(bookmark)
+                                output.append(f"[{bookmark.get('id')}] {bookmark.get('title', 'Untitled')[:40]}:")
+                                if suggested_tags:
+                                    output.append(f"  Suggested: {', '.join(suggested_tags)}")
+                                else:
+                                    output.append("  No tags suggested")
+                                output.append("")
+                                
+                        except Exception as e:
+                            output.append(f"[{bookmark.get('id')}] Error: {str(e)}")
+                            output.append("")
+                    
+                    if len(target_bookmarks) > 1:
+                        output.append(f"Processed {len(target_bookmarks)} bookmarks")
+                    
                     return CommandResult(True, output='\n'.join(output))
+                
+                # Check if it's a URL
+                elif arg.startswith('http://') or arg.startswith('https://'):
+                    try:
+                        # For URLs, create a minimal bookmark dict if method expects it
+                        if method_name == 'enrich':
+                            bookmark = {'url': arg, 'title': 'URL Test', 'tags': []}
+                            result = method(bookmark)
+                            output = ["Enriched URL:\n"]
+                            for key, value in result.items():
+                                if key not in ['url']:
+                                    output.append(f"  {key}: {str(value)[:200]}")
+                        else:
+                            # Methods that expect URL directly
+                            result = method(arg)
+                            output = ["Result:\n"]
+                            if isinstance(result, dict):
+                                for key, value in result.items():
+                                    if value:
+                                        value_str = str(value)[:200] if not isinstance(value, (list, dict)) else json.dumps(value)[:200]
+                                        output.append(f"  {key}: {value_str}")
+                            else:
+                                output.append(str(result))
+                        
+                        return CommandResult(True, output='\n'.join(output))
+                    except Exception as e:
+                        return CommandResult(False, error=f"Error processing URL: {e}")
+                
+                # Invalid argument
+                else:
+                    return CommandResult(False, error=f"Invalid argument '{arg}'. Use bookmark ID, 'all', or URL")
             
             # Default execution for other methods
             result = method(*method_args) if method_args else method()
@@ -1415,38 +1464,65 @@ Top 5 tags:
         
         # Parse arguments
         plugin_name = None
-        if args and args[0].startswith('--plugin='):
-            plugin_name = args[0].split('=')[1]
-            args = args[1:]
+        remaining_args = list(args)  # Copy to avoid modifying original
+        
+        # Check for --plugin option
+        if remaining_args and remaining_args[0].startswith('--plugin'):
+            if '=' in remaining_args[0]:
+                plugin_name = remaining_args[0].split('=')[1]
+            elif len(remaining_args) > 1:
+                plugin_name = remaining_args[1]
+                remaining_args = remaining_args[1:]  # Skip the plugin value too
+            remaining_args = remaining_args[1:]  # Skip the --plugin option
         
         # Get enrichers
         enrichers = self.plugin_registry.get_plugins('bookmark_enricher')
-        if not enrichers:
-            return CommandResult(False, error="No enricher plugins available")
         
-        # Select enricher
+        # If user specified a plugin, validate it
         if plugin_name:
             enricher = next((e for e in enrichers if e.metadata.name == plugin_name), None)
             if not enricher:
-                return CommandResult(False, error=f"Enricher '{plugin_name}' not found")
+                # Check if it's a different plugin type to provide helpful error
+                all_plugins = []
+                for plugin_type in ['content_extractor', 'tag_suggester', 'similarity_finder', 'search_enhancer']:
+                    plugins = self.plugin_registry.get_plugins(plugin_type)
+                    for p in plugins:
+                        if p.metadata.name == plugin_name:
+                            return CommandResult(False, error=f"'{plugin_name}' is a {plugin_type.replace('_', ' ')}. For content extraction use 'extract' command, for tagging use 'autotag' command.")
+                
+                # Plugin not found at all
+                available = ', '.join(e.metadata.name for e in enrichers) if enrichers else 'none'
+                return CommandResult(False, error=f"Enricher '{plugin_name}' not found. Available enrichers: {available}")
         else:
+            if not enrichers:
+                return CommandResult(False, error="No enricher plugins available. Try loading plugins with 'plugins' command.")
             # Use first available enricher
             enricher = enrichers[0]
         
         try:
             # Load bookmarks
             bookmarks = utils.load_bookmarks(self.context.current_lib)
+            output = []
             
             # Filter bookmarks if specified
-            if args:
-                if '-' in args[0]:
-                    start, end = map(int, args[0].split('-'))
+            if remaining_args and remaining_args[0] and remaining_args[0].strip():  # Check if non-empty
+                arg = remaining_args[0].strip()
+                if '-' in arg:
+                    start, end = map(int, arg.split('-'))
                     bookmarks = [b for b in bookmarks if start <= b.get('id', 0) <= end]
-                elif args[0].isdigit():
-                    target_id = int(args[0])
+                    output.append(f"Enriching bookmarks {start}-{end}")
+                elif arg.isdigit():
+                    target_id = int(arg)
                     bookmarks = [b for b in bookmarks if b.get('id') == target_id]
+                    output.append(f"Enriching bookmark {target_id}")
+                else:
+                    return CommandResult(False, error=f"Invalid range or ID: {arg}")
+            else:
+                # Default to first 5 bookmarks if no range specified
+                bookmarks = bookmarks[:5]
+                output.append("No range specified, enriching first 5 bookmarks")
             
-            output = [f"Using enricher: {enricher.metadata.name}\n"]
+            output.append(f"Using enricher: {enricher.metadata.name}\n")
             enriched_count = 0
             
             # Enrich each bookmark

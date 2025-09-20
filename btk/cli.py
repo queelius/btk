@@ -221,6 +221,10 @@ def main():
     dedup_parser.add_argument('--strategy', choices=['merge', 'keep_first', 'keep_last', 'keep_most_visited'],
                              default='merge', help='Deduplication strategy (default: merge)')
     dedup_parser.add_argument('--key', type=str, default='url', help='Key to use for finding duplicates (default: url)')
+    dedup_parser.add_argument('--smart', action='store_true', help='Use smart duplicate detection (normalizes URLs)')
+    dedup_parser.add_argument('--aggressive', action='store_true', help='Aggressive matching (ignores tracking params)')
+    dedup_parser.add_argument('--content', action='store_true', help='Find duplicates by content similarity')
+    dedup_parser.add_argument('--analyze', action='store_true', help='Comprehensive duplicate analysis')
     dedup_parser.add_argument('--preview', action='store_true', help='Preview changes without applying them')
     dedup_parser.add_argument('--stats', action='store_true', help='Show duplicate statistics only')
     dedup_parser.add_argument('--output-removed', type=str, help='Save removed bookmarks to this directory')
@@ -293,6 +297,40 @@ def main():
     archive_parser.add_argument('--summary', action='store_true', help='Show archive summary')
     archive_parser.add_argument('--cache-stats', action='store_true', help='Show cache statistics')
     archive_parser.add_argument('--search', type=str, help='Search in cached content')
+
+    # Stream command
+    stream_parser = subparsers.add_parser('stream', help='Stream bookmarks for pipeline processing')
+    stream_parser.add_argument('lib_dir', type=str, help='Directory of the bookmark library')
+    stream_parser.add_argument('--filter', type=str, help='Filter expression (e.g., "stars == true")')
+    stream_parser.add_argument('--fields', nargs='+', help='Fields to output (default: all)')
+    stream_parser.add_argument('--format', choices=['jsonl', 'json', 'csv', 'urls', 'tsv'], default='jsonl',
+                               help='Output format (default: jsonl)')
+    stream_parser.add_argument('--watch', action='store_true', help='Watch for changes and stream updates')
+    stream_parser.add_argument('--tail', type=int, help='Show last N bookmarks')
+    stream_parser.add_argument('--follow', action='store_true', help='Follow mode (use with --tail)')
+    stream_parser.add_argument('--diff', type=str, help='Stream differences with another library')
+
+    # Health command
+    health_parser = subparsers.add_parser('health', help='Analyze and maintain bookmark health')
+    health_subparsers = health_parser.add_subparsers(dest='health_command', help='Health operations')
+
+    # Health check
+    health_check = health_subparsers.add_parser('check', help='Check health of bookmarks')
+    health_check.add_argument('lib_dir', type=str, help='Directory of the bookmark library')
+    health_check.add_argument('--detailed', action='store_true', help='Show detailed per-bookmark analysis')
+    health_check.add_argument('--id', type=int, help='Check health of specific bookmark')
+    health_check.add_argument('--export', type=str, help='Export health report to JSON file')
+    health_check.add_argument('--threshold', type=float, default=0.4, help='Health score threshold for warnings')
+
+    # Health fix
+    health_fix = health_subparsers.add_parser('fix', help='Auto-fix common bookmark issues')
+    health_fix.add_argument('lib_dir', type=str, help='Directory of the bookmark library')
+    health_fix.add_argument('--fix-urls', action='store_true', help='Clean URLs (remove tracking, normalize)')
+    health_fix.add_argument('--fix-titles', action='store_true', help='Generate missing titles')
+    health_fix.add_argument('--fix-metadata', action='store_true', help='Add missing metadata fields')
+    health_fix.add_argument('--all', action='store_true', help='Apply all fixes')
+    health_fix.add_argument('--preview', action='store_true', help='Preview fixes without applying')
+    health_fix.add_argument('--threshold', type=float, default=0.4, help='Only fix bookmarks below this health score')
 
     # Collections command
     collections_parser = subparsers.add_parser('collections', help='Manage bookmark collections')
@@ -484,22 +522,23 @@ def main():
             utils.save_bookmarks(bookmarks, None, lib_dir)
         elif args.type_command == 'browser':
             # Import browser bookmarks and history
+            import sys  # Ensure sys is available in this scope
             from . import browser_import
-            
+
             # List profiles if requested
             if args.list_profiles:
                 profile_list = browser_import.list_browser_profiles()
-                
+
                 if not profile_list:
                     console.print("[yellow]No browser profiles found on this system.[/yellow]")
                     sys.exit(0)
-                
+
                 table = Table(title="Detected Browser Profiles")
                 table.add_column("Browser", style="cyan")
                 table.add_column("Profile", style="green")
                 table.add_column("Path", style="white")
                 table.add_column("Default", style="yellow")
-                
+
                 for profile in profile_list:
                     table.add_row(
                         profile['browser'],
@@ -507,10 +546,10 @@ def main():
                         profile['path'],
                         "✓" if profile['is_default'] else ""
                     )
-                
+
                 console.print(table)
                 sys.exit(0)
-            
+
             # Import bookmarks using the high-level API
             lib_dir = args.lib_dir
             if not lib_dir:
@@ -804,6 +843,198 @@ def main():
         else:
             console.print("[yellow]Please specify --id, --all, --summary, --cache-stats, or --search.[/yellow]")
             sys.exit(1)
+
+    elif args.command == 'stream':
+        import btk.stream as stream_module
+
+        lib_dir = args.lib_dir
+        if not os.path.isdir(lib_dir):
+            logging.error(f"The specified library directory '{lib_dir}' does not exist.")
+            sys.exit(1)
+
+        if args.diff:
+            # Diff mode - compare two libraries
+            if not os.path.isdir(args.diff):
+                logging.error(f"The comparison library '{args.diff}' does not exist.")
+                sys.exit(1)
+
+            stream = stream_module.BookmarkStream(lib_dir)
+            try:
+                for line in stream.diff(args.diff, show_only='all'):
+                    print(line)
+                    sys.stdout.flush()
+            except KeyboardInterrupt:
+                pass
+            except BrokenPipeError:
+                pass
+        else:
+            # Regular streaming
+            stream_module.stream_bookmarks(
+                lib_dir=lib_dir,
+                filter=args.filter,
+                fields=args.fields,
+                format=args.format,
+                watch=args.watch,
+                tail=args.tail,
+                follow=args.follow
+            )
+
+    elif args.command == 'health':
+        import btk.health as health_module
+
+        if args.health_command == 'check':
+            # Health check command
+            lib_dir = args.lib_dir
+            if not os.path.isdir(lib_dir):
+                logging.error(f"The specified library directory '{lib_dir}' does not exist.")
+                sys.exit(1)
+
+            bookmarks = utils.load_bookmarks(lib_dir)
+            if not bookmarks:
+                console.print("[yellow]No bookmarks found in library.[/yellow]")
+                sys.exit(1)
+
+            if args.id:
+                # Check specific bookmark
+                bookmark = utils.find_bookmark(bookmarks, args.id)
+                if not bookmark:
+                    console.print(f"[red]Bookmark with ID {args.id} not found.[/red]")
+                    sys.exit(1)
+
+                health = health_module.BookmarkHealth()
+                analysis = health.calculate_health_score(bookmark)
+
+                # Display results
+                console.print(Panel(
+                    f"[bold]Bookmark Health Analysis[/bold]\n\n"
+                    f"Title: {bookmark.get('title', 'Untitled')}\n"
+                    f"URL: {bookmark.get('url', '')}\n\n"
+                    f"Overall Health: {analysis['overall']:.2f} - {analysis['status'].upper()}\n\n"
+                    f"Scores:\n"
+                    f"  Reachability: {analysis['scores']['reachability']:.2f}\n"
+                    f"  Freshness: {analysis['scores']['freshness']:.2f}\n"
+                    f"  Completeness: {analysis['scores']['completeness']:.2f}\n"
+                    f"  Engagement: {analysis['scores']['engagement']:.2f}\n"
+                    f"  Metadata Quality: {analysis['scores']['metadata_quality']:.2f}\n\n"
+                    f"Recommendations:\n" +
+                    '\n'.join(f"  • {rec}" for rec in analysis['recommendations']),
+                    border_style="cyan" if analysis['overall'] >= args.threshold else "red"
+                ))
+            else:
+                # Analyze entire library
+                report = health_module.analyze_library_health(bookmarks, detailed=args.detailed)
+
+                # Display summary
+                status_color = "green" if report['average_health'] >= 0.6 else "yellow" if report['average_health'] >= 0.4 else "red"
+
+                console.print(Panel(
+                    f"[bold]Library Health Report[/bold]\n\n"
+                    f"Total Bookmarks: {report['total_bookmarks']}\n"
+                    f"Average Health: [{status_color}]{report['average_health']:.2f}[/{status_color}] - {report['library_status'].upper()}\n\n"
+                    f"Status Distribution:\n"
+                    f"  Excellent: {report['status_distribution']['excellent']}\n"
+                    f"  Good: {report['status_distribution']['good']}\n"
+                    f"  Fair: {report['status_distribution']['fair']}\n"
+                    f"  Poor: {report['status_distribution']['poor']}\n"
+                    f"  Critical: {report['status_distribution']['critical']}\n\n"
+                    f"Common Issues:\n" +
+                    '\n'.join(f"  • {issue['issue']} ({issue['count']} bookmarks)" for issue in report['common_issues'][:5]) +
+                    "\n\nLibrary Recommendations:\n" +
+                    '\n'.join(f"  • {rec}" for rec in report['recommendations']),
+                    title="Library Health Analysis",
+                    border_style=status_color
+                ))
+
+                # Show problem bookmarks
+                if report['problem_bookmarks']:
+                    table = Table(title="Problem Bookmarks (Lowest Health)", show_header=True, header_style="bold red")
+                    table.add_column("ID", style="cyan", no_wrap=True)
+                    table.add_column("Title", style="white")
+                    table.add_column("Score", justify="right", style="red")
+                    table.add_column("Main Issue", style="yellow")
+
+                    for pb in report['problem_bookmarks'][:10]:
+                        table.add_row(
+                            str(pb['id']),
+                            pb['title'][:50] + "..." if len(pb['title']) > 50 else pb['title'],
+                            f"{pb['score']:.2f}",
+                            pb['issues'][0] if pb['issues'] else "Multiple issues"
+                        )
+
+                    console.print(table)
+
+                # Export if requested
+                if args.export:
+                    with open(args.export, 'w') as f:
+                        json.dump(report, f, indent=2)
+                    console.print(f"[green]Health report exported to {args.export}[/green]")
+
+        elif args.health_command == 'fix':
+            # Health fix command
+            lib_dir = args.lib_dir
+            if not os.path.isdir(lib_dir):
+                logging.error(f"The specified library directory '{lib_dir}' does not exist.")
+                sys.exit(1)
+
+            bookmarks = utils.load_bookmarks(lib_dir)
+            if not bookmarks:
+                console.print("[yellow]No bookmarks found in library.[/yellow]")
+                sys.exit(1)
+
+            # Determine fix types
+            fix_types = []
+            if args.all:
+                fix_types = ['url', 'title', 'metadata']
+            else:
+                if args.fix_urls:
+                    fix_types.append('url')
+                if args.fix_titles:
+                    fix_types.append('title')
+                if args.fix_metadata:
+                    fix_types.append('metadata')
+
+            if not fix_types:
+                console.print("[yellow]No fix types specified. Use --all or specific fix flags.[/yellow]")
+                sys.exit(1)
+
+            # Apply fixes
+            health = health_module.BookmarkHealth()
+            fixed_count = 0
+            all_fixes = []
+
+            for i, bookmark in enumerate(bookmarks):
+                # Check if bookmark needs fixing (based on health score)
+                analysis = health.calculate_health_score(bookmark)
+                if analysis['overall'] < args.threshold:
+                    fixed_bookmark, fixes = health_module.auto_fix_bookmark(bookmark, fix_types)
+
+                    if fixes:
+                        if args.preview:
+                            console.print(f"[yellow]Would fix bookmark {bookmark.get('id')}:[/yellow]")
+                            for fix in fixes:
+                                console.print(f"  • {fix}")
+                        else:
+                            bookmarks[i] = fixed_bookmark
+                            fixed_count += 1
+                            all_fixes.extend(fixes)
+
+            if not args.preview and fixed_count > 0:
+                utils.save_bookmarks(bookmarks, lib_dir, lib_dir)
+                console.print(f"[green]Fixed {fixed_count} bookmarks with {len(all_fixes)} total fixes applied.[/green]")
+
+                # Show fix summary
+                fix_counts = {}
+                for fix in all_fixes:
+                    fix_type = fix.split()[0]
+                    fix_counts[fix_type] = fix_counts.get(fix_type, 0) + 1
+
+                console.print("\n[bold]Fixes Applied:[/bold]")
+                for fix_type, count in sorted(fix_counts.items(), key=lambda x: x[1], reverse=True):
+                    console.print(f"  • {fix_type}: {count}")
+            elif args.preview:
+                console.print(f"\n[yellow]Preview mode: {fixed_count} bookmarks would be fixed.[/yellow]")
+            else:
+                console.print("[green]No bookmarks needed fixing based on threshold.[/green]")
 
     elif args.command == 'collections':
         if not hasattr(args, 'collections_command') or not args.collections_command:
@@ -1199,10 +1430,50 @@ def main():
         if not os.path.isdir(lib_dir):
             logging.error(f"The specified library directory '{lib_dir}' does not exist or is not a directory.")
             sys.exit(1)
-        
+
         bookmarks = utils.load_bookmarks(lib_dir)
-        
-        if args.stats:
+
+        if args.analyze:
+            # Comprehensive duplicate analysis
+            analysis = dedup.analyze_duplicates(bookmarks)
+
+            console.print(Panel(
+                "[bold]Comprehensive Duplicate Analysis[/bold]",
+                title="Duplicate Detection Results",
+                border_style="cyan"
+            ))
+
+            # Show different types of duplicates found
+            table = Table(show_header=True, header_style="bold magenta")
+            table.add_column("Detection Method", style="cyan")
+            table.add_column("Groups", justify="right", style="yellow")
+            table.add_column("Total Dupes", justify="right", style="red")
+
+            table.add_row("Exact URL match",
+                         str(analysis['exact_duplicates']['groups']),
+                         str(analysis['exact_duplicates']['total']))
+            table.add_row("Smart match (normalized)",
+                         str(analysis['smart_duplicates']['groups']),
+                         str(analysis['smart_duplicates']['total']))
+            table.add_row("Aggressive (no tracking)",
+                         str(analysis['aggressive_duplicates']['groups']),
+                         str(analysis['aggressive_duplicates']['total']))
+            table.add_row("Content similarity",
+                         str(analysis['content_duplicates']['groups']),
+                         str(analysis['content_duplicates']['total']))
+            table.add_row("Redirect chains",
+                         str(analysis['redirect_chains']['chains']),
+                         str(analysis['redirect_chains']['total']))
+
+            console.print(table)
+
+            console.print("\n[bold]Summary Recommendations:[/bold]")
+            console.print(f"  • Safe to remove (exact): {analysis['summary']['removable_exact']}")
+            console.print(f"  • Likely duplicates (smart): {analysis['summary']['removable_smart']}")
+            console.print(f"  • Aggressive removal: {analysis['summary']['removable_aggressive']}")
+            console.print(f"  • Content duplicates to merge: {analysis['summary']['potential_merges']}")
+
+        elif args.stats:
             # Show statistics only
             stats = dedup.get_duplicate_stats(bookmarks, key=args.key)
             
@@ -1226,7 +1497,81 @@ def main():
                     table.add_row(url[:80] + "..." if len(url) > 80 else url, str(count))
                 
                 console.print(table)
-        
+
+        elif args.smart or args.aggressive or args.content:
+            # Use enhanced duplicate detection
+            if args.content:
+                duplicates = dedup.find_content_duplicates(bookmarks)
+                console.print("[cyan]Using content-based duplicate detection...[/cyan]")
+            elif args.aggressive:
+                duplicates = dedup.find_smart_duplicates(bookmarks, 'aggressive')
+                console.print("[cyan]Using aggressive URL matching (ignoring tracking params)...[/cyan]")
+            else:  # smart
+                duplicates = dedup.find_smart_duplicates(bookmarks, 'normal')
+                console.print("[cyan]Using smart URL normalization...[/cyan]")
+
+            if not duplicates:
+                console.print("[green]No duplicates found with the selected method.[/green]")
+            else:
+                total_dupes = sum(len(g) - 1 for g in duplicates.values())
+
+                if args.preview:
+                    console.print(f"[yellow]Preview: Would remove {total_dupes} duplicates from {len(duplicates)} groups[/yellow]")
+
+                    # Show some examples
+                    console.print("\n[bold]Example duplicate groups:[/bold]")
+                    for i, (key, group) in enumerate(list(duplicates.items())[:5], 1):
+                        console.print(f"\n[cyan]Group {i} ({len(group)} bookmarks):[/cyan]")
+                        for j, b in enumerate(group[:3], 1):  # Show first 3
+                            title = b.get('title', 'Untitled')[:50]
+                            url = b.get('url', '')[:50]
+                            console.print(f"  {j}. {title} - {url}")
+                        if len(group) > 3:
+                            console.print(f"  ... and {len(group) - 3} more")
+                else:
+                    # Apply the deduplication
+                    removed_bookmarks = []
+                    kept_bookmarks = []
+                    seen_keys = set()
+
+                    for bookmark in bookmarks:
+                        # Find which duplicate group this bookmark belongs to
+                        found_in_group = False
+                        for key, group in duplicates.items():
+                            if bookmark in group:
+                                if key not in seen_keys:
+                                    seen_keys.add(key)
+                                    # Apply strategy to this group
+                                    if args.strategy == 'merge':
+                                        merged = dedup.merge_bookmark_metadata(group)
+                                        kept_bookmarks.append(merged)
+                                        removed_bookmarks.extend(group)
+                                    elif args.strategy == 'keep_first':
+                                        kept_bookmarks.append(group[0])
+                                        removed_bookmarks.extend(group[1:])
+                                    elif args.strategy == 'keep_last':
+                                        kept_bookmarks.append(group[-1])
+                                        removed_bookmarks.extend(group[:-1])
+                                    elif args.strategy == 'keep_most_visited':
+                                        most_visited = max(group, key=lambda b: b.get('visit_count', 0))
+                                        kept_bookmarks.append(most_visited)
+                                        removed_bookmarks.extend([b for b in group if b != most_visited])
+                                found_in_group = True
+                                break
+
+                        if not found_in_group:
+                            kept_bookmarks.append(bookmark)
+
+                    # Save removed bookmarks if requested
+                    if args.output_removed and removed_bookmarks:
+                        utils.ensure_dir(args.output_removed)
+                        utils.save_bookmarks(removed_bookmarks, None, args.output_removed)
+                        console.print(f"[cyan]Saved {len(removed_bookmarks)} removed bookmarks to '{args.output_removed}'[/cyan]")
+
+                    utils.save_bookmarks(kept_bookmarks, lib_dir, lib_dir)
+                    console.print(f"[green]Removed {total_dupes} duplicates. {len(kept_bookmarks)} bookmarks remaining.[/green]")
+                    console.print(f"[cyan]Strategy used: {args.strategy}[/cyan]")
+
         elif args.preview:
             # Preview deduplication
             deduplicated = dedup.preview_deduplication(bookmarks, strategy=args.strategy, key=args.key)
