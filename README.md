@@ -1,239 +1,416 @@
 # Bookmark Toolkit (btk)
 
-Bookmark Toolkit (btk) is a command-line tool for managing and analyzing bookmarks. It provides features for importing, searching, editing, and exporting bookmarks, as well as querying them using JMESPath.
+A modern, database-first bookmark manager with powerful features for organizing, searching, and analyzing your bookmarks.
+
+## Features
+
+- 🗄️ **SQLite-based storage** - Fast, reliable, and portable
+- 📥 **Multi-format import** - HTML (Netscape), JSON, CSV, Markdown, plain text
+- 📤 **Multi-format export** - HTML (hierarchical folders), JSON, CSV, Markdown
+- 🔍 **Advanced search** - Full-text search including cached content
+- 🏷️ **Hierarchical tags** - Organize with nested tags (e.g., `programming/python`)
+- 🤖 **Auto-tagging** - NLP-powered automatic tag generation
+- 📄 **Content caching** - Stores compressed HTML and markdown for offline access
+- 📑 **PDF support** - Extracts and indexes text from PDF bookmarks
+- 🔌 **Plugin system** - Extensible architecture for custom features
+- 🌐 **Browser integration** - Import bookmarks and history from Chrome, Firefox, Safari
+- 📊 **Statistics & analytics** - Track usage, duplicates, health scores
+- ⚡ **Parallel processing** - Fast bulk operations with multi-threading
 
 ## Installation
-
-To install `bookmark-tk`, you can use `pip`:
 
 ```sh
 pip install bookmark-tk
 ```
 
-## Usage
-
-It installs a command-line took, `btk`. To see how to use it, type:
+## Quick Start
 
 ```sh
-btk --help
+# Initialize default database
+btk init
+
+# Import bookmarks from HTML
+btk import html bookmarks.html
+
+# Search bookmarks
+btk search "python"
+
+# Add a bookmark
+btk add https://example.com --title "Example Site" --tags tutorial,web
+
+# List all bookmarks
+btk list
+
+# Export to various formats
+btk export bookmarks.html html --hierarchical
+btk export bookmarks.json json
+btk export bookmarks.csv csv
 ```
 
-### Commands
+## Database Management
 
-- **import**: Import bookmarks from various formats, e.g., Netscape Bookmark Format HTML file.
-  ```sh
-  btk import oldbookmarks --format netscape --output bookmarks
-  ```
+BTK uses a single SQLite database file (default: `btk.db`) instead of directory-based storage:
 
-- **search**: Search bookmarks by query.
-  ```sh
-  btk search mybookmarks "statistics"
-  ```
+```sh
+# Use default database (btk.db in current directory)
+btk list
 
-- **list-index**: List the bookmarks with the given indices.
-  ```sh
-  btk list-index mybookmarks 1 2 3
-  ```
+# Specify a different database
+btk --db ~/bookmarks.db list
 
-- **add**: Add a new bookmark.
-  ```sh
-  btk add mybookmarks --title "My Bookmark" --url "https://example.com"
-  ```
+# Set default database in config
+btk config set database.path ~/bookmarks.db
 
-- **edit**: Edit a bookmark by its ID.
-  ```sh
-  btk edit mybookmarks 1 --title "Updated Title"
-  ```
+# Database operations
+btk db info              # Show database statistics
+btk db vacuum            # Optimize database
+btk db export backup.db  # Export to new database
+```
 
-- **remove**: Remove a bookmark by its ID.
-  ```sh
-  btk remove mybookmarks 2
-  ```
+## Core Commands
 
-- **list**: List all bookmarks (including metadata).
-  ```sh
-  btk list mybookmarks
-  ```
+### Import & Export
 
-- **visit**: Visit a bookmark by its ID.
-  ```sh
-  btk visit mybookmarks 103
-  ```
+```sh
+# Import from various formats
+btk import html bookmarks.html          # Netscape HTML format
+btk import json bookmarks.json          # JSON format
+btk import csv bookmarks.csv            # CSV format
+btk import markdown notes.md            # Extract links from markdown
+btk import text urls.txt                # Plain text URLs
 
-- **merge**: Perform merge (set) operations on bookmark libraries.
-  ```sh
-  btk merge union lib1 lib2 lib3 --output merged
-  ```
+# Auto-detect format
+btk import bookmarks.html               # Automatically detects format
 
+# Import browser bookmarks
+btk import chrome                       # Import from Chrome
+btk import firefox --profile default    # Import from specific Firefox profile
 
-- **reachable**: Check and mark bookmarks as reachable or not.
-  ```sh
-  btk reachable mybookmarks
-  ```
+# Export to various formats
+btk export output.html html             # HTML with hierarchical folders
+btk export output.json json             # JSON format
+btk export output.csv csv               # CSV format
+btk export output.md markdown           # Markdown with tag sections
+```
 
-- **purge**: Remove bookmarks marked as not reachable.
-  ```sh
-  btk purge mybookmarks --output purged
-  ```
+### Search & Query
 
-- **export**: Export bookmarks to a different format.
-  ```sh
-  btk export mybookmarks --output bookmarks.csv
-  ```
+```sh
+# Basic search (title, URL, description)
+btk search "machine learning"
 
-- **jmespath**: Query bookmarks using JMESPath.
-  ```sh
-  btk jmespath mybookmarks "[?visit_count > `0`].title"
-  ```
+# Search in cached content
+btk search "neural networks" --in-content
 
-- **stats**: Get statistics about bookmarks.
-  ```sh
-  btk stats mybookmarks
-  ```
+# Advanced queries with JMESPath
+btk query "[?stars == \`true\`].title"                    # Starred bookmarks
+btk query "[?visit_count > \`5\`].{title: title, url: url}" # Frequently visited
 
-- **about**: Get information about the tool.
-  ```sh
-  btk about
-  ```
+# Filter by tags
+btk tags filter programming/python      # Bookmarks with tag prefix
 
-- **version**: Get the version of the tool.
-  ```sh
-  btk version
-  ```
+# List tags with statistics
+btk tags list
+btk tags tree                           # Show tag hierarchy
+btk tags stats                          # Tag usage statistics
+```
 
+### Bookmark Management
 
-## Example JMESPath Queries
+```sh
+# Add bookmarks
+btk add https://example.com --title "Example" --tags tutorial,reference
+btk add https://paper.pdf --tags research,ml  # Automatically extracts PDF text
 
-- Get all starred bookmarks:
-  ```sh
-  btk jmespath mybookmarks "[?stars == `true`].title"
-  ```
-- Get URLs of frequently visited bookmarks:
-  ```sh
-  btk jmespath mybookmarks "[?visit_count > `5`].url"
-  ```
-- Get bookmarks that contain 'wikipedia' in the URL:
-  ```sh
-  btk jmespath mybookmarks "[?contains(url, 'wikipedia')].{title: title, url: url}"
-  ```
+# Get bookmark details
+btk get 42                              # Simple view
+btk get 42 --details                    # Full details with metadata
+btk get 42 --format json                # JSON output
 
+# Update bookmarks
+btk update 42 --title "New Title" --tags python,tutorial --stars true
+btk update 42 --add-tags advanced --remove-tags beginner
 
+# Delete bookmarks
+btk delete 42
+btk delete --tag-prefix old/            # Delete by tag prefix
+```
 
-## Roadmap and Future Plans
+### Content & Caching
 
-BTK is actively evolving with a plugin-based architecture that enables extensibility while keeping the core lightweight. Here's our comprehensive roadmap:
+```sh
+# Refresh cached content
+btk refresh --id 42                     # Refresh specific bookmark
+btk refresh --all                       # Refresh all bookmarks
+btk refresh --all --workers 50          # Use 50 parallel workers
+
+# View cached content
+btk view 42                             # View markdown in terminal
+btk view 42 --html                      # Open HTML in browser
+
+# Auto-tag using cached content
+btk auto-tag --id 42                    # Preview tags for bookmark
+btk auto-tag --id 42 --apply            # Apply suggested tags
+btk auto-tag --all --workers 100 --apply # Tag all bookmarks in parallel
+```
+
+### Organization
+
+```sh
+# Tag operations
+btk tags rename "old-tag" "new-tag"
+btk tags merge tag1 tag2 tag3 --into merged-tag
+
+# Deduplication
+btk dedupe --strategy merge             # Merge duplicate metadata
+btk dedupe --strategy keep_first        # Keep oldest bookmark
+btk dedupe --strategy keep_most_visited # Keep most visited
+
+# Statistics
+btk stats                               # Database statistics
+btk stats --tags                        # Tag statistics
+```
+
+## Configuration
+
+BTK supports configuration files for persistent settings:
+
+```sh
+# Show configuration
+btk config show
+
+# Set configuration values
+btk config set database.path ~/bookmarks.db
+btk config set output.format json
+btk config set import.fetch_titles true
+
+# Configuration file location: ~/.config/btk/config.toml
+```
+
+## Advanced Features
+
+### PDF Support
+
+BTK automatically extracts text from PDF bookmarks for search and auto-tagging:
+
+```sh
+btk add https://arxiv.org/pdf/2301.00001.pdf --tags research,ml
+btk search "neural network" --in-content  # Searches PDF text
+btk view 42                                # View extracted PDF text
+```
+
+### Hierarchical Tags & Export
+
+Organize bookmarks with hierarchical tags and export to browser-compatible HTML:
+
+```sh
+# Add bookmarks with hierarchical tags
+btk add https://docs.python.org --tags programming/python/docs
+btk add https://flask.palletsprojects.com --tags programming/python/web
+
+# Export with folder structure
+btk export bookmarks.html html --hierarchical
+
+# Result: Nested folders in browser
+# 📁 programming
+#   📁 python
+#     📁 docs
+#       🔖 Python Documentation
+#     📁 web
+#       🔖 Flask Documentation
+```
+
+### Content Caching
+
+BTK caches webpage content for offline access and full-text search:
+
+- Fetches HTML and converts to markdown
+- Compresses with zlib (70-80% compression ratio)
+- Extracts text from PDFs
+- Enables content-based search and auto-tagging
+
+```sh
+# Content is cached automatically when adding bookmarks
+btk add https://example.com
+
+# Manually refresh content
+btk refresh --all --workers 50
+
+# Search within cached content
+btk search "specific phrase" --in-content
+```
+
+### Plugin System
+
+BTK has an extensible plugin architecture:
+
+```python
+from btk.plugins import Plugin, PluginMetadata, PluginPriority
+
+class MyPlugin(Plugin):
+    def get_metadata(self) -> PluginMetadata:
+        return PluginMetadata(
+            name="my-plugin",
+            version="1.0.0",
+            description="Custom functionality",
+            priority=PluginPriority.NORMAL
+        )
+
+    def on_bookmark_added(self, bookmark):
+        # Custom logic when bookmark is added
+        pass
+```
+
+## Architecture
+
+### Modern Stack
+
+- **Database**: SQLAlchemy ORM with SQLite backend
+- **Models**: Bookmark, Tag, ContentCache, BookmarkHealth
+- **CLI**: argparse with Rich for beautiful terminal output
+- **Testing**: pytest with 59% code coverage (317 tests)
+- **Content**: HTML/Markdown conversion, zlib compression, PDF extraction
+
+### Database Schema
+
+```
+bookmarks
+├── id (primary key)
+├── unique_id (hash)
+├── url
+├── title
+├── description
+├── added (timestamp)
+├── stars (boolean)
+├── visit_count
+├── last_visited
+└── reachable (boolean)
+
+tags
+├── id
+├── name (unique)
+├── description
+└── color
+
+bookmark_tags (many-to-many)
+├── bookmark_id
+└── tag_id
+
+content_cache
+├── id
+├── bookmark_id (foreign key)
+├── html_content (compressed)
+├── markdown_content
+├── content_hash
+├── fetched_at
+└── status_code
+```
+
+### Code Organization
+
+```
+btk/
+├── cli.py              # Command-line interface
+├── db.py               # Database operations
+├── models.py           # SQLAlchemy models
+├── importers.py        # Import from various formats
+├── exporters.py        # Export to various formats
+├── content_fetcher.py  # Web content fetching & caching
+├── content_cache.py    # Content cache management
+├── plugins.py          # Plugin system
+├── tag_utils.py        # Tag operations
+├── dedup.py            # Deduplication
+├── archiver.py         # Web archive integration
+└── browser_import.py   # Browser bookmark import
+```
+
+## Development
+
+### Running Tests
+
+```sh
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=btk --cov-report=term-missing
+
+# Run specific test file
+pytest tests/test_db.py -v
+```
+
+### Test Coverage
+
+- Overall: 59.40% (317 tests, all passing)
+- Core modules: >80% coverage
+  - db.py: 90.77%
+  - exporters.py: 92.45%
+  - importers.py: 82.35%
+  - utils.py: 88.57%
+  - tag_utils.py: 95.67%
+  - dedup.py: 88.24%
+  - plugins.py: 90.07%
+
+## Roadmap
 
 ### Recently Completed ✅
 
-- **Plugin Architecture**: Extensible system for adding new capabilities without modifying core
-- **Auto-tagging**: Automatic tag generation using domain rules, keywords, and content analysis
-- **Content Extraction**: Fetches and analyzes webpage content for enhanced tagging
-- **FastAPI Server**: REST API for programmatic access to BTK functionality
-- **Web Dashboard**: Beautiful frontend interface with statistics, search, and management
-- **Hierarchical Tags**: Support for nested tags with tree views and operations
-- **Deduplication**: Smart duplicate detection and removal with multiple strategies
-- **Bulk Operations**: Add, edit, and remove multiple bookmarks at once
+- SQLAlchemy-based database architecture
+- Content caching with compression
+- PDF text extraction
+- Auto-tagging with NLP
+- Hierarchical tag export
+- Parallel processing for bulk operations
+- Browser bookmark import
+- Plugin system
 
 ### In Progress 🚧
 
-- **Bookmark Collections/Sets**: Organize bookmarks into named collections with set operations
-- **BTK REPL**: Interactive shell with tab completion and stateful operations
+- Enhanced search capabilities
+- Reading list management
+- Link rot detection with Wayback Machine
 
-### Short-term Goals (Q1 2024) 🎯
+### Planned Features 🎯
 
-#### Core Features
-- **Complete API Coverage**: Add missing endpoints (JMESPath, reachability, library merge)
-- **Similarity Detection**: Find related bookmarks using content analysis
-- **Smart Search**: Natural language queries and semantic search
-- **Reading Time & Analytics**: Track reading patterns and bookmark usage
+- Browser extensions (Chrome, Firefox)
+- MCP integration for AI-powered queries
+- Static site generator for bookmark collections
+- Similarity detection and recommendations
+- Full-text search with ranking
+- Bookmark relationship graphs
+- Social features (shared collections)
 
-#### Integrations
-- **Browser Extensions**: Chrome/Firefox extensions for one-click bookmarking
-- **Static Site Export**: Generate beautiful static websites from bookmarks
-- **MCP Integration**: AI-powered natural language interface via Model Context Protocol
+## Migration from Legacy JSON Format
 
-### Medium-term Goals (Q2-Q3 2024) 🚀
+If you're upgrading from an older JSON-based version of BTK:
 
-#### Smart Features
-- **Auto-categorization**: Automatically organize bookmarks into collections
-- **Link Rot Detection**: Periodic checks for dead links with Wayback Machine fallback
-- **Content Summarization**: AI-powered summaries of bookmarked content
-- **Recommendation Engine**: Suggest related content based on bookmarking patterns
-- **Full-text Search**: Index and search within bookmarked page content
-
-#### Organization & Discovery
-- **Smart Collections**: Rule-based auto-organization (e.g., "All Python tutorials from 2024")
-- **Bookmark Relationships**: Link related bookmarks and create knowledge graphs
-- **Reading Lists**: Prioritized queues with reading goals
-- **Rich Notes**: Markdown notes and annotations for bookmarks
-- **Version History**: Track all changes to bookmarks over time
-
-#### Visualization & Analytics
-- **Network Visualization**: Interactive graphs showing tag and content relationships
-- **Activity Heatmaps**: Visualize bookmarking patterns over time
-- **Domain Analytics**: Detailed insights into your most bookmarked sources
-- **Tag Evolution**: Track how your interests change over time
-- **Reading Statistics**: Time spent, completion rates, reading velocity
-
-### Long-term Vision (2024+) 🌟
-
-#### Collaboration Features
-- **Shared Collections**: Public/private bookmark collections with permissions
-- **Team Libraries**: Collaborative bookmarking for organizations
-- **Social Features**: Follow users, discover trending bookmarks
-- **Comments & Discussions**: Community annotations on bookmarks
-
-#### Advanced Integrations
-- **NLP Integrations**: 
-  - spaCy for named entity recognition
-  - Transformers for semantic understanding
-  - NLTK for linguistic analysis
-- **Data Sources**:
-  - RSS feed generation from collections
-  - Two-way sync with Pocket, Instapaper, Pinboard
-  - Import from browser history
-  - Social media saved posts (Twitter, Reddit, HN)
-- **Workflow Automation**:
-  - Webhooks for bookmark events
-  - IFTTT/Zapier integration
-  - Email digests and reports
-  - Scriptable hooks for custom actions
-
-#### Power User Features
-- **Query Language**: SQL-like queries for complex bookmark searches
-- **Macro System**: Record and replay bookmark operations
-- **Custom Fields**: User-defined metadata schemas
-- **Bookmark Templates**: Predefined structures for common bookmark types
-- **API-first Design**: Everything accessible via API for custom tooling
-
-#### AI & Machine Learning
-- **Smart Tagging**: ML models trained on your tagging patterns
-- **Duplicate Detection**: Fuzzy matching for similar content
-- **Content Classification**: Automatic quality and relevance scoring
-- **Trend Detection**: Identify emerging topics in your bookmarks
-- **Personal Knowledge Base**: Transform bookmarks into a queryable knowledge graph
-
-### Architecture Principles
-
-1. **Plugin-based Extensibility**: Core remains lightweight with optional heavy features
-2. **Progressive Enhancement**: Basic features work without dependencies, advanced features are opt-in
-3. **API-first Design**: All functionality exposed via APIs
-4. **Privacy-focused**: Local-first with optional cloud features
-5. **Standards Compliance**: Support common formats (Netscape, OPML, JSON-LD)
-
-### Contributing to the Roadmap
-
-We welcome contributions in any of these areas! The plugin architecture makes it easy to add new features without touching the core. See CONTRIBUTING.md for guidelines.
-
-## License
-
-This project is licensed under the MIT License.
+1. The new version uses SQLite databases instead of JSON files
+2. Use `btk import json old-bookmarks.json` to migrate your data
+3. Legacy commands and directory-based storage are no longer supported
+4. All functionality is now database-first with improved performance
 
 ## Contributing
 
-Contributions are welcome! Please submit a pull request or open an issue if you have suggestions or improvements.
+Contributions are welcome! Areas for contribution:
+
+- Adding new importers/exporters
+- Creating plugins for custom functionality
+- Improving test coverage
+- Documentation improvements
+- Performance optimizations
+
+See the plugin system for the easiest way to extend BTK without modifying core code.
+
+## License
+
+MIT License - see LICENSE file for details.
 
 ## Author
 
-Developed by [Alex Towell](https://github.com/queelius).
+Developed by [Alex Towell](https://github.com/queelius)
 
+## Links
+
+- GitHub: https://github.com/queelius/bookmark-tk
+- Issues: https://github.com/queelius/bookmark-tk/issues
+- PyPI: https://pypi.org/project/bookmark-tk/

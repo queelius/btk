@@ -1,5 +1,8 @@
 """
-Constants and configuration for BTK.
+Constants for BTK.
+
+These constants are used by various modules for sensible defaults.
+Many are now also available via the config system.
 """
 
 # Network timeouts (in seconds)
@@ -17,10 +20,6 @@ MAX_TAGS_PER_BOOKMARK = 50
 # Batch processing
 DEFAULT_BATCH_SIZE = 100
 DEFAULT_MAX_WORKERS = 5
-
-# File paths
-BOOKMARKS_FILENAME = 'bookmarks.json'
-FAVICONS_DIRNAME = 'favicons'
 
 # Display limits
 DEFAULT_LIST_LIMIT = 50

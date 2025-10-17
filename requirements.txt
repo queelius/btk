@@ -1,10 +1,18 @@
-bs4
-requests
-colorama
-rich
-networkx
-matplotlib
-pyvis
-tqdm
-jmespath
-scipy
+# Core dependencies
+sqlalchemy>=2.0.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+rich>=13.0.0
+markdownify>=0.11.0
+pypdf>=3.0.0
+
+# Configuration
+tomli>=2.0.0  # For reading TOML (Python 3.10 and below)
+tomli-w>=1.0.0  # For writing TOML
+
+# Optional dependencies for advanced features
+jmespath>=1.0.0  # For JMESPath queries
+tqdm>=4.65.0  # For progress bars
+
+# Minimal set - removed heavy dependencies
+# networkx, matplotlib, pyvis, scipy, colorama - moved to extras

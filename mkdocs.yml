@@ -1,0 +1,97 @@
+site_name: Bookmark Toolkit (BTK)
+site_description: A modern, database-first bookmark manager with powerful features
+site_author: Alex Towell
+site_url: https://queelius.github.io/bookmark-tk/
+
+repo_name: queelius/bookmark-tk
+repo_url: https://github.com/queelius/bookmark-tk
+edit_uri: edit/master/docs/
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.tracking
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - Configuration: getting-started/configuration.md
+  - User Guide:
+    - Core Commands: guide/commands.md
+    - Import & Export: guide/import-export.md
+    - Search & Query: guide/search.md
+    - Tags & Organization: guide/tags.md
+    - Content Caching: guide/content.md
+    - Graph Analysis: guide/graph.md
+  - Advanced:
+    - Plugin System: advanced/plugins.md
+    - Browser Integration: advanced/browser.md
+    - Database Management: advanced/database.md
+    - Performance Tuning: advanced/performance.md
+  - API Reference:
+    - CLI Reference: api/cli.md
+    - Python API: api/python.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Architecture: development/architecture.md
+    - Testing: development/testing.md
+    - Changelog: development/changelog.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/queelius/bookmark-tk
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/bookmark-tk/
+
+copyright: Copyright &copy; 2024 Alex Towell
