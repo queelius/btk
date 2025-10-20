@@ -46,6 +46,7 @@ nav:
     - Quick Start: getting-started/quickstart.md
     - Configuration: getting-started/configuration.md
   - User Guide:
+    - Interactive Shell: guide/shell.md
     - Core Commands: guide/commands.md
     - Import & Export: guide/import-export.md
     - Search & Query: guide/search.md

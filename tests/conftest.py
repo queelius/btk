@@ -137,6 +137,71 @@ def mock_favicon_download(monkeypatch):
     """Mock favicon downloading to avoid network calls."""
     def mock_download(*args, **kwargs):
         return "favicons/mocked.ico"
-    
+
     monkeypatch.setattr("btk.utils.download_favicon", mock_download)
     return mock_download
+
+
+@pytest.fixture
+def temp_db():
+    """Create a temporary database file."""
+    temp_dir = tempfile.mkdtemp(prefix="btk_test_db_")
+    db_path = os.path.join(temp_dir, "test.db")
+    yield db_path
+    # Cleanup
+    shutil.rmtree(temp_dir)
+
+
+@pytest.fixture
+def test_shell(temp_db):
+    """Create a BookmarkShell with test database."""
+    from btk.shell import BookmarkShell
+    shell = BookmarkShell(temp_db)
+    return shell
+
+
+@pytest.fixture
+def populated_shell_db():
+    """Create a shell with populated test database."""
+    from btk.db import Database
+    from btk.shell import BookmarkShell
+
+    temp_dir = tempfile.mkdtemp(prefix="btk_test_shell_")
+    db_path = os.path.join(temp_dir, "test.db")
+
+    # Create database and populate
+    db = Database(db_path)
+
+    # Add diverse test data
+    db.add(
+        url="https://docs.python.org",
+        title="Python Documentation",
+        description="Official Python docs",
+        tags=["programming/python", "documentation"],
+        stars=True
+    )
+    db.add(
+        url="https://www.rust-lang.org",
+        title="Rust Programming Language",
+        tags=["programming/rust"],
+        stars=False
+    )
+    db.add(
+        url="https://github.com",
+        title="GitHub",
+        tags=["development", "git"],
+        stars=True
+    )
+    db.add(
+        url="https://stackoverflow.com",
+        title="Stack Overflow",
+        tags=["qa", "programming"],
+        stars=False
+    )
+
+    shell = BookmarkShell(db_path)
+
+    yield shell
+
+    # Cleanup
+    shutil.rmtree(temp_dir)

@@ -858,6 +858,131 @@ def cmd_tags(args):
             console.print(table)
 
 
+def cmd_tag_add(args):
+    """Add tag to bookmark(s)."""
+    db = get_db(args.db)
+
+    from btk.models import Tag, Bookmark
+
+    tag_name = args.tag
+    bookmark_ids = [int(id_str) for id_str in args.ids]
+
+    added_count = 0
+
+    with db.session() as session:
+        # Get or create tag
+        tag = session.query(Tag).filter_by(name=tag_name).first()
+        if not tag:
+            tag = Tag(name=tag_name)
+            session.add(tag)
+
+        # Add to each bookmark
+        for bookmark_id in bookmark_ids:
+            bookmark = session.get(Bookmark, bookmark_id)
+            if not bookmark:
+                console.print(f"[yellow]Bookmark {bookmark_id} not found, skipping[/yellow]")
+                continue
+
+            if tag not in bookmark.tags:
+                bookmark.tags.append(tag)
+                added_count += 1
+
+        session.commit()
+
+    console.print(f"[green]✓ Added tag '{tag_name}' to {added_count} bookmark(s)[/green]")
+
+
+def cmd_tag_remove(args):
+    """Remove tag from bookmark(s)."""
+    db = get_db(args.db)
+
+    from btk.models import Tag, Bookmark
+
+    tag_name = args.tag
+    bookmark_ids = [int(id_str) for id_str in args.ids]
+
+    removed_count = 0
+
+    with db.session() as session:
+        tag = session.query(Tag).filter_by(name=tag_name).first()
+        if not tag:
+            console.print(f"[yellow]Tag '{tag_name}' not found[/yellow]")
+            return
+
+        # Remove from each bookmark
+        for bookmark_id in bookmark_ids:
+            bookmark = session.get(Bookmark, bookmark_id)
+            if not bookmark:
+                console.print(f"[yellow]Bookmark {bookmark_id} not found, skipping[/yellow]")
+                continue
+
+            if tag in bookmark.tags:
+                bookmark.tags.remove(tag)
+                removed_count += 1
+
+        session.commit()
+
+    console.print(f"[green]✓ Removed tag '{tag_name}' from {removed_count} bookmark(s)[/green]")
+
+
+def cmd_tag_rename(args):
+    """Rename a tag across all bookmarks."""
+    db = get_db(args.db)
+
+    from btk.models import Tag, Bookmark
+
+    old_tag = args.old_tag
+    new_tag = args.new_tag
+
+    if old_tag == new_tag:
+        console.print("[yellow]Tags are the same, nothing to do[/yellow]")
+        return
+
+    renamed_count = 0
+
+    with db.session() as session:
+        # Find old tag
+        old_tag_obj = session.query(Tag).filter_by(name=old_tag).first()
+        if not old_tag_obj:
+            console.print(f"[yellow]Tag '{old_tag}' not found[/yellow]")
+            return
+
+        # Get or create new tag
+        new_tag_obj = session.query(Tag).filter_by(name=new_tag).first()
+        if not new_tag_obj:
+            new_tag_obj = Tag(name=new_tag)
+            session.add(new_tag_obj)
+
+        # Get all bookmarks with old tag
+        bookmarks = session.query(Bookmark).join(Bookmark.tags).filter(Tag.name == old_tag).all()
+
+        console.print(f"[yellow]Renaming tag '{old_tag}' to '{new_tag}' on {len(bookmarks)} bookmark(s)[/yellow]")
+
+        # Update each bookmark
+        for bookmark in bookmarks:
+            # Remove old tag
+            if old_tag_obj in bookmark.tags:
+                bookmark.tags.remove(old_tag_obj)
+
+            # Add new tag if not already present
+            if new_tag_obj not in bookmark.tags:
+                bookmark.tags.append(new_tag_obj)
+
+            renamed_count += 1
+
+        session.commit()
+
+        # Clean up orphaned old tag
+        old_tag_obj = session.query(Tag).filter_by(name=old_tag).first()
+        if old_tag_obj:
+            bookmark_count = session.query(Bookmark).join(Bookmark.tags).filter(Tag.name == old_tag).count()
+            if bookmark_count == 0:
+                session.delete(old_tag_obj)
+                session.commit()
+
+    console.print(f"[green]✓ Renamed tag '{old_tag}' to '{new_tag}' on {renamed_count} bookmark(s)[/green]")
+
+
 def cmd_graph(args):
     """Manage bookmark graph."""
     from btk.graph import BookmarkGraph, GraphConfig
@@ -867,6 +992,16 @@ def cmd_graph(args):
 
     if args.graph_command == "build":
         # Build graph with specified config
+        # Check if there are any bookmarks
+        bookmark_count = len(db.all())
+        if bookmark_count == 0:
+            console.print("[yellow]No bookmarks found in the database.[/yellow]")
+            console.print("\n[cyan]To add bookmarks, try:[/cyan]")
+            console.print("  btk add <url> --title \"Title\" --tags \"tag1,tag2\"")
+            console.print("  btk import html <file.html>")
+            console.print("  btk import json <file.json>")
+            return
+
         config = GraphConfig(
             domain_weight=args.domain_weight,
             tag_weight=args.tag_weight,
@@ -917,7 +1052,13 @@ def cmd_graph(args):
 
     elif args.graph_command == "neighbors":
         # Load existing graph
-        graph.load()
+        try:
+            graph.load()
+        except ValueError as e:
+            console.print(f"[red]Error: {e}[/red]")
+            console.print("\n[cyan]To build the graph, run:[/cyan]")
+            console.print("  btk graph build")
+            return
 
         # Get neighbors
         neighbors = graph.get_neighbors(
@@ -928,6 +1069,7 @@ def cmd_graph(args):
 
         if not neighbors:
             console.print(f"[yellow]No neighbors found for bookmark {args.bookmark_id}[/yellow]")
+            console.print(f"\n[dim]Tip: Try lowering --min-weight or check if the bookmark exists[/dim]")
             return
 
         # Display results
@@ -956,7 +1098,13 @@ def cmd_graph(args):
 
     elif args.graph_command == "export":
         # Load graph
-        graph.load()
+        try:
+            graph.load()
+        except ValueError as e:
+            console.print(f"[red]Error: {e}[/red]")
+            console.print("\n[cyan]To build the graph, run:[/cyan]")
+            console.print("  btk graph build")
+            return
 
         if args.format == "d3":
             graph.export_d3(Path(args.file), min_weight=getattr(args, 'min_weight', 0.0))
@@ -1036,7 +1184,13 @@ def cmd_graph(args):
 
     elif args.graph_command == "stats":
         # Load graph and show statistics
-        graph.load()
+        try:
+            graph.load()
+        except ValueError as e:
+            console.print(f"[red]Error: {e}[/red]")
+            console.print("\n[cyan]To build the graph, run:[/cyan]")
+            console.print("  btk graph build")
+            return
 
         total_edges = len(graph.edges)
         if total_edges == 0:
@@ -1091,6 +1245,23 @@ def cmd_config(args):
         console.print(f"[green]Created config at {config_path}[/green]")
 
 
+def cmd_shell(args):
+    """Launch interactive bookmark shell."""
+    from btk.shell import BookmarkShell
+
+    db_path = args.db if hasattr(args, 'db') else 'btk.db'
+
+    try:
+        shell = BookmarkShell(db_path)
+        shell.cmdloop()
+    except KeyboardInterrupt:
+        console.print("\n[cyan]Interrupted. Goodbye![/cyan]")
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        import traceback
+        traceback.print_exc()
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -1098,46 +1269,44 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Basic operations (uses btk.db or config default)
-  btk add https://example.com --title "Example" --tags "web,demo"
-  btk list --limit 10 --sort visit_count
-  btk search "python"
-  btk get 1
-  btk update 1 --title "New Title" --tags "python,web"
-  btk delete 1 2 3
+  # Bookmark operations
+  btk bookmark add https://example.com --title "Example" --tags "web,demo"
+  btk bookmark list --limit 10 --sort visit_count
+  btk bookmark search "python"
+  btk bookmark get 123
+  btk bookmark update 123 --title "New Title" --add-tags "important"
+  btk bookmark delete 1 2 3
 
-  # Using specific database file
-  btk list --db bookmarks.db
-  btk add https://example.com --db ~/my-bookmarks.db
+  # Tag operations
+  btk tag list
+  btk tag add python 123
+  btk tag rename "old-name" "new-name"
+  btk tag copy important --starred
 
-  # Database inspection
-  btk db info
-  btk db schema
-  btk stats
-
-  # SQL-like queries
-  btk query "stars = true"
-  btk query "title LIKE '%python%' AND visit_count > 5"
+  # Content operations
+  btk content refresh --id 123
+  btk content view 123 --html
 
   # Import/Export
-  btk import bookmarks.html
-  btk export bookmarks.json --format json
-  btk export starred.md --format markdown --query "stars = true"
+  btk import html bookmarks.html
+  btk export json data.json --starred
+
+  # Database management
+  btk db info
+  btk db schema
+  btk db stats
+
+  # Interactive shell
+  btk shell
 
   # Composable Unix-style pipelines
-  btk list --output urls | xargs -I {} curl -I {}
-  btk search "python" --output json | jq '.[] | .url'
+  btk bookmark list --output urls | xargs -I {} curl -I {}
+  btk bookmark search "python" --output json | jq '.[] | .url'
 
 Configuration:
   Default database: ./btk.db or from config
   Config file: ~/.config/btk/config.toml
   Environment: BTK_DATABASE, BTK_OUTPUT_FORMAT
-  Local override: ./btk.toml or ./.btkrc
-
-Database Options:
-  SQLite (default): --db bookmarks.db
-  PostgreSQL: --db postgresql://user:pass@localhost/bookmarks
-  MySQL: --db mysql://user:pass@localhost/bookmarks
         """
     )
 
@@ -1148,131 +1317,170 @@ Database Options:
     parser.add_argument("-o", "--output", choices=["table", "json", "csv", "plain", "urls"],
                        help="Output format")
 
-    subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # Add command
-    add_parser = subparsers.add_parser("add", help="Add a bookmark")
-    add_parser.add_argument("url", help="URL to bookmark")
-    add_parser.add_argument("--title", help="Bookmark title")
-    add_parser.add_argument("--description", help="Description")
-    add_parser.add_argument("--tags", help="Comma-separated tags")
-    add_parser.add_argument("--star", action="store_true", help="Star this bookmark")
-    add_parser.set_defaults(func=cmd_add)
+    subparsers = parser.add_subparsers(dest="command", required=True, help="Command groups")
 
-    # List command
-    list_parser = subparsers.add_parser("list", help="List bookmarks")
-    list_parser.add_argument("--limit", type=int, help="Maximum results")
-    list_parser.add_argument("--offset", type=int, default=0, help="Skip N results")
-    list_parser.add_argument("--sort", choices=["added", "title", "visit_count", "stars"],
-                           default="added", help="Sort order")
-    list_parser.add_argument("--include-archived", action="store_true", help="Include archived bookmarks")
-    list_parser.set_defaults(func=cmd_list)
+    # =================
+    # BOOKMARK GROUP
+    # =================
+    bookmark_parser = subparsers.add_parser("bookmark", help="Bookmark operations")
+    bookmark_subparsers = bookmark_parser.add_subparsers(dest="bookmark_command", required=True)
 
-    # Search command
-    search_parser = subparsers.add_parser("search", help="Search bookmarks")
-    search_parser.add_argument("query", nargs='?', default='', help="Search query (optional)")
-    search_parser.add_argument("--in-content", action="store_true", help="Search within cached markdown content")
-    search_parser.add_argument("--limit", type=int, help="Maximum results")
-    search_parser.add_argument("--starred", action="store_true", help="Filter to starred bookmarks")
-    search_parser.add_argument("--archived", action="store_true", help="Filter to archived bookmarks")
-    search_parser.add_argument("--unarchived", action="store_true", help="Filter to non-archived bookmarks")
-    search_parser.add_argument("--include-archived", action="store_true", help="Include archived bookmarks (by default they are excluded)")
-    search_parser.add_argument("--pinned", action="store_true", help="Filter to pinned bookmarks")
-    search_parser.add_argument("--tags", help="Filter by tags (comma-separated)")
-    search_parser.add_argument("--untagged", action="store_true", help="Filter to bookmarks with no tags")
-    search_parser.set_defaults(func=cmd_search)
+    # bookmark add
+    bm_add = bookmark_subparsers.add_parser("add", help="Add a bookmark")
+    bm_add.add_argument("url", help="URL to bookmark")
+    bm_add.add_argument("--title", help="Bookmark title")
+    bm_add.add_argument("--description", help="Description")
+    bm_add.add_argument("--tags", help="Comma-separated tags")
+    bm_add.add_argument("--star", action="store_true", help="Star this bookmark")
+    bm_add.set_defaults(func=cmd_add)
 
-    # Get command
-    get_parser = subparsers.add_parser("get", help="Get a specific bookmark")
-    get_parser.add_argument("id", help="Bookmark ID or unique ID")
-    get_parser.add_argument("--details", action="store_true", help="Show detailed metadata")
-    get_parser.set_defaults(func=cmd_get)
+    # bookmark list
+    bm_list = bookmark_subparsers.add_parser("list", help="List bookmarks")
+    bm_list.add_argument("--limit", type=int, help="Maximum results")
+    bm_list.add_argument("--offset", type=int, default=0, help="Skip N results")
+    bm_list.add_argument("--sort", choices=["added", "title", "visit_count", "stars"],
+                        default="added", help="Sort order")
+    bm_list.add_argument("--include-archived", action="store_true", help="Include archived bookmarks")
+    bm_list.add_argument("--starred", action="store_true", help="Filter to starred bookmarks")
+    bm_list.set_defaults(func=cmd_list)
 
-    # Update command
-    update_parser = subparsers.add_parser("update", help="Update a bookmark")
-    update_parser.add_argument("id", help="Bookmark ID")
-    update_parser.add_argument("--url", help="New URL")
-    update_parser.add_argument("--title", help="New title")
-    update_parser.add_argument("--description", help="New description")
-    update_parser.add_argument("--tags", help="Replace all tags (comma-separated)")
-    update_parser.add_argument("--add-tags", help="Add tags (comma-separated)")
-    update_parser.add_argument("--remove-tags", help="Remove tags (comma-separated)")
-    update_parser.add_argument("--starred", action="store_true", default=None, help="Mark as starred")
-    update_parser.add_argument("--unstarred", action="store_false", dest="starred", help="Remove starred status")
-    update_parser.add_argument("--archived", action="store_true", default=None, help="Mark as archived")
-    update_parser.add_argument("--unarchived", action="store_false", dest="archived", help="Remove archived status")
-    update_parser.add_argument("--pinned", action="store_true", default=None, help="Mark as pinned")
-    update_parser.add_argument("--unpinned", action="store_false", dest="pinned", help="Remove pinned status")
-    update_parser.set_defaults(func=cmd_update)
+    # bookmark search
+    bm_search = bookmark_subparsers.add_parser("search", help="Search bookmarks")
+    bm_search.add_argument("query", nargs='?', default='', help="Search query (optional)")
+    bm_search.add_argument("--in-content", action="store_true", help="Search within cached content")
+    bm_search.add_argument("--limit", type=int, help="Maximum results")
+    bm_search.add_argument("--starred", action="store_true", help="Filter to starred bookmarks")
+    bm_search.add_argument("--archived", action="store_true", help="Filter to archived bookmarks")
+    bm_search.add_argument("--unarchived", action="store_true", help="Filter to non-archived bookmarks")
+    bm_search.add_argument("--include-archived", action="store_true", help="Include archived bookmarks")
+    bm_search.add_argument("--pinned", action="store_true", help="Filter to pinned bookmarks")
+    bm_search.add_argument("--tags", help="Filter by tags (comma-separated)")
+    bm_search.add_argument("--untagged", action="store_true", help="Filter to bookmarks with no tags")
+    bm_search.set_defaults(func=cmd_search)
 
-    # Refresh command
-    refresh_parser = subparsers.add_parser("refresh", help="Refresh cached content for bookmarks")
-    refresh_parser.add_argument("--id", type=int, help="Refresh specific bookmark ID")
-    refresh_parser.add_argument("--all", action="store_true", help="Refresh all bookmarks")
-    refresh_parser.add_argument("--unreachable", action="store_true", help="Refresh only unreachable bookmarks")
-    refresh_parser.add_argument("--force", action="store_true", help="Force refresh even if content unchanged")
-    refresh_parser.add_argument("--no-update-metadata", action="store_true", help="Don't update title/description from fetched content")
-    refresh_parser.set_defaults(func=cmd_refresh)
+    # bookmark get
+    bm_get = bookmark_subparsers.add_parser("get", help="Get a specific bookmark")
+    bm_get.add_argument("id", help="Bookmark ID or unique ID")
+    bm_get.add_argument("--details", action="store_true", help="Show detailed metadata")
+    bm_get.set_defaults(func=cmd_get)
 
-    # View command
-    view_parser = subparsers.add_parser("view", help="View cached content for a bookmark")
-    view_parser.add_argument("id", help="Bookmark ID or unique ID")
-    view_parser.add_argument("--html", action="store_true", help="Open cached HTML in browser")
-    view_parser.add_argument("--raw", action="store_true", help="Show raw HTML")
-    view_parser.add_argument("--fetch", action="store_true", help="Fetch fresh content before viewing")
-    view_parser.set_defaults(func=cmd_view)
+    # bookmark update
+    bm_update = bookmark_subparsers.add_parser("update", help="Update a bookmark")
+    bm_update.add_argument("id", help="Bookmark ID")
+    bm_update.add_argument("--url", help="New URL")
+    bm_update.add_argument("--title", help="New title")
+    bm_update.add_argument("--description", help="New description")
+    bm_update.add_argument("--tags", help="Replace all tags (comma-separated)")
+    bm_update.add_argument("--add-tags", help="Add tags (comma-separated)")
+    bm_update.add_argument("--remove-tags", help="Remove tags (comma-separated)")
+    bm_update.add_argument("--star", action="store_true", dest="starred", default=None, help="Mark as starred")
+    bm_update.add_argument("--unstar", action="store_false", dest="starred", help="Remove starred status")
+    bm_update.add_argument("--archive", action="store_true", dest="archived", default=None, help="Mark as archived")
+    bm_update.add_argument("--unarchive", action="store_false", dest="archived", help="Remove archived status")
+    bm_update.add_argument("--pin", action="store_true", dest="pinned", default=None, help="Mark as pinned")
+    bm_update.add_argument("--unpin", action="store_false", dest="pinned", help="Remove pinned status")
+    bm_update.set_defaults(func=cmd_update)
 
-    # Auto-tag command
-    auto_tag_parser = subparsers.add_parser("auto-tag", help="Auto-generate tags using NLP")
-    auto_tag_parser.add_argument("--id", type=int, help="Auto-tag specific bookmark ID")
-    auto_tag_parser.add_argument("--all", action="store_true", help="Auto-tag all bookmarks")
-    auto_tag_parser.add_argument("--apply", action="store_true", help="Apply suggested tags (default is preview only)")
-    auto_tag_parser.set_defaults(func=cmd_auto_tag)
+    # bookmark delete
+    bm_delete = bookmark_subparsers.add_parser("delete", help="Delete bookmarks")
+    bm_delete.add_argument("ids", nargs="+", help="Bookmark IDs to delete")
+    bm_delete.set_defaults(func=cmd_delete)
 
-    # Delete command
-    delete_parser = subparsers.add_parser("delete", help="Delete bookmarks")
-    delete_parser.add_argument("ids", nargs="+", help="Bookmark IDs to delete")
-    delete_parser.set_defaults(func=cmd_delete)
+    # bookmark query
+    bm_query = bookmark_subparsers.add_parser("query", help="Execute SQL-like query")
+    bm_query.add_argument("sql", help="SQL WHERE clause")
+    bm_query.set_defaults(func=cmd_query)
 
-    # Query command (SQL-like)
-    query_parser = subparsers.add_parser("query", help="Execute SQL-like query")
-    query_parser.add_argument("sql", help="SQL WHERE clause")
-    query_parser.set_defaults(func=cmd_query)
+    # =================
+    # TAG GROUP
+    # =================
+    tag_parser = subparsers.add_parser("tag", help="Tag management")
+    tag_subparsers = tag_parser.add_subparsers(dest="tag_command", required=True)
 
-    # Stats command
-    stats_parser = subparsers.add_parser("stats", help="Show database statistics")
-    stats_parser.set_defaults(func=cmd_stats)
+    # tag list
+    tag_list = tag_subparsers.add_parser("list", help="List all tags")
+    tag_list.set_defaults(func=cmd_tags)
 
-    # Database commands group
-    db_parser = subparsers.add_parser("db", help="Database management commands")
-    db_subparsers = db_parser.add_subparsers(dest="db_command", required=True)
+    # tag add
+    tag_add = tag_subparsers.add_parser("add", help="Add tag(s) to bookmark(s)")
+    tag_add.add_argument("tag", help="Tag to add")
+    tag_add.add_argument("ids", nargs="+", help="Bookmark IDs")
+    tag_add.set_defaults(func=cmd_tag_add)
 
-    # db info
-    db_info_parser = db_subparsers.add_parser("info", help="Show database information")
-    db_info_parser.set_defaults(func=cmd_db_info)
+    # tag remove
+    tag_remove = tag_subparsers.add_parser("remove", help="Remove tag(s) from bookmark(s)")
+    tag_remove.add_argument("tag", help="Tag to remove")
+    tag_remove.add_argument("ids", nargs="+", help="Bookmark IDs")
+    tag_remove.set_defaults(func=cmd_tag_remove)
 
-    # db schema
-    db_schema_parser = db_subparsers.add_parser("schema", help="Show database schema")
-    db_schema_parser.set_defaults(func=cmd_db_schema)
+    # tag rename
+    tag_rename = tag_subparsers.add_parser("rename", help="Rename a tag")
+    tag_rename.add_argument("old_tag", help="Current tag name")
+    tag_rename.add_argument("new_tag", help="New tag name")
+    tag_rename.set_defaults(func=cmd_tag_rename)
 
-    # db stats (alias for stats command)
-    db_stats_parser = db_subparsers.add_parser("stats", help="Show database statistics")
-    db_stats_parser.set_defaults(func=cmd_stats)
+    # tag copy
+    tag_copy = tag_subparsers.add_parser("copy", help="Copy tag to bookmarks")
+    tag_copy.add_argument("tag", help="Tag to copy")
+    tag_copy.add_argument("--to-ids", help="Comma-separated bookmark IDs")
+    tag_copy.add_argument("--starred", action="store_true", help="Copy to all starred bookmarks")
+    tag_copy.add_argument("--all", action="store_true", help="Copy to all bookmarks")
+    tag_copy.set_defaults(func=lambda args: print("tag copy not yet implemented"))
 
-    # Import command
+    # tag stats
+    tag_stats = tag_subparsers.add_parser("stats", help="Show tag statistics")
+    tag_stats.set_defaults(func=lambda args: print("tag stats not yet implemented"))
+
+    # =================
+    # CONTENT GROUP
+    # =================
+    content_parser = subparsers.add_parser("content", help="Content operations")
+    content_subparsers = content_parser.add_subparsers(dest="content_command", required=True)
+
+    # content refresh
+    content_refresh = content_subparsers.add_parser("refresh", help="Refresh cached content")
+    content_refresh.add_argument("--id", type=int, help="Refresh specific bookmark ID")
+    content_refresh.add_argument("--all", action="store_true", help="Refresh all bookmarks")
+    content_refresh.add_argument("--unreachable", action="store_true", help="Refresh only unreachable bookmarks")
+    content_refresh.add_argument("--force", action="store_true", help="Force refresh even if unchanged")
+    content_refresh.add_argument("--no-update-metadata", action="store_true",
+                                help="Don't update title/description from fetched content")
+    content_refresh.set_defaults(func=cmd_refresh)
+
+    # content view
+    content_view = content_subparsers.add_parser("view", help="View cached content")
+    content_view.add_argument("id", help="Bookmark ID or unique ID")
+    content_view.add_argument("--html", action="store_true", help="Open cached HTML in browser")
+    content_view.add_argument("--raw", action="store_true", help="Show raw HTML")
+    content_view.add_argument("--fetch", action="store_true", help="Fetch fresh content before viewing")
+    content_view.set_defaults(func=cmd_view)
+
+    # content auto-tag
+    content_autotag = content_subparsers.add_parser("auto-tag", help="Auto-generate tags using NLP")
+    content_autotag.add_argument("--id", type=int, help="Auto-tag specific bookmark ID")
+    content_autotag.add_argument("--all", action="store_true", help="Auto-tag all bookmarks")
+    content_autotag.add_argument("--apply", action="store_true",
+                                help="Apply suggested tags (default is preview only)")
+    content_autotag.set_defaults(func=cmd_auto_tag)
+
+    # =================
+    # IMPORT GROUP
+    # =================
     import_parser = subparsers.add_parser("import", help="Import bookmarks")
     import_parser.add_argument("file", help="File to import")
     import_parser.add_argument("--format", help="Force format (auto-detected by default)")
     import_parser.set_defaults(func=cmd_import)
 
-    # Export command
+    # =================
+    # EXPORT GROUP
+    # =================
     export_parser = subparsers.add_parser("export", help="Export bookmarks")
     export_parser.add_argument("file", help="Output file")
     export_parser.add_argument("--format", required=True,
                               choices=["json", "csv", "html", "markdown"],
                               help="Export format")
     export_parser.add_argument("--query", help="SQL query to filter bookmarks")
-    # Add filter arguments (same as search)
     export_parser.add_argument("--starred", action="store_true", help="Filter to starred bookmarks")
     export_parser.add_argument("--pinned", action="store_true", help="Filter to pinned bookmarks")
     export_parser.add_argument("--archived", action="store_true", help="Filter to archived bookmarks")
@@ -1280,63 +1488,88 @@ Database Options:
     export_parser.add_argument("--tags", help="Filter by tags (comma-separated)")
     export_parser.set_defaults(func=cmd_export)
 
-    # Tags command
-    tags_parser = subparsers.add_parser("tags", help="List tags")
-    tags_parser.set_defaults(func=cmd_tags)
+    # =================
+    # DB GROUP
+    # =================
+    db_parser = subparsers.add_parser("db", help="Database management")
+    db_subparsers = db_parser.add_subparsers(dest="db_command", required=True)
 
-    # Graph command
+    # db info
+    db_info = db_subparsers.add_parser("info", help="Show database information")
+    db_info.set_defaults(func=cmd_db_info)
+
+    # db schema
+    db_schema = db_subparsers.add_parser("schema", help="Show database schema")
+    db_schema.set_defaults(func=cmd_db_schema)
+
+    # db stats
+    db_stats = db_subparsers.add_parser("stats", help="Show database statistics")
+    db_stats.set_defaults(func=cmd_stats)
+
+    # =================
+    # GRAPH GROUP
+    # =================
     graph_parser = subparsers.add_parser("graph", help="Analyze bookmark relationships")
     graph_subparsers = graph_parser.add_subparsers(dest="graph_command", required=True)
 
     # graph build
-    build_parser = graph_subparsers.add_parser("build", help="Build bookmark similarity graph")
-    build_parser.add_argument("--domain-weight", type=float, default=1.0,
-                             help="Weight for domain similarity (default: 1.0)")
-    build_parser.add_argument("--tag-weight", type=float, default=2.0,
-                             help="Weight for tag similarity (default: 2.0)")
-    build_parser.add_argument("--direct-link-weight", type=float, default=5.0,
-                             help="Weight for direct links (default: 5.0)")
-    build_parser.add_argument("--indirect-link-weight", type=float, default=0.0,
-                             help="Weight for indirect links (default: 0.0, off)")
-    build_parser.add_argument("--min-edge-weight", type=float, default=0.1,
-                             help="Minimum edge weight threshold (default: 0.1)")
-    build_parser.add_argument("--max-hops", type=int, default=3,
-                             help="Max hops for indirect links (default: 3)")
+    graph_build = graph_subparsers.add_parser("build", help="Build bookmark similarity graph")
+    graph_build.add_argument("--domain-weight", type=float, default=1.0,
+                            help="Weight for domain similarity (default: 1.0)")
+    graph_build.add_argument("--tag-weight", type=float, default=2.0,
+                            help="Weight for tag similarity (default: 2.0)")
+    graph_build.add_argument("--direct-link-weight", type=float, default=5.0,
+                            help="Weight for direct links (default: 5.0)")
+    graph_build.add_argument("--indirect-link-weight", type=float, default=0.0,
+                            help="Weight for indirect links (default: 0.0, off)")
+    graph_build.add_argument("--min-edge-weight", type=float, default=0.1,
+                            help="Minimum edge weight threshold (default: 0.1)")
+    graph_build.add_argument("--max-hops", type=int, default=3,
+                            help="Max hops for indirect links (default: 3)")
 
     # graph neighbors
-    neighbors_parser = graph_subparsers.add_parser("neighbors", help="Find similar bookmarks")
-    neighbors_parser.add_argument("bookmark_id", help="Bookmark ID to find neighbors for")
-    neighbors_parser.add_argument("--min-weight", type=float, default=0.0,
-                                 help="Minimum edge weight (default: 0.0)")
-    neighbors_parser.add_argument("--limit", type=int, default=10,
-                                 help="Maximum neighbors to show (default: 10)")
+    graph_neighbors = graph_subparsers.add_parser("neighbors", help="Find similar bookmarks")
+    graph_neighbors.add_argument("bookmark_id", help="Bookmark ID to find neighbors for")
+    graph_neighbors.add_argument("--min-weight", type=float, default=0.0,
+                                help="Minimum edge weight (default: 0.0)")
+    graph_neighbors.add_argument("--limit", type=int, default=10,
+                                help="Maximum neighbors to show (default: 10)")
 
     # graph export
-    export_graph_parser = graph_subparsers.add_parser("export", help="Export graph visualization")
-    export_graph_parser.add_argument("file", help="Output file")
-    export_graph_parser.add_argument("--format", choices=["d3", "svg", "png", "gexf", "graphml", "gml"], default="d3",
-                                    help="Export format: d3 (web), svg/png (images), gexf/graphml/gml (network tools)")
-    export_graph_parser.add_argument("--min-weight", type=float, default=0.0,
-                                    help="Minimum edge weight to include (default: 0.0)")
-    export_graph_parser.add_argument("--width", type=int, default=2000,
-                                    help="Image width for svg/png (default: 2000)")
-    export_graph_parser.add_argument("--height", type=int, default=2000,
-                                    help="Image height for svg/png (default: 2000)")
-    export_graph_parser.add_argument("--no-labels", dest="show_labels", action="store_false",
-                                    help="Hide bookmark labels in svg/png")
+    graph_export = graph_subparsers.add_parser("export", help="Export graph visualization")
+    graph_export.add_argument("file", help="Output file")
+    graph_export.add_argument("--format", choices=["d3", "svg", "png", "gexf", "graphml", "gml"],
+                             default="d3",
+                             help="Export format: d3 (web), svg/png (images), gexf/graphml/gml (network tools)")
+    graph_export.add_argument("--min-weight", type=float, default=0.0,
+                             help="Minimum edge weight to include (default: 0.0)")
+    graph_export.add_argument("--width", type=int, default=2000,
+                             help="Image width for svg/png (default: 2000)")
+    graph_export.add_argument("--height", type=int, default=2000,
+                             help="Image height for svg/png (default: 2000)")
+    graph_export.add_argument("--no-labels", dest="show_labels", action="store_false",
+                             help="Hide bookmark labels in svg/png")
 
     # graph stats
-    stats_parser = graph_subparsers.add_parser("stats", help="Show graph statistics")
+    graph_stats = graph_subparsers.add_parser("stats", help="Show graph statistics")
 
     graph_parser.set_defaults(func=cmd_graph)
 
-    # Config command
+    # =================
+    # CONFIG GROUP
+    # =================
     config_parser = subparsers.add_parser("config", help="Manage configuration")
     config_parser.add_argument("action", choices=["show", "set", "init"],
-                             help="Config action")
+                              help="Config action")
     config_parser.add_argument("key", nargs="?", help="Config key")
     config_parser.add_argument("value", nargs="?", help="Config value (for set)")
     config_parser.set_defaults(func=cmd_config)
+
+    # =================
+    # SHELL COMMAND
+    # =================
+    shell_parser = subparsers.add_parser("shell", help="Interactive bookmark shell")
+    shell_parser.set_defaults(func=cmd_shell)
 
     # Parse arguments
     args = parser.parse_args()

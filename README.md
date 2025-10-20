@@ -26,26 +26,68 @@ pip install bookmark-tk
 ## Quick Start
 
 ```sh
-# Initialize default database
-btk init
+# Start the interactive shell (recommended for exploration)
+btk shell
 
-# Import bookmarks from HTML
+# Or use direct CLI commands
+btk bookmark add https://example.com --title "Example" --tags tutorial,web
+btk bookmark list
+btk bookmark search "python"
+
+# Import and export
 btk import html bookmarks.html
-
-# Search bookmarks
-btk search "python"
-
-# Add a bookmark
-btk add https://example.com --title "Example Site" --tags tutorial,web
-
-# List all bookmarks
-btk list
-
-# Export to various formats
 btk export bookmarks.html html --hierarchical
-btk export bookmarks.json json
-btk export bookmarks.csv csv
+
+# Tag management
+btk tag add my-tag 42          # Add tag to bookmark #42
+btk tag list                   # List all tags
+btk tag tree                   # Show tag hierarchy
 ```
+
+## Interactive Shell
+
+BTK includes a powerful interactive shell with a virtual filesystem interface:
+
+```sh
+$ btk shell
+
+btk:/$ ls
+bookmarks  tags  starred  archived  recent  domains
+
+btk:/$ cd tags
+btk:/tags$ ls
+programming/  research/  tutorial/  web/
+
+btk:/tags$ cd programming/python
+btk:/tags/programming/python$ ls
+3298  4095  5124  5789  (bookmark IDs with this tag)
+
+btk:/tags/programming/python$ cat 4095/title
+Advanced Python Techniques
+
+btk:/tags/programming/python$ star 4095
+★ Starred bookmark #4095
+
+btk:/tags/programming/python$ recent
+# Shows recently visited bookmarks in this context
+
+btk:/tags/programming/python$ cd /bookmarks/4095
+btk:/bookmarks/4095$ pwd
+/bookmarks/4095
+
+btk:/bookmarks/4095$ tag data-science machine-learning
+✓ Added tags to bookmark #4095
+```
+
+### Shell Features
+
+- **Virtual filesystem** - Navigate bookmarks like files and directories
+- **Hierarchical tags** - Tags like `programming/python/django` create navigable folders
+- **Context-aware commands** - Commands adapt based on your current location
+- **Unix-like interface** - Familiar `cd`, `ls`, `pwd`, `mv`, `cp` commands
+- **Tab completion** - (planned) Auto-complete for commands and paths
+- **Tag operations** - Rename tags with `mv old-tag new-tag`
+- **Bulk operations** - Copy tags to multiple bookmarks with `cp`
 
 ## Database Management
 
@@ -67,7 +109,56 @@ btk db vacuum            # Optimize database
 btk db export backup.db  # Export to new database
 ```
 
-## Core Commands
+## CLI Commands
+
+BTK organizes commands into logical groups. Use `btk <group> <command>` syntax:
+
+### Bookmark Operations
+
+```sh
+# Add bookmarks
+btk bookmark add https://example.com --title "Example" --tags tutorial,reference
+btk bookmark add https://paper.pdf --tags research,ml  # Auto-extracts PDF text
+
+# List and search
+btk bookmark list                       # List all bookmarks
+btk bookmark list --limit 10            # List first 10
+btk bookmark search "machine learning"  # Search bookmarks
+btk bookmark search "python" --in-content  # Search cached content
+
+# Get bookmark details
+btk bookmark get 42                     # Simple view
+btk bookmark get 42 --details           # Full details
+btk bookmark get 42 --format json       # JSON output
+
+# Update bookmarks
+btk bookmark update 42 --title "New Title" --tags python,tutorial --stars
+btk bookmark update 42 --add-tags advanced --remove-tags beginner
+
+# Delete bookmarks
+btk bookmark delete 42
+btk bookmark delete --filter-tags old/  # Delete by tag prefix
+
+# Query with JMESPath
+btk bookmark query "[?stars == \`true\`].title"  # Starred bookmarks
+btk bookmark query "[?visit_count > \`5\`]"      # Frequently visited
+```
+
+### Tag Management
+
+```sh
+# List tags
+btk tag list                            # All tags
+btk tag tree                            # Hierarchical tree view
+btk tag stats                           # Usage statistics
+
+# Tag operations
+btk tag add my-tag 42 43 44             # Add tag to bookmarks
+btk tag remove old-tag 42               # Remove tag from bookmark
+btk tag rename old-tag new-tag          # Rename tag everywhere
+btk tag copy source-tag 42              # Copy tag to bookmark
+btk tag filter programming/python       # Filter by tag prefix
+```
 
 ### Import & Export
 
@@ -79,96 +170,62 @@ btk import csv bookmarks.csv            # CSV format
 btk import markdown notes.md            # Extract links from markdown
 btk import text urls.txt                # Plain text URLs
 
-# Auto-detect format
-btk import bookmarks.html               # Automatically detects format
-
 # Import browser bookmarks
 btk import chrome                       # Import from Chrome
-btk import firefox --profile default    # Import from specific Firefox profile
+btk import firefox --profile default    # Import from Firefox profile
 
 # Export to various formats
-btk export output.html html             # HTML with hierarchical folders
-btk export output.json json             # JSON format
-btk export output.csv csv               # CSV format
-btk export output.md markdown           # Markdown with tag sections
+btk export output.html html --hierarchical  # HTML with folder structure
+btk export output.json json                 # JSON format
+btk export output.csv csv                   # CSV format
+btk export output.md markdown               # Markdown with sections
 ```
 
-### Search & Query
-
-```sh
-# Basic search (title, URL, description)
-btk search "machine learning"
-
-# Search in cached content
-btk search "neural networks" --in-content
-
-# Advanced queries with JMESPath
-btk query "[?stars == \`true\`].title"                    # Starred bookmarks
-btk query "[?visit_count > \`5\`].{title: title, url: url}" # Frequently visited
-
-# Filter by tags
-btk tags filter programming/python      # Bookmarks with tag prefix
-
-# List tags with statistics
-btk tags list
-btk tags tree                           # Show tag hierarchy
-btk tags stats                          # Tag usage statistics
-```
-
-### Bookmark Management
-
-```sh
-# Add bookmarks
-btk add https://example.com --title "Example" --tags tutorial,reference
-btk add https://paper.pdf --tags research,ml  # Automatically extracts PDF text
-
-# Get bookmark details
-btk get 42                              # Simple view
-btk get 42 --details                    # Full details with metadata
-btk get 42 --format json                # JSON output
-
-# Update bookmarks
-btk update 42 --title "New Title" --tags python,tutorial --stars true
-btk update 42 --add-tags advanced --remove-tags beginner
-
-# Delete bookmarks
-btk delete 42
-btk delete --tag-prefix old/            # Delete by tag prefix
-```
-
-### Content & Caching
+### Content Operations
 
 ```sh
 # Refresh cached content
-btk refresh --id 42                     # Refresh specific bookmark
-btk refresh --all                       # Refresh all bookmarks
-btk refresh --all --workers 50          # Use 50 parallel workers
+btk content refresh --id 42             # Refresh specific bookmark
+btk content refresh --all               # Refresh all bookmarks
+btk content refresh --all --workers 50  # Use 50 parallel workers
 
 # View cached content
-btk view 42                             # View markdown in terminal
-btk view 42 --html                      # Open HTML in browser
+btk content view 42                     # View markdown in terminal
+btk content view 42 --html              # Open HTML in browser
 
-# Auto-tag using cached content
-btk auto-tag --id 42                    # Preview tags for bookmark
-btk auto-tag --id 42 --apply            # Apply suggested tags
-btk auto-tag --all --workers 100 --apply # Tag all bookmarks in parallel
+# Auto-tag using content
+btk content auto-tag --id 42            # Preview suggested tags
+btk content auto-tag --id 42 --apply    # Apply suggested tags
+btk content auto-tag --all --workers 100  # Tag all bookmarks
 ```
 
-### Organization
+### Database Operations
 
 ```sh
-# Tag operations
-btk tags rename "old-tag" "new-tag"
-btk tags merge tag1 tag2 tag3 --into merged-tag
+# Database info
+btk db info                             # Show statistics
+btk db stats                            # Detailed stats
+btk db vacuum                           # Optimize database
 
 # Deduplication
-btk dedupe --strategy merge             # Merge duplicate metadata
-btk dedupe --strategy keep_first        # Keep oldest bookmark
-btk dedupe --strategy keep_most_visited # Keep most visited
+btk db dedupe --strategy merge          # Merge duplicate metadata
+btk db dedupe --strategy keep_first     # Keep oldest bookmark
+btk db dedupe --preview                 # Preview changes
+```
 
-# Statistics
-btk stats                               # Database statistics
-btk stats --tags                        # Tag statistics
+### Configuration
+
+```sh
+btk config show                         # Show current config
+btk config set database.path ~/bookmarks.db
+btk config set output.format json
+```
+
+### Shell
+
+```sh
+btk shell                               # Start interactive shell
+btk shell --db ~/bookmarks.db           # Use specific database
 ```
 
 ## Configuration
@@ -266,9 +323,10 @@ class MyPlugin(Plugin):
 ### Modern Stack
 
 - **Database**: SQLAlchemy ORM with SQLite backend
-- **Models**: Bookmark, Tag, ContentCache, BookmarkHealth
-- **CLI**: argparse with Rich for beautiful terminal output
-- **Testing**: pytest with 59% code coverage (317 tests)
+- **Models**: Bookmark, Tag, ContentCache, BookmarkHealth, Collection
+- **CLI**: Grouped argparse structure with Rich for beautiful terminal output
+- **Shell**: Interactive REPL with virtual filesystem and context-aware commands
+- **Testing**: pytest with 515 tests, >80% coverage on core modules
 - **Content**: HTML/Markdown conversion, zlib compression, PDF extraction
 
 ### Database Schema
@@ -310,16 +368,20 @@ content_cache
 
 ```
 btk/
-├── cli.py              # Command-line interface
+├── cli.py              # Grouped command-line interface
+├── shell.py            # Interactive shell with virtual filesystem
 ├── db.py               # Database operations
 ├── models.py           # SQLAlchemy models
+├── graph.py            # Bookmark relationship graphs
 ├── importers.py        # Import from various formats
 ├── exporters.py        # Export to various formats
-├── content_fetcher.py  # Web content fetching & caching
+├── content_fetcher.py  # Web content fetching
 ├── content_cache.py    # Content cache management
+├── content_extractor.py # Content extraction & parsing
+├── auto_tag.py         # Auto-tagging with NLP/TF-IDF
 ├── plugins.py          # Plugin system
-├── tag_utils.py        # Tag operations
-├── dedup.py            # Deduplication
+├── tag_utils.py        # Tag operations & hierarchies
+├── dedup.py            # Deduplication strategies
 ├── archiver.py         # Web archive integration
 └── browser_import.py   # Browser bookmark import
 ```
@@ -341,20 +403,38 @@ pytest tests/test_db.py -v
 
 ### Test Coverage
 
-- Overall: 59.40% (317 tests, all passing)
+- **Overall: 515 tests, all passing** ✅
 - Core modules: >80% coverage
-  - db.py: 90.77%
-  - exporters.py: 92.45%
-  - importers.py: 82.35%
-  - utils.py: 88.57%
+  - graph.py: 97.28%
+  - models.py: 96.62%
   - tag_utils.py: 95.67%
-  - dedup.py: 88.24%
+  - content_extractor.py: 93.63%
+  - exporters.py: 92.45%
   - plugins.py: 90.07%
+  - dedup.py: 88.24%
+  - utils.py: 88.57%
+  - db.py: 86.91%
+- Interface modules:
+  - shell.py: 53.12% (69 tests)
+  - cli.py: 23.11% (41 tests)
+  - Expected lower coverage for interactive/CLI code
 
 ## Roadmap
 
 ### Recently Completed ✅
 
+- **Smart Collections & Time-Based Recent** (v0.7.1)
+  - 5 auto-updating smart collections (`/unread`, `/popular`, `/broken`, `/untagged`, `/pdfs`)
+  - Time-based navigation with 6 periods × 3 activity types
+  - Enhanced `/recent` with hierarchical structure
+  - Collection counts in `ls` output
+- **Interactive Shell with Virtual Filesystem** (v0.7.0)
+  - Unix-like navigation (`cd`, `ls`, `pwd`)
+  - Hierarchical tag browsing
+  - Context-aware commands
+  - Tag operations (`mv`, `cp`)
+- **Grouped CLI Structure** - Organized commands by functionality
+- **Comprehensive Test Suite** - 515 tests with >50% shell coverage
 - SQLAlchemy-based database architecture
 - Content caching with compression
 - PDF text extraction
@@ -372,6 +452,9 @@ pytest tests/test_db.py -v
 
 ### Planned Features 🎯
 
+- **Enhanced Domain Organization** - Improved domain-based browsing and filtering
+- **Bookmark Notes/Annotations** - Rich text notes and annotations on bookmarks
+- **User-Defined Collections** - Custom smart collections via configuration
 - Browser extensions (Chrome, Firefox)
 - MCP integration for AI-powered queries
 - Static site generator for bookmark collections

@@ -379,13 +379,26 @@ class BookmarkGraph:
             conn.commit()
 
     def load(self, db_path: str = None):
-        """Load graph from database."""
-        from sqlalchemy import create_engine, text
+        """
+        Load graph from database.
+
+        Raises:
+            ValueError: If graph table doesn't exist (need to build first)
+        """
+        from sqlalchemy import create_engine, text, inspect
 
         # Use the existing engine from the database
         engine = self.db.engine
 
         self.edges = {}
+
+        # Check if table exists
+        inspector = inspect(engine)
+        if not inspector.has_table('bookmark_graph'):
+            raise ValueError(
+                "Graph has not been built yet. "
+                "Please run 'btk graph build' first to create the bookmark graph."
+            )
 
         with engine.connect() as conn:
             result = conn.execute(text("""
