@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#cli" class="md-skip">
+        <a href="#cli-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -266,7 +266,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../guide/commands/" class="md-tabs__link">
+        <a href="../../guide/shell/" class="md-tabs__link">
           
   
   
@@ -572,6 +572,29 @@
             User Guide
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/shell/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Interactive Shell
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -926,6 +949,19 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    CLI Reference
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -937,6 +973,592 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#command-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Command Structure
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#global-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Global Options
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Command Groups
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Command Groups">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-bookmark-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark - Bookmark Operations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk bookmark - Bookmark Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark add
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark list
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark search
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-get" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark get
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark update
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-delete" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark delete
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark query
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-tag-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag - Tag Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk tag - Tag Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag list
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag tree
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag stats
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag add
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-remove" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag remove
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-rename" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag rename
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-copy" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag copy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag filter
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-content-content-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk content - Content Operations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk content - Content Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-content-refresh" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk content refresh
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-content-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk content view
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-content-auto-tag" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk content auto-tag
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-import-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import - Import Operations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk import - Import Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-html" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import html
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import json
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-csv" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import csv
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import text
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-chrome" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import chrome
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-firefox" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import firefox
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-safari" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import safari
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-export-export-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk export - Export Operations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk export - Export Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-export-html" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk export html
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-export-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk export json
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-export-csv" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk export csv
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-export-markdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk export markdown
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-db-database-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk db - Database Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk db - Database Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-db-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk db info
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-db-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk db schema
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-db-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk db stats
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-db-vacuum" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk db vacuum
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-db-dedupe" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk db dedupe
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-graph-graph-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk graph - Graph Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk graph - Graph Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-graph-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk graph build
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-graph-neighbors" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk graph neighbors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-graph-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk graph export
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-graph-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk graph stats
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-config-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk config - Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk config - Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-config-show" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk config show
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-config-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk config set
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-config-init" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk config init
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-shell-interactive-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk shell - Interactive Shell
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Codes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Environment Variables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration File
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1137,6 +1759,581 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#command-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Command Structure
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#global-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Global Options
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Command Groups
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Command Groups">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-bookmark-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark - Bookmark Operations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk bookmark - Bookmark Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark add
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark list
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark search
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-get" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark get
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark update
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-delete" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark delete
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-bookmark-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk bookmark query
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-tag-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag - Tag Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk tag - Tag Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag list
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-tree" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag tree
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag stats
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag add
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-remove" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag remove
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-rename" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag rename
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-copy" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag copy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-tag-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk tag filter
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-content-content-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk content - Content Operations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk content - Content Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-content-refresh" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk content refresh
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-content-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk content view
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-content-auto-tag" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk content auto-tag
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-import-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import - Import Operations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk import - Import Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-html" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import html
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import json
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-csv" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import csv
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import text
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-chrome" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import chrome
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-firefox" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import firefox
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-import-safari" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk import safari
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-export-export-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk export - Export Operations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk export - Export Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-export-html" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk export html
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-export-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk export json
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-export-csv" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk export csv
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-export-markdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk export markdown
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-db-database-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk db - Database Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk db - Database Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-db-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk db info
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-db-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk db schema
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-db-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk db stats
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-db-vacuum" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk db vacuum
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-db-dedupe" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk db dedupe
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-graph-graph-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk graph - Graph Analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk graph - Graph Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-graph-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk graph build
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-graph-neighbors" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk graph neighbors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-graph-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk graph export
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-graph-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk graph stats
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-config-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk config - Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="btk config - Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#btk-config-show" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk config show
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-config-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk config set
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-config-init" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk config init
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btk-shell-interactive-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      btk shell - Interactive Shell
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Codes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Environment Variables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration File
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1154,8 +2351,843 @@
   
 
 
-<h1 id="cli">Cli<a class="headerlink" href="#cli" title="Permanent link">&para;</a></h1>
-<p>Documentation coming soon...</p>
+<h1 id="cli-reference">CLI Reference<a class="headerlink" href="#cli-reference" title="Permanent link">&para;</a></h1>
+<p>Complete command-line interface reference for BTK (Bookmark Toolkit).</p>
+<h2 id="command-structure">Command Structure<a class="headerlink" href="#command-structure" title="Permanent link">&para;</a></h2>
+<p>BTK uses a grouped command structure:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>btk<span class="w"> </span><span class="o">[</span>global-options<span class="o">]</span><span class="w"> </span>&lt;group&gt;<span class="w"> </span>&lt;command&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span><span class="w"> </span><span class="o">[</span>arguments<span class="o">]</span>
+</code></pre></div>
+<h2 id="global-options">Global Options<a class="headerlink" href="#global-options" title="Permanent link">&para;</a></h2>
+<p>Options that apply to all commands:</p>
+<ul>
+<li><code>--db PATH</code> - Database file path (default: <code>btk.db</code> in current directory)</li>
+<li><code>--version</code> - Show version and exit</li>
+<li><code>--help</code> - Show help message and exit</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Use specific database</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>btk<span class="w"> </span>--db<span class="w"> </span>~/bookmarks.db<span class="w"> </span>bookmark<span class="w"> </span>list
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Show version</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>btk<span class="w"> </span>--version
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Show help</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>btk<span class="w"> </span>--help
+</code></pre></div>
+<h2 id="command-groups">Command Groups<a class="headerlink" href="#command-groups" title="Permanent link">&para;</a></h2>
+<h3 id="btk-bookmark-bookmark-operations"><code>btk bookmark</code> - Bookmark Operations<a class="headerlink" href="#btk-bookmark-bookmark-operations" title="Permanent link">&para;</a></h3>
+<p>Core CRUD operations for managing bookmarks.</p>
+<h4 id="btk-bookmark-add"><code>btk bookmark add</code><a class="headerlink" href="#btk-bookmark-add" title="Permanent link">&para;</a></h4>
+<p>Add a new bookmark.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>add<span class="w"> </span>&lt;url&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>url</code> - URL of the bookmark (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--title TEXT</code> - Bookmark title (auto-fetched if not provided)</li>
+<li><code>--description TEXT</code> - Bookmark description</li>
+<li><code>--tags TEXT</code> - Comma-separated tags</li>
+<li><code>--stars</code> - Mark as starred</li>
+<li><code>--no-fetch</code> - Don't fetch title/content automatically</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>add<span class="w"> </span>https://example.com
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>add<span class="w"> </span>https://example.com<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Example Site&quot;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>add<span class="w"> </span>https://example.com<span class="w"> </span>--tags<span class="w"> </span><span class="s2">&quot;python,tutorial&quot;</span><span class="w"> </span>--stars
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>add<span class="w"> </span>https://example.com<span class="w"> </span>--no-fetch
+</code></pre></div>
+<h4 id="btk-bookmark-list"><code>btk bookmark list</code><a class="headerlink" href="#btk-bookmark-list" title="Permanent link">&para;</a></h4>
+<p>List bookmarks with filtering and sorting.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--limit N</code> - Limit results to N bookmarks</li>
+<li><code>--offset N</code> - Skip first N bookmarks</li>
+<li><code>--tags TEXT</code> - Filter by tags (comma-separated)</li>
+<li><code>--starred</code> - Show only starred bookmarks</li>
+<li><code>--archived</code> - Show archived bookmarks</li>
+<li><code>--domain TEXT</code> - Filter by domain</li>
+<li><code>--sort FIELD</code> - Sort by field (added, title, visits, etc.)</li>
+<li><code>--format FORMAT</code> - Output format (table, json, csv)</li>
+</ul>
+<p><strong>Sort Fields:</strong></p>
+<ul>
+<li><code>added</code> - Date added (default)</li>
+<li><code>title</code> - Alphabetical by title</li>
+<li><code>visits</code> - Visit count</li>
+<li><code>visited</code> - Last visited date</li>
+<li><code>stars</code> - Starred status</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>list
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>list<span class="w"> </span>--limit<span class="w"> </span><span class="m">20</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>list<span class="w"> </span>--starred<span class="w"> </span>--tags<span class="w"> </span>python
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>list<span class="w"> </span>--sort<span class="w"> </span>visits<span class="w"> </span>--limit<span class="w"> </span><span class="m">10</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>list<span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>bookmarks.json
+</code></pre></div>
+<h4 id="btk-bookmark-search"><code>btk bookmark search</code><a class="headerlink" href="#btk-bookmark-search" title="Permanent link">&para;</a></h4>
+<p>Search bookmarks using full-text search.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>search<span class="w"> </span>&lt;query&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>query</code> - Search query (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--tags TEXT</code> - Filter by tags</li>
+<li><code>--starred</code> - Search only starred bookmarks</li>
+<li><code>--in-content</code> - Search in cached content (not just title/URL)</li>
+<li><code>--limit N</code> - Limit results</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;python tutorial&quot;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;machine learning&quot;</span><span class="w"> </span>--in-content
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;tutorial&quot;</span><span class="w"> </span>--tags<span class="w"> </span>python
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;important&quot;</span><span class="w"> </span>--starred
+</code></pre></div>
+<h4 id="btk-bookmark-get"><code>btk bookmark get</code><a class="headerlink" href="#btk-bookmark-get" title="Permanent link">&para;</a></h4>
+<p>Get detailed information about a specific bookmark.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>get<span class="w"> </span>&lt;id&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>id</code> - Bookmark ID (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--details</code> - Show full details including content cache</li>
+<li><code>--format FORMAT</code> - Output format (table, json, yaml)</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>get<span class="w"> </span><span class="m">123</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>get<span class="w"> </span><span class="m">123</span><span class="w"> </span>--details
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>get<span class="w"> </span><span class="m">123</span><span class="w"> </span>--format<span class="w"> </span>json
+</code></pre></div>
+<h4 id="btk-bookmark-update"><code>btk bookmark update</code><a class="headerlink" href="#btk-bookmark-update" title="Permanent link">&para;</a></h4>
+<p>Update bookmark metadata.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>update<span class="w"> </span>&lt;id&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>id</code> - Bookmark ID (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--title TEXT</code> - Update title</li>
+<li><code>--description TEXT</code> - Update description</li>
+<li><code>--stars</code> - Set starred status to true</li>
+<li><code>--no-stars</code> - Set starred status to false</li>
+<li><code>--add-tags TEXT</code> - Add tags (comma-separated)</li>
+<li><code>--remove-tags TEXT</code> - Remove tags (comma-separated)</li>
+<li><code>--set-tags TEXT</code> - Replace all tags</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>update<span class="w"> </span><span class="m">123</span><span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;New Title&quot;</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>update<span class="w"> </span><span class="m">123</span><span class="w"> </span>--stars
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>update<span class="w"> </span><span class="m">123</span><span class="w"> </span>--add-tags<span class="w"> </span><span class="s2">&quot;important,featured&quot;</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>update<span class="w"> </span><span class="m">123</span><span class="w"> </span>--remove-tags<span class="w"> </span><span class="s2">&quot;draft&quot;</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>update<span class="w"> </span><span class="m">123</span><span class="w"> </span>--set-tags<span class="w"> </span><span class="s2">&quot;python,tutorial&quot;</span>
+</code></pre></div>
+<h4 id="btk-bookmark-delete"><code>btk bookmark delete</code><a class="headerlink" href="#btk-bookmark-delete" title="Permanent link">&para;</a></h4>
+<p>Delete bookmarks from the collection.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>delete<span class="w"> </span>&lt;id&gt;<span class="w"> </span><span class="o">[</span>&lt;id&gt;<span class="w"> </span>...<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>id</code> - One or more bookmark IDs</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--filter-tags TEXT</code> - Delete bookmarks with these tags</li>
+<li><code>--filter-domain TEXT</code> - Delete bookmarks from domain</li>
+<li><code>--dry-run</code> - Preview what would be deleted without deleting</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>delete<span class="w"> </span><span class="m">123</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>delete<span class="w"> </span><span class="m">123</span><span class="w"> </span><span class="m">456</span><span class="w"> </span><span class="m">789</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>delete<span class="w"> </span>--filter-tags<span class="w"> </span><span class="s2">&quot;old,deprecated&quot;</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>delete<span class="w"> </span>--filter-domain<span class="w"> </span><span class="s2">&quot;old-site.com&quot;</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>delete<span class="w"> </span>--filter-tags<span class="w"> </span><span class="s2">&quot;draft&quot;</span><span class="w"> </span>--dry-run
+</code></pre></div>
+<h4 id="btk-bookmark-query"><code>btk bookmark query</code><a class="headerlink" href="#btk-bookmark-query" title="Permanent link">&para;</a></h4>
+<p>Advanced querying using SQL-like syntax.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>query<span class="w"> </span>&lt;sql-query&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>sql-query</code> - SQL WHERE clause (required)</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;stars = true AND visit_count &gt; 10&quot;</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;added &gt; &#39;2024-10-01&#39;&quot;</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;tags LIKE &#39;%python%&#39;&quot;</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;stars = true AND (tags LIKE &#39;%python%&#39; OR tags LIKE &#39;%tutorial%&#39;)&quot;</span>
+</code></pre></div>
+<hr />
+<h3 id="btk-tag-tag-management"><code>btk tag</code> - Tag Management<a class="headerlink" href="#btk-tag-tag-management" title="Permanent link">&para;</a></h3>
+<p>Commands for managing tags and tag hierarchies.</p>
+<h4 id="btk-tag-list"><code>btk tag list</code><a class="headerlink" href="#btk-tag-list" title="Permanent link">&para;</a></h4>
+<p>List all tags.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--format FORMAT</code> - Output format (table, json, csv)</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>list
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>btk<span class="w"> </span>tag<span class="w"> </span>list<span class="w"> </span>--format<span class="w"> </span>json
+</code></pre></div>
+<h4 id="btk-tag-tree"><code>btk tag tree</code><a class="headerlink" href="#btk-tag-tree" title="Permanent link">&para;</a></h4>
+<p>Show hierarchical tag tree.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>tree
+</code></pre></div></p>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>tree
+</code></pre></div>
+<h4 id="btk-tag-stats"><code>btk tag stats</code><a class="headerlink" href="#btk-tag-stats" title="Permanent link">&para;</a></h4>
+<p>Show tag usage statistics.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>stats
+</code></pre></div></p>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>stats
+</code></pre></div>
+<h4 id="btk-tag-add"><code>btk tag add</code><a class="headerlink" href="#btk-tag-add" title="Permanent link">&para;</a></h4>
+<p>Add tags to bookmarks.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>add<span class="w"> </span>&lt;tag&gt;<span class="w"> </span>&lt;id&gt;<span class="w"> </span><span class="o">[</span>&lt;id&gt;<span class="w"> </span>...<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>tag</code> - Tag name (required)</li>
+<li><code>id</code> - One or more bookmark IDs</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--all</code> - Add tag to all bookmarks</li>
+<li><code>--starred</code> - Add tag to all starred bookmarks</li>
+<li><code>--filter-tags TEXT</code> - Add to bookmarks with these tags</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>add<span class="w"> </span>important<span class="w"> </span><span class="m">123</span><span class="w"> </span><span class="m">456</span><span class="w"> </span><span class="m">789</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>btk<span class="w"> </span>tag<span class="w"> </span>add<span class="w"> </span>reviewed<span class="w"> </span>--starred
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>btk<span class="w"> </span>tag<span class="w"> </span>add<span class="w"> </span>needs-review<span class="w"> </span>--filter-tags<span class="w"> </span><span class="s2">&quot;draft,wip&quot;</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>btk<span class="w"> </span>tag<span class="w"> </span>add<span class="w"> </span>programming/python/advanced<span class="w"> </span><span class="m">123</span>
+</code></pre></div>
+<h4 id="btk-tag-remove"><code>btk tag remove</code><a class="headerlink" href="#btk-tag-remove" title="Permanent link">&para;</a></h4>
+<p>Remove tags from bookmarks.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>remove<span class="w"> </span>&lt;tag&gt;<span class="w"> </span>&lt;id&gt;<span class="w"> </span><span class="o">[</span>&lt;id&gt;<span class="w"> </span>...<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>tag</code> - Tag name (required)</li>
+<li><code>id</code> - One or more bookmark IDs</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--all</code> - Remove tag from all bookmarks</li>
+<li><code>--filter-tags TEXT</code> - Remove from bookmarks with these tags</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>remove<span class="w"> </span>draft<span class="w"> </span><span class="m">123</span><span class="w"> </span><span class="m">456</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>btk<span class="w"> </span>tag<span class="w"> </span>remove<span class="w"> </span>old<span class="w"> </span>--all
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>btk<span class="w"> </span>tag<span class="w"> </span>remove<span class="w"> </span>wip<span class="w"> </span>--filter-tags<span class="w"> </span><span class="s2">&quot;completed&quot;</span>
+</code></pre></div>
+<h4 id="btk-tag-rename"><code>btk tag rename</code><a class="headerlink" href="#btk-tag-rename" title="Permanent link">&para;</a></h4>
+<p>Rename a tag across all bookmarks.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>rename<span class="w"> </span>&lt;old-tag&gt;<span class="w"> </span>&lt;new-tag&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>old-tag</code> - Current tag name (required)</li>
+<li><code>new-tag</code> - New tag name (required)</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>rename<span class="w"> </span>javascript<span class="w"> </span>js
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>btk<span class="w"> </span>tag<span class="w"> </span>rename<span class="w"> </span>programming/python/web<span class="w"> </span>programming/python/web-dev
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>btk<span class="w"> </span>tag<span class="w"> </span>rename<span class="w"> </span>backend<span class="w"> </span>programming/backend
+</code></pre></div>
+<h4 id="btk-tag-copy"><code>btk tag copy</code><a class="headerlink" href="#btk-tag-copy" title="Permanent link">&para;</a></h4>
+<p>Copy a tag to additional bookmarks.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>copy<span class="w"> </span>&lt;tag&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>tag</code> - Tag name to copy (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--to-ids ID [ID ...]</code> - Copy to specific bookmark IDs</li>
+<li><code>--starred</code> - Copy to all starred bookmarks</li>
+<li><code>--filter-tags TEXT</code> - Copy to bookmarks with these tags</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>copy<span class="w"> </span>featured<span class="w"> </span>--to-ids<span class="w"> </span><span class="m">123</span><span class="w"> </span><span class="m">456</span><span class="w"> </span><span class="m">789</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>btk<span class="w"> </span>tag<span class="w"> </span>copy<span class="w"> </span>high-priority<span class="w"> </span>--starred
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>btk<span class="w"> </span>tag<span class="w"> </span>copy<span class="w"> </span>reviewed<span class="w"> </span>--filter-tags<span class="w"> </span><span class="s2">&quot;programming/python&quot;</span>
+</code></pre></div>
+<h4 id="btk-tag-filter"><code>btk tag filter</code><a class="headerlink" href="#btk-tag-filter" title="Permanent link">&para;</a></h4>
+<p>Filter bookmarks by tag prefix.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>filter<span class="w"> </span>&lt;prefix&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>prefix</code> - Tag prefix (required)</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>filter<span class="w"> </span>programming/python
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>btk<span class="w"> </span>tag<span class="w"> </span>filter<span class="w"> </span>tutorial
+</code></pre></div>
+<hr />
+<h3 id="btk-content-content-operations"><code>btk content</code> - Content Operations<a class="headerlink" href="#btk-content-content-operations" title="Permanent link">&para;</a></h3>
+<p>Manage cached webpage content.</p>
+<h4 id="btk-content-refresh"><code>btk content refresh</code><a class="headerlink" href="#btk-content-refresh" title="Permanent link">&para;</a></h4>
+<p>Fetch or refresh cached content for bookmarks.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>btk<span class="w"> </span>content<span class="w"> </span>refresh<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--id ID</code> - Refresh specific bookmark</li>
+<li><code>--all</code> - Refresh all bookmarks</li>
+<li><code>--force</code> - Force refresh even if cached</li>
+<li><code>--workers N</code> - Number of parallel workers (default: 10)</li>
+<li><code>--starred</code> - Refresh only starred bookmarks</li>
+<li><code>--filter-tags TEXT</code> - Refresh bookmarks with tags</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>btk<span class="w"> </span>content<span class="w"> </span>refresh<span class="w"> </span>--id<span class="w"> </span><span class="m">123</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>btk<span class="w"> </span>content<span class="w"> </span>refresh<span class="w"> </span>--all
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>btk<span class="w"> </span>content<span class="w"> </span>refresh<span class="w"> </span>--all<span class="w"> </span>--workers<span class="w"> </span><span class="m">50</span>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>btk<span class="w"> </span>content<span class="w"> </span>refresh<span class="w"> </span>--starred<span class="w"> </span>--force
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>btk<span class="w"> </span>content<span class="w"> </span>refresh<span class="w"> </span>--filter-tags<span class="w"> </span><span class="s2">&quot;programming/python&quot;</span>
+</code></pre></div>
+<h4 id="btk-content-view"><code>btk content view</code><a class="headerlink" href="#btk-content-view" title="Permanent link">&para;</a></h4>
+<p>View cached content for a bookmark.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>btk<span class="w"> </span>content<span class="w"> </span>view<span class="w"> </span>&lt;id&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>id</code> - Bookmark ID (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--html</code> - Open HTML in browser</li>
+<li><code>--markdown</code> - Display markdown in terminal (default)</li>
+<li><code>--raw</code> - Show raw HTML</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>btk<span class="w"> </span>content<span class="w"> </span>view<span class="w"> </span><span class="m">123</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>btk<span class="w"> </span>content<span class="w"> </span>view<span class="w"> </span><span class="m">123</span><span class="w"> </span>--html
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>btk<span class="w"> </span>content<span class="w"> </span>view<span class="w"> </span><span class="m">123</span><span class="w"> </span>--raw
+</code></pre></div>
+<h4 id="btk-content-auto-tag"><code>btk content auto-tag</code><a class="headerlink" href="#btk-content-auto-tag" title="Permanent link">&para;</a></h4>
+<p>Generate tags automatically based on cached content.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>btk<span class="w"> </span>content<span class="w"> </span>auto-tag<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--id ID</code> - Auto-tag specific bookmark</li>
+<li><code>--all</code> - Auto-tag all bookmarks</li>
+<li><code>--apply</code> - Apply suggested tags (otherwise just preview)</li>
+<li><code>--threshold FLOAT</code> - Confidence threshold (0.0-1.0, default: 0.5)</li>
+<li><code>--workers N</code> - Number of parallel workers</li>
+<li><code>--max-tags N</code> - Maximum tags to suggest (default: 5)</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>btk<span class="w"> </span>content<span class="w"> </span>auto-tag<span class="w"> </span>--id<span class="w"> </span><span class="m">123</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>btk<span class="w"> </span>content<span class="w"> </span>auto-tag<span class="w"> </span>--all
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>btk<span class="w"> </span>content<span class="w"> </span>auto-tag<span class="w"> </span>--id<span class="w"> </span><span class="m">123</span><span class="w"> </span>--apply
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a>btk<span class="w"> </span>content<span class="w"> </span>auto-tag<span class="w"> </span>--all<span class="w"> </span>--apply<span class="w"> </span>--threshold<span class="w"> </span><span class="m">0</span>.7<span class="w"> </span>--workers<span class="w"> </span><span class="m">20</span>
+</code></pre></div>
+<hr />
+<h3 id="btk-import-import-operations"><code>btk import</code> - Import Operations<a class="headerlink" href="#btk-import-import-operations" title="Permanent link">&para;</a></h3>
+<p>Import bookmarks from various formats.</p>
+<h4 id="btk-import-html"><code>btk import html</code><a class="headerlink" href="#btk-import-html" title="Permanent link">&para;</a></h4>
+<p>Import bookmarks from HTML (Netscape Bookmark Format).</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>btk<span class="w"> </span>import<span class="w"> </span>html<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>file</code> - HTML file path (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--add-tags TEXT</code> - Add tags to all imported bookmarks</li>
+<li><code>--skip-duplicates</code> - Skip bookmarks that already exist</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>btk<span class="w"> </span>import<span class="w"> </span>html<span class="w"> </span>bookmarks.html
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>btk<span class="w"> </span>import<span class="w"> </span>html<span class="w"> </span>bookmarks.html<span class="w"> </span>--add-tags<span class="w"> </span><span class="s2">&quot;imported,firefox&quot;</span>
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>btk<span class="w"> </span>import<span class="w"> </span>html<span class="w"> </span>bookmarks.html<span class="w"> </span>--skip-duplicates
+</code></pre></div>
+<h4 id="btk-import-json"><code>btk import json</code><a class="headerlink" href="#btk-import-json" title="Permanent link">&para;</a></h4>
+<p>Import from JSON format.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>btk<span class="w"> </span>import<span class="w"> </span>json<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>file</code> - JSON file path (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--add-tags TEXT</code> - Add tags to all imported bookmarks</li>
+<li><code>--skip-duplicates</code> - Skip bookmarks that already exist</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>btk<span class="w"> </span>import<span class="w"> </span>json<span class="w"> </span>bookmarks.json
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>btk<span class="w"> </span>import<span class="w"> </span>json<span class="w"> </span>bookmarks.json<span class="w"> </span>--add-tags<span class="w"> </span><span class="s2">&quot;imported&quot;</span>
+</code></pre></div>
+<h4 id="btk-import-csv"><code>btk import csv</code><a class="headerlink" href="#btk-import-csv" title="Permanent link">&para;</a></h4>
+<p>Import from CSV file.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>btk<span class="w"> </span>import<span class="w"> </span>csv<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>file</code> - CSV file path (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--add-tags TEXT</code> - Add tags to all imported bookmarks</li>
+<li><code>--skip-duplicates</code> - Skip bookmarks that already exist</li>
+</ul>
+<p><strong>CSV Format:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>url,title,tags,description
+<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>https://example.com,Example,&quot;tutorial,web&quot;,Description here
+</code></pre></div></p>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>btk<span class="w"> </span>import<span class="w"> </span>csv<span class="w"> </span>bookmarks.csv
+<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>btk<span class="w"> </span>import<span class="w"> </span>csv<span class="w"> </span>bookmarks.csv<span class="w"> </span>--add-tags<span class="w"> </span><span class="s2">&quot;imported,2024&quot;</span>
+</code></pre></div>
+<h4 id="btk-import-text"><code>btk import text</code><a class="headerlink" href="#btk-import-text" title="Permanent link">&para;</a></h4>
+<p>Import plain text file with URLs (one per line).</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>btk<span class="w"> </span>import<span class="w"> </span>text<span class="w"> </span>&lt;file&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>file</code> - Text file path (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--add-tags TEXT</code> - Tags for all imported bookmarks</li>
+<li><code>--fetch-titles</code> / <code>--no-fetch-titles</code> - Fetch titles from URLs (default: true)</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>btk<span class="w"> </span>import<span class="w"> </span>text<span class="w"> </span>urls.txt
+<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>btk<span class="w"> </span>import<span class="w"> </span>text<span class="w"> </span>urls.txt<span class="w"> </span>--no-fetch-titles
+<a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a>btk<span class="w"> </span>import<span class="w"> </span>text<span class="w"> </span>urls.txt<span class="w"> </span>--add-tags<span class="w"> </span><span class="s2">&quot;reading-list,2024&quot;</span>
+</code></pre></div>
+<h4 id="btk-import-chrome"><code>btk import chrome</code><a class="headerlink" href="#btk-import-chrome" title="Permanent link">&para;</a></h4>
+<p>Import directly from Chrome browser.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>btk<span class="w"> </span>import<span class="w"> </span>chrome<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--profile TEXT</code> - Browser profile name</li>
+<li><code>--add-tags TEXT</code> - Tags for imported bookmarks</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>btk<span class="w"> </span>import<span class="w"> </span>chrome
+<a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a>btk<span class="w"> </span>import<span class="w"> </span>chrome<span class="w"> </span>--profile<span class="w"> </span><span class="s2">&quot;Profile 1&quot;</span>
+<a id="__codelineno-48-3" name="__codelineno-48-3" href="#__codelineno-48-3"></a>btk<span class="w"> </span>import<span class="w"> </span>chrome<span class="w"> </span>--add-tags<span class="w"> </span><span class="s2">&quot;chrome,browser&quot;</span>
+</code></pre></div>
+<h4 id="btk-import-firefox"><code>btk import firefox</code><a class="headerlink" href="#btk-import-firefox" title="Permanent link">&para;</a></h4>
+<p>Import directly from Firefox browser.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>btk<span class="w"> </span>import<span class="w"> </span>firefox<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--profile TEXT</code> - Browser profile name</li>
+<li><code>--add-tags TEXT</code> - Tags for imported bookmarks</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>btk<span class="w"> </span>import<span class="w"> </span>firefox
+<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>btk<span class="w"> </span>import<span class="w"> </span>firefox<span class="w"> </span>--profile<span class="w"> </span>work
+<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>btk<span class="w"> </span>import<span class="w"> </span>firefox<span class="w"> </span>--add-tags<span class="w"> </span><span class="s2">&quot;firefox,browser&quot;</span>
+</code></pre></div>
+<h4 id="btk-import-safari"><code>btk import safari</code><a class="headerlink" href="#btk-import-safari" title="Permanent link">&para;</a></h4>
+<p>Import directly from Safari browser.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>btk<span class="w"> </span>import<span class="w"> </span>safari<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--add-tags TEXT</code> - Tags for imported bookmarks</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>btk<span class="w"> </span>import<span class="w"> </span>safari
+<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>btk<span class="w"> </span>import<span class="w"> </span>safari<span class="w"> </span>--add-tags<span class="w"> </span><span class="s2">&quot;safari,browser&quot;</span>
+</code></pre></div>
+<hr />
+<h3 id="btk-export-export-operations"><code>btk export</code> - Export Operations<a class="headerlink" href="#btk-export-export-operations" title="Permanent link">&para;</a></h3>
+<p>Export bookmarks to various formats.</p>
+<h4 id="btk-export-html"><code>btk export html</code><a class="headerlink" href="#btk-export-html" title="Permanent link">&para;</a></h4>
+<p>Export to browser-compatible HTML.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>html<span class="w"> </span>&lt;output-file&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>output-file</code> - Output file path (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--hierarchical</code> - Create folder hierarchy from tags</li>
+<li><code>--starred</code> - Export only starred bookmarks</li>
+<li><code>--filter-tags TEXT</code> - Export bookmarks with tags</li>
+<li><code>--include-archived</code> - Include archived bookmarks</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>html<span class="w"> </span>bookmarks.html
+<a id="__codelineno-54-2" name="__codelineno-54-2" href="#__codelineno-54-2"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>html<span class="w"> </span>bookmarks.html<span class="w"> </span>--hierarchical
+<a id="__codelineno-54-3" name="__codelineno-54-3" href="#__codelineno-54-3"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>html<span class="w"> </span>starred.html<span class="w"> </span>--starred
+<a id="__codelineno-54-4" name="__codelineno-54-4" href="#__codelineno-54-4"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>html<span class="w"> </span>python.html<span class="w"> </span>--filter-tags<span class="w"> </span><span class="s2">&quot;programming/python&quot;</span>
+</code></pre></div>
+<h4 id="btk-export-json"><code>btk export json</code><a class="headerlink" href="#btk-export-json" title="Permanent link">&para;</a></h4>
+<p>Export to JSON format.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>json<span class="w"> </span>&lt;output-file&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>output-file</code> - Output file path (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--starred</code> - Export only starred bookmarks</li>
+<li><code>--filter-tags TEXT</code> - Export bookmarks with tags</li>
+<li><code>--include-archived</code> - Include archived bookmarks</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>json<span class="w"> </span>bookmarks.json
+<a id="__codelineno-56-2" name="__codelineno-56-2" href="#__codelineno-56-2"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>json<span class="w"> </span>starred.json<span class="w"> </span>--starred
+<a id="__codelineno-56-3" name="__codelineno-56-3" href="#__codelineno-56-3"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>json<span class="w"> </span>python.json<span class="w"> </span>--filter-tags<span class="w"> </span><span class="s2">&quot;python&quot;</span>
+</code></pre></div>
+<h4 id="btk-export-csv"><code>btk export csv</code><a class="headerlink" href="#btk-export-csv" title="Permanent link">&para;</a></h4>
+<p>Export to CSV format.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>csv<span class="w"> </span>&lt;output-file&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>output-file</code> - Output file path (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--starred</code> - Export only starred bookmarks</li>
+<li><code>--filter-tags TEXT</code> - Export bookmarks with tags</li>
+<li><code>--include-archived</code> - Include archived bookmarks</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>csv<span class="w"> </span>bookmarks.csv
+<a id="__codelineno-58-2" name="__codelineno-58-2" href="#__codelineno-58-2"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>csv<span class="w"> </span>python.csv<span class="w"> </span>--filter-tags<span class="w"> </span><span class="s2">&quot;python&quot;</span>
+</code></pre></div>
+<h4 id="btk-export-markdown"><code>btk export markdown</code><a class="headerlink" href="#btk-export-markdown" title="Permanent link">&para;</a></h4>
+<p>Export to Markdown format.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>markdown<span class="w"> </span>&lt;output-file&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>output-file</code> - Output file path (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--starred</code> - Export only starred bookmarks</li>
+<li><code>--filter-tags TEXT</code> - Export bookmarks with tags</li>
+<li><code>--include-archived</code> - Include archived bookmarks</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>markdown<span class="w"> </span>bookmarks.md
+<a id="__codelineno-60-2" name="__codelineno-60-2" href="#__codelineno-60-2"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>markdown<span class="w"> </span>starred.md<span class="w"> </span>--starred
+</code></pre></div>
+<hr />
+<h3 id="btk-db-database-management"><code>btk db</code> - Database Management<a class="headerlink" href="#btk-db-database-management" title="Permanent link">&para;</a></h3>
+<p>Database maintenance and information commands.</p>
+<h4 id="btk-db-info"><code>btk db info</code><a class="headerlink" href="#btk-db-info" title="Permanent link">&para;</a></h4>
+<p>Show database statistics and information.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-61-1" name="__codelineno-61-1" href="#__codelineno-61-1"></a>btk<span class="w"> </span>db<span class="w"> </span>info
+</code></pre></div></p>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-62-1" name="__codelineno-62-1" href="#__codelineno-62-1"></a>btk<span class="w"> </span>db<span class="w"> </span>info
+</code></pre></div>
+<h4 id="btk-db-schema"><code>btk db schema</code><a class="headerlink" href="#btk-db-schema" title="Permanent link">&para;</a></h4>
+<p>Display database schema.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-63-1" name="__codelineno-63-1" href="#__codelineno-63-1"></a>btk<span class="w"> </span>db<span class="w"> </span>schema
+</code></pre></div></p>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>btk<span class="w"> </span>db<span class="w"> </span>schema
+</code></pre></div>
+<h4 id="btk-db-stats"><code>btk db stats</code><a class="headerlink" href="#btk-db-stats" title="Permanent link">&para;</a></h4>
+<p>Show detailed database statistics.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-65-1" name="__codelineno-65-1" href="#__codelineno-65-1"></a>btk<span class="w"> </span>db<span class="w"> </span>stats<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--tags</code> - Tag statistics</li>
+<li><code>--domains</code> - Domain statistics</li>
+<li><code>--activity</code> - Activity statistics</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a>btk<span class="w"> </span>db<span class="w"> </span>stats
+<a id="__codelineno-66-2" name="__codelineno-66-2" href="#__codelineno-66-2"></a>btk<span class="w"> </span>db<span class="w"> </span>stats<span class="w"> </span>--tags
+<a id="__codelineno-66-3" name="__codelineno-66-3" href="#__codelineno-66-3"></a>btk<span class="w"> </span>db<span class="w"> </span>stats<span class="w"> </span>--domains
+<a id="__codelineno-66-4" name="__codelineno-66-4" href="#__codelineno-66-4"></a>btk<span class="w"> </span>db<span class="w"> </span>stats<span class="w"> </span>--activity
+</code></pre></div>
+<h4 id="btk-db-vacuum"><code>btk db vacuum</code><a class="headerlink" href="#btk-db-vacuum" title="Permanent link">&para;</a></h4>
+<p>Optimize database file.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-67-1" name="__codelineno-67-1" href="#__codelineno-67-1"></a>btk<span class="w"> </span>db<span class="w"> </span>vacuum
+</code></pre></div></p>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-68-1" name="__codelineno-68-1" href="#__codelineno-68-1"></a>btk<span class="w"> </span>db<span class="w"> </span>vacuum
+</code></pre></div>
+<h4 id="btk-db-dedupe"><code>btk db dedupe</code><a class="headerlink" href="#btk-db-dedupe" title="Permanent link">&para;</a></h4>
+<p>Find and handle duplicate bookmarks.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-69-1" name="__codelineno-69-1" href="#__codelineno-69-1"></a>btk<span class="w"> </span>db<span class="w"> </span>dedupe<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--strategy TEXT</code> - Deduplication strategy:</li>
+<li><code>merge</code> - Merge duplicate metadata</li>
+<li><code>keep_first</code> - Keep oldest bookmark</li>
+<li><code>keep_last</code> - Keep newest bookmark</li>
+<li><code>keep_most_visited</code> - Keep most visited bookmark</li>
+<li><code>--preview</code> - Preview changes without applying</li>
+<li><code>--stats</code> - Show duplicate statistics only</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-70-1" name="__codelineno-70-1" href="#__codelineno-70-1"></a>btk<span class="w"> </span>db<span class="w"> </span>dedupe<span class="w"> </span>--preview
+<a id="__codelineno-70-2" name="__codelineno-70-2" href="#__codelineno-70-2"></a>btk<span class="w"> </span>db<span class="w"> </span>dedupe<span class="w"> </span>--stats
+<a id="__codelineno-70-3" name="__codelineno-70-3" href="#__codelineno-70-3"></a>btk<span class="w"> </span>db<span class="w"> </span>dedupe<span class="w"> </span>--strategy<span class="w"> </span>merge
+<a id="__codelineno-70-4" name="__codelineno-70-4" href="#__codelineno-70-4"></a>btk<span class="w"> </span>db<span class="w"> </span>dedupe<span class="w"> </span>--strategy<span class="w"> </span>keep_first
+</code></pre></div>
+<hr />
+<h3 id="btk-graph-graph-analysis"><code>btk graph</code> - Graph Analysis<a class="headerlink" href="#btk-graph-graph-analysis" title="Permanent link">&para;</a></h3>
+<p>Build and analyze bookmark relationship graphs.</p>
+<h4 id="btk-graph-build"><code>btk graph build</code><a class="headerlink" href="#btk-graph-build" title="Permanent link">&para;</a></h4>
+<p>Build bookmark similarity graph.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-71-1" name="__codelineno-71-1" href="#__codelineno-71-1"></a>btk<span class="w"> </span>graph<span class="w"> </span>build<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--tag-weight FLOAT</code> - Weight for tag similarity (default: 1.0)</li>
+<li><code>--domain-weight FLOAT</code> - Weight for domain similarity (default: 1.0)</li>
+<li><code>--link-weight FLOAT</code> - Weight for direct links (default: 2.0)</li>
+<li><code>--min-edge-weight FLOAT</code> - Minimum edge weight to include</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-72-1" name="__codelineno-72-1" href="#__codelineno-72-1"></a>btk<span class="w"> </span>graph<span class="w"> </span>build
+<a id="__codelineno-72-2" name="__codelineno-72-2" href="#__codelineno-72-2"></a>btk<span class="w"> </span>graph<span class="w"> </span>build<span class="w"> </span>--tag-weight<span class="w"> </span><span class="m">2</span>.0<span class="w"> </span>--domain-weight<span class="w"> </span><span class="m">1</span>.0
+<a id="__codelineno-72-3" name="__codelineno-72-3" href="#__codelineno-72-3"></a>btk<span class="w"> </span>graph<span class="w"> </span>build<span class="w"> </span>--min-edge-weight<span class="w"> </span><span class="m">4</span>.0
+</code></pre></div>
+<h4 id="btk-graph-neighbors"><code>btk graph neighbors</code><a class="headerlink" href="#btk-graph-neighbors" title="Permanent link">&para;</a></h4>
+<p>Find similar bookmarks (neighbors in graph).</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-73-1" name="__codelineno-73-1" href="#__codelineno-73-1"></a>btk<span class="w"> </span>graph<span class="w"> </span>neighbors<span class="w"> </span>&lt;id&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>id</code> - Bookmark ID (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--limit N</code> - Limit number of results (default: 10)</li>
+<li><code>--min-weight FLOAT</code> - Minimum edge weight</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-74-1" name="__codelineno-74-1" href="#__codelineno-74-1"></a>btk<span class="w"> </span>graph<span class="w"> </span>neighbors<span class="w"> </span><span class="m">123</span>
+<a id="__codelineno-74-2" name="__codelineno-74-2" href="#__codelineno-74-2"></a>btk<span class="w"> </span>graph<span class="w"> </span>neighbors<span class="w"> </span><span class="m">123</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">20</span>
+<a id="__codelineno-74-3" name="__codelineno-74-3" href="#__codelineno-74-3"></a>btk<span class="w"> </span>graph<span class="w"> </span>neighbors<span class="w"> </span><span class="m">123</span><span class="w"> </span>--min-weight<span class="w"> </span><span class="m">3</span>.0
+</code></pre></div>
+<h4 id="btk-graph-export"><code>btk graph export</code><a class="headerlink" href="#btk-graph-export" title="Permanent link">&para;</a></h4>
+<p>Export graph data for visualization.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-75-1" name="__codelineno-75-1" href="#__codelineno-75-1"></a>btk<span class="w"> </span>graph<span class="w"> </span><span class="nb">export</span><span class="w"> </span>&lt;output-file&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>output-file</code> - Output file path (required)</li>
+</ul>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--format FORMAT</code> - Export format:</li>
+<li><code>gexf</code> - GEXF format (Gephi)</li>
+<li><code>graphml</code> - GraphML format (yEd)</li>
+<li><code>json</code> - JSON format (Cytoscape)</li>
+<li><code>d3</code> - D3.js HTML visualization</li>
+<li><code>--min-weight FLOAT</code> - Minimum edge weight to include</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-76-1" name="__codelineno-76-1" href="#__codelineno-76-1"></a>btk<span class="w"> </span>graph<span class="w"> </span><span class="nb">export</span><span class="w"> </span>graph.gexf<span class="w"> </span>--format<span class="w"> </span>gexf
+<a id="__codelineno-76-2" name="__codelineno-76-2" href="#__codelineno-76-2"></a>btk<span class="w"> </span>graph<span class="w"> </span><span class="nb">export</span><span class="w"> </span>graph.graphml<span class="w"> </span>--format<span class="w"> </span>graphml
+<a id="__codelineno-76-3" name="__codelineno-76-3" href="#__codelineno-76-3"></a>btk<span class="w"> </span>graph<span class="w"> </span><span class="nb">export</span><span class="w"> </span>graph.json<span class="w"> </span>--format<span class="w"> </span>json
+<a id="__codelineno-76-4" name="__codelineno-76-4" href="#__codelineno-76-4"></a>btk<span class="w"> </span>graph<span class="w"> </span><span class="nb">export</span><span class="w"> </span>viz.html<span class="w"> </span>--format<span class="w"> </span>d3
+<a id="__codelineno-76-5" name="__codelineno-76-5" href="#__codelineno-76-5"></a>btk<span class="w"> </span>graph<span class="w"> </span><span class="nb">export</span><span class="w"> </span>graph.gexf<span class="w"> </span>--min-weight<span class="w"> </span><span class="m">4</span>.0
+</code></pre></div>
+<h4 id="btk-graph-stats"><code>btk graph stats</code><a class="headerlink" href="#btk-graph-stats" title="Permanent link">&para;</a></h4>
+<p>Show graph statistics.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-77-1" name="__codelineno-77-1" href="#__codelineno-77-1"></a>btk<span class="w"> </span>graph<span class="w"> </span>stats
+</code></pre></div></p>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-78-1" name="__codelineno-78-1" href="#__codelineno-78-1"></a>btk<span class="w"> </span>graph<span class="w"> </span>stats
+</code></pre></div>
+<hr />
+<h3 id="btk-config-configuration"><code>btk config</code> - Configuration<a class="headerlink" href="#btk-config-configuration" title="Permanent link">&para;</a></h3>
+<p>Manage BTK configuration.</p>
+<h4 id="btk-config-show"><code>btk config show</code><a class="headerlink" href="#btk-config-show" title="Permanent link">&para;</a></h4>
+<p>Display current configuration.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-79-1" name="__codelineno-79-1" href="#__codelineno-79-1"></a>btk<span class="w"> </span>config<span class="w"> </span>show
+</code></pre></div></p>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-80-1" name="__codelineno-80-1" href="#__codelineno-80-1"></a>btk<span class="w"> </span>config<span class="w"> </span>show
+</code></pre></div>
+<h4 id="btk-config-set"><code>btk config set</code><a class="headerlink" href="#btk-config-set" title="Permanent link">&para;</a></h4>
+<p>Set configuration value.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-81-1" name="__codelineno-81-1" href="#__codelineno-81-1"></a>btk<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>&lt;key&gt;<span class="w"> </span>&lt;value&gt;
+</code></pre></div></p>
+<p><strong>Arguments:</strong></p>
+<ul>
+<li><code>key</code> - Configuration key (required)</li>
+<li><code>value</code> - Configuration value (required)</li>
+</ul>
+<p><strong>Configuration Keys:</strong></p>
+<ul>
+<li><code>database.path</code> - Default database path</li>
+<li><code>output.format</code> - Default output format (table, json, csv)</li>
+<li><code>output.colors</code> - Enable colors (true, false)</li>
+<li><code>import.fetch_titles</code> - Fetch titles when importing (true, false)</li>
+<li><code>import.skip_duplicates</code> - Skip duplicates when importing (true, false)</li>
+<li><code>content.workers</code> - Number of parallel workers for content operations</li>
+<li><code>content.cache_expiry_days</code> - Days before content cache expires</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-82-1" name="__codelineno-82-1" href="#__codelineno-82-1"></a>btk<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>database.path<span class="w"> </span>~/bookmarks.db
+<a id="__codelineno-82-2" name="__codelineno-82-2" href="#__codelineno-82-2"></a>btk<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>output.format<span class="w"> </span>json
+<a id="__codelineno-82-3" name="__codelineno-82-3" href="#__codelineno-82-3"></a>btk<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>output.colors<span class="w"> </span><span class="nb">true</span>
+<a id="__codelineno-82-4" name="__codelineno-82-4" href="#__codelineno-82-4"></a>btk<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>content.workers<span class="w"> </span><span class="m">50</span>
+</code></pre></div>
+<h4 id="btk-config-init"><code>btk config init</code><a class="headerlink" href="#btk-config-init" title="Permanent link">&para;</a></h4>
+<p>Initialize default configuration file.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a>btk<span class="w"> </span>config<span class="w"> </span>init
+</code></pre></div></p>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-84-1" name="__codelineno-84-1" href="#__codelineno-84-1"></a>btk<span class="w"> </span>config<span class="w"> </span>init
+</code></pre></div>
+<p><strong>Configuration File Location:</strong></p>
+<ul>
+<li>Linux/macOS: <code>~/.config/btk/config.toml</code></li>
+<li>Windows: <code>%APPDATA%\btk\config.toml</code></li>
+</ul>
+<hr />
+<h3 id="btk-shell-interactive-shell"><code>btk shell</code> - Interactive Shell<a class="headerlink" href="#btk-shell-interactive-shell" title="Permanent link">&para;</a></h3>
+<p>Launch the interactive shell.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-85-1" name="__codelineno-85-1" href="#__codelineno-85-1"></a>btk<span class="w"> </span>shell<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div></p>
+<p><strong>Options:</strong></p>
+<ul>
+<li><code>--db PATH</code> - Database path</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a>btk<span class="w"> </span>shell
+<a id="__codelineno-86-2" name="__codelineno-86-2" href="#__codelineno-86-2"></a>btk<span class="w"> </span>shell<span class="w"> </span>--db<span class="w"> </span>~/bookmarks.db
+</code></pre></div>
+<p>See the <a href="../../guide/shell/">Shell Guide</a> for complete shell documentation.</p>
+<hr />
+<h2 id="exit-codes">Exit Codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
+<p>BTK returns standard exit codes:</p>
+<ul>
+<li><code>0</code> - Success</li>
+<li><code>1</code> - General error</li>
+<li><code>2</code> - Invalid arguments</li>
+<li><code>3</code> - Database error</li>
+<li><code>4</code> - Network error</li>
+<li><code>5</code> - File I/O error</li>
+</ul>
+<hr />
+<h2 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
+<p>BTK respects the following environment variables:</p>
+<ul>
+<li><code>BTK_DB</code> - Default database path (overridden by <code>--db</code> flag)</li>
+<li><code>BTK_CONFIG</code> - Configuration file path</li>
+<li><code>NO_COLOR</code> - Disable colored output if set</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-87-1" name="__codelineno-87-1" href="#__codelineno-87-1"></a><span class="c1"># Set default database</span>
+<a id="__codelineno-87-2" name="__codelineno-87-2" href="#__codelineno-87-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BTK_DB</span><span class="o">=</span>~/bookmarks.db
+<a id="__codelineno-87-3" name="__codelineno-87-3" href="#__codelineno-87-3"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>list
+<a id="__codelineno-87-4" name="__codelineno-87-4" href="#__codelineno-87-4"></a>
+<a id="__codelineno-87-5" name="__codelineno-87-5" href="#__codelineno-87-5"></a><span class="c1"># Disable colors</span>
+<a id="__codelineno-87-6" name="__codelineno-87-6" href="#__codelineno-87-6"></a><span class="nv">NO_COLOR</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>btk<span class="w"> </span>bookmark<span class="w"> </span>list
+</code></pre></div>
+<hr />
+<h2 id="configuration-file">Configuration File<a class="headerlink" href="#configuration-file" title="Permanent link">&para;</a></h2>
+<p>BTK uses TOML format for configuration:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-88-1" name="__codelineno-88-1" href="#__codelineno-88-1"></a><span class="k">[database]</span>
+<a id="__codelineno-88-2" name="__codelineno-88-2" href="#__codelineno-88-2"></a><span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/home/user/bookmarks.db&quot;</span>
+<a id="__codelineno-88-3" name="__codelineno-88-3" href="#__codelineno-88-3"></a>
+<a id="__codelineno-88-4" name="__codelineno-88-4" href="#__codelineno-88-4"></a><span class="k">[output]</span>
+<a id="__codelineno-88-5" name="__codelineno-88-5" href="#__codelineno-88-5"></a><span class="n">format</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;table&quot;</span>
+<a id="__codelineno-88-6" name="__codelineno-88-6" href="#__codelineno-88-6"></a><span class="n">colors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<a id="__codelineno-88-7" name="__codelineno-88-7" href="#__codelineno-88-7"></a>
+<a id="__codelineno-88-8" name="__codelineno-88-8" href="#__codelineno-88-8"></a><span class="k">[import]</span>
+<a id="__codelineno-88-9" name="__codelineno-88-9" href="#__codelineno-88-9"></a><span class="n">fetch_titles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<a id="__codelineno-88-10" name="__codelineno-88-10" href="#__codelineno-88-10"></a><span class="n">skip_duplicates</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+<a id="__codelineno-88-11" name="__codelineno-88-11" href="#__codelineno-88-11"></a>
+<a id="__codelineno-88-12" name="__codelineno-88-12" href="#__codelineno-88-12"></a><span class="k">[content]</span>
+<a id="__codelineno-88-13" name="__codelineno-88-13" href="#__codelineno-88-13"></a><span class="n">workers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span>
+<a id="__codelineno-88-14" name="__codelineno-88-14" href="#__codelineno-88-14"></a><span class="n">cache_expiry_days</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">30</span>
+<a id="__codelineno-88-15" name="__codelineno-88-15" href="#__codelineno-88-15"></a>
+<a id="__codelineno-88-16" name="__codelineno-88-16" href="#__codelineno-88-16"></a><span class="k">[graph]</span>
+<a id="__codelineno-88-17" name="__codelineno-88-17" href="#__codelineno-88-17"></a><span class="n">tag_weight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span>
+<a id="__codelineno-88-18" name="__codelineno-88-18" href="#__codelineno-88-18"></a><span class="n">domain_weight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span>
+<a id="__codelineno-88-19" name="__codelineno-88-19" href="#__codelineno-88-19"></a><span class="n">link_weight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span>
+</code></pre></div>
+<hr />
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../guide/shell/">Shell Guide</a> - Interactive shell reference</li>
+<li><a href="../../guide/commands/">Commands Guide</a> - Command examples and workflows</li>
+<li><a href="../../guide/tags/">Tags Guide</a> - Tag management strategies</li>
+<li><a href="../../getting-started/quickstart/">Quick Start</a> - Getting started guide</li>
+</ul>
 
 
 

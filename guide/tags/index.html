@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#tags" class="md-skip">
+        <a href="#tags-organization" class="md-skip">
           Skip to content
         </a>
       
@@ -268,7 +268,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../commands/" class="md-tabs__link">
+        <a href="../shell/" class="md-tabs__link">
           
   
   
@@ -583,6 +583,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../shell/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Interactive Shell
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../commands/" class="md-nav__link">
         
   
@@ -661,6 +684,19 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Tags & Organization
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -672,6 +708,490 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tag-basics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Basics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tag Basics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tag-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Names
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hierarchical-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hierarchical Tags
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hierarchical Tags">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-hierarchies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating Hierarchies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viewing-hierarchies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Viewing Hierarchies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#navigating-hierarchies-in-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      Navigating Hierarchies in Shell
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hierarchy-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hierarchy Best Practices
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tag-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Operations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tag Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#listing-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Listing Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#renaming-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Renaming Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#copying-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Copying Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filtering-by-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filtering by Tags
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#organizational-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Organizational Strategies
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Organizational Strategies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#by-topiccategory" class="md-nav__link">
+    <span class="md-ellipsis">
+      By Topic/Category
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#by-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      By Project
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#by-statusworkflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      By Status/Workflow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#by-content-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      By Content Type
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hybrid-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hybrid Approach
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tag-maintenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Maintenance
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tag Maintenance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-unused-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding Unused Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consolidating-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consolidating Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cleaning-up-hierarchies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cleaning Up Hierarchies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-tagging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Batch Tagging
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-tag-techniques" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Tag Techniques
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Tag Techniques">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multi-dimensional-tagging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-Dimensional Tagging
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temporal-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Temporal Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#source-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Source Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relationship-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Relationship Tags
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tag-integration-with-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Integration with Shell
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tag Integration with Shell">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#browse-by-tag-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Browse by Tag Hierarchy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context-aware-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context-Aware Operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quick-tag-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Tag Operations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tag-patterns-and-anti-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Patterns and Anti-Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tag Patterns and Anti-Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#good-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Good Patterns
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#anti-patterns-to-avoid" class="md-nav__link">
+    <span class="md-ellipsis">
+      Anti-Patterns to Avoid
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tag-export-and-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Export and Import
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tag Export and Import">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exporting-with-tag-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exporting with Tag Structure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#importing-tagged-bookmarks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Importing Tagged Bookmarks
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tag-analytics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Analytics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tag Analytics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tag-usage-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Usage Statistics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finding-tag-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding Tag Patterns
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tag-health" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Health
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1137,6 +1657,479 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tag-basics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Basics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tag Basics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adding Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tag-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Names
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hierarchical-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hierarchical Tags
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hierarchical Tags">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-hierarchies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating Hierarchies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viewing-hierarchies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Viewing Hierarchies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#navigating-hierarchies-in-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      Navigating Hierarchies in Shell
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hierarchy-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hierarchy Best Practices
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tag-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Operations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tag Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#listing-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Listing Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#renaming-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Renaming Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#copying-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Copying Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filtering-by-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filtering by Tags
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#organizational-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Organizational Strategies
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Organizational Strategies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#by-topiccategory" class="md-nav__link">
+    <span class="md-ellipsis">
+      By Topic/Category
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#by-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      By Project
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#by-statusworkflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      By Status/Workflow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#by-content-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      By Content Type
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hybrid-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hybrid Approach
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tag-maintenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Maintenance
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tag Maintenance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-unused-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding Unused Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consolidating-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consolidating Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cleaning-up-hierarchies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cleaning Up Hierarchies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-tagging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Batch Tagging
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-tag-techniques" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Tag Techniques
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Tag Techniques">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multi-dimensional-tagging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-Dimensional Tagging
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temporal-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Temporal Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#source-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Source Tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relationship-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Relationship Tags
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tag-integration-with-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Integration with Shell
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tag Integration with Shell">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#browse-by-tag-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Browse by Tag Hierarchy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context-aware-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Context-Aware Operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quick-tag-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Tag Operations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tag-patterns-and-anti-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Patterns and Anti-Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tag Patterns and Anti-Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#good-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Good Patterns
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#anti-patterns-to-avoid" class="md-nav__link">
+    <span class="md-ellipsis">
+      Anti-Patterns to Avoid
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tag-export-and-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Export and Import
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tag Export and Import">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exporting-with-tag-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exporting with Tag Structure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#importing-tagged-bookmarks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Importing Tagged Bookmarks
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tag-analytics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Analytics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tag Analytics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tag-usage-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Usage Statistics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finding-tag-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding Tag Patterns
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tag-health" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tag Health
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1154,8 +2147,639 @@
   
 
 
-<h1 id="tags">Tags<a class="headerlink" href="#tags" title="Permanent link">&para;</a></h1>
-<p>Documentation coming soon...</p>
+<h1 id="tags-organization">Tags &amp; Organization<a class="headerlink" href="#tags-organization" title="Permanent link">&para;</a></h1>
+<p>Tags are the primary way to organize bookmarks in BTK. They support hierarchical structures, making it easy to create sophisticated organizational schemes that scale with your collection.</p>
+<h2 id="tag-basics">Tag Basics<a class="headerlink" href="#tag-basics" title="Permanent link">&para;</a></h2>
+<p>Tags are labels you attach to bookmarks to categorize and find them later. Unlike folders in traditional bookmark managers, a single bookmark can have multiple tags.</p>
+<h3 id="adding-tags">Adding Tags<a class="headerlink" href="#adding-tags" title="Permanent link">&para;</a></h3>
+<p>Add tags when creating a bookmark:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>add<span class="w"> </span>https://example.com<span class="w"> </span>--tags<span class="w"> </span><span class="s2">&quot;tutorial,python,web&quot;</span>
+</code></pre></div>
+<p>Or add tags to existing bookmarks:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># CLI</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>btk<span class="w"> </span>tag<span class="w"> </span>add<span class="w"> </span>python<span class="w"> </span><span class="m">123</span><span class="w"> </span><span class="m">456</span><span class="w"> </span><span class="m">789</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Shell</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>btk:/$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>bookmarks/123
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>btk:/bookmarks/123$<span class="w"> </span>tag<span class="w"> </span>python<span class="w"> </span>tutorial
+</code></pre></div>
+<h3 id="tag-names">Tag Names<a class="headerlink" href="#tag-names" title="Permanent link">&para;</a></h3>
+<p>Tag names should be:</p>
+<ul>
+<li><strong>Lowercase</strong> - For consistency (e.g., <code>python</code> not <code>Python</code>)</li>
+<li><strong>Descriptive</strong> - Clear and meaningful (e.g., <code>machine-learning</code> not <code>ml1</code>)</li>
+<li><strong>Concise</strong> - Short but descriptive (e.g., <code>web-dev</code> not <code>web-development-resources</code>)</li>
+<li><strong>Hierarchical</strong> - Use <code>/</code> for hierarchy (e.g., <code>programming/python/web</code>)</li>
+</ul>
+<p><strong>Valid tag characters:</strong></p>
+<ul>
+<li>Letters: <code>a-z</code>, <code>A-Z</code> (though lowercase is recommended)</li>
+<li>Numbers: <code>0-9</code></li>
+<li>Special: <code>-</code>, <code>_</code>, <code>/</code> (for hierarchy)</li>
+</ul>
+<p><strong>Invalid:</strong> Spaces, commas, or special characters like <code>@</code>, <code>#</code>, <code>!</code></p>
+<h2 id="hierarchical-tags">Hierarchical Tags<a class="headerlink" href="#hierarchical-tags" title="Permanent link">&para;</a></h2>
+<p>BTK supports hierarchical tags using <code>/</code> as a separator, allowing you to create nested organizational structures.</p>
+<h3 id="creating-hierarchies">Creating Hierarchies<a class="headerlink" href="#creating-hierarchies" title="Permanent link">&para;</a></h3>
+<p>Simply use <code>/</code> in your tag names:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Add hierarchical tags</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>add<span class="w"> </span>https://flask.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--tags<span class="w"> </span><span class="s2">&quot;programming/python/web/flask&quot;</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>add<span class="w"> </span>https://numpy.org<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span>--tags<span class="w"> </span><span class="s2">&quot;programming/python/data-science/numpy&quot;</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>add<span class="w"> </span>https://react.dev<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">  </span>--tags<span class="w"> </span><span class="s2">&quot;programming/javascript/web/react&quot;</span>
+</code></pre></div>
+<p>This creates a hierarchy:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>programming/
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>├── python/
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>│   ├── web/
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>│   │   └── flask
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>│   └── data-science/
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>│       └── numpy
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>└── javascript/
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    └── web/
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        └── react
+</code></pre></div>
+<h3 id="viewing-hierarchies">Viewing Hierarchies<a class="headerlink" href="#viewing-hierarchies" title="Permanent link">&para;</a></h3>
+<p>Use the tree view to see your tag structure:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>tree
+</code></pre></div>
+<p><strong>Output:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>📁 Root
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>├── 📁 programming (234 bookmarks)
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>│   ├── 📁 python (127 bookmarks)
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>│   │   ├── 📁 web (45 bookmarks)
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>│   │   │   ├── django (23 bookmarks)
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>│   │   │   ├── flask (15 bookmarks)
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>│   │   │   └── fastapi (7 bookmarks)
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>│   │   ├── 📁 data-science (38 bookmarks)
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>│   │   │   ├── pandas (20 bookmarks)
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>│   │   │   ├── numpy (12 bookmarks)
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>│   │   │   └── scikit-learn (6 bookmarks)
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>│   │   └── 📁 testing (19 bookmarks)
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>│   │       ├── pytest (12 bookmarks)
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>│   │       └── unittest (7 bookmarks)
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>│   ├── 📁 javascript (67 bookmarks)
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>│   │   ├── 📁 web (45 bookmarks)
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>│   │   │   ├── react (25 bookmarks)
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>│   │   │   ├── vue (12 bookmarks)
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>│   │   │   └── angular (8 bookmarks)
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>│   │   └── 📁 node (22 bookmarks)
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>│   └── 📁 go (40 bookmarks)
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>├── 📁 research (89 bookmarks)
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>│   ├── 📁 machine-learning (56 bookmarks)
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>│   │   ├── nlp (23 bookmarks)
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>│   │   ├── computer-vision (18 bookmarks)
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>│   │   └── reinforcement-learning (15 bookmarks)
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>│   └── 📁 papers (33 bookmarks)
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>└── 📁 tutorial (156 bookmarks)
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>    ├── video (67 bookmarks)
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>    └── written (89 bookmarks)
+</code></pre></div>
+<h3 id="navigating-hierarchies-in-shell">Navigating Hierarchies in Shell<a class="headerlink" href="#navigating-hierarchies-in-shell" title="Permanent link">&para;</a></h3>
+<p>The shell makes hierarchical tags browsable like directories:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>btk:/$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>tags
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>btk:/tags$<span class="w"> </span>ls
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>programming/<span class="w">  </span>research/<span class="w">  </span>tutorial/
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>btk:/tags$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>programming
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>btk:/tags/programming$<span class="w"> </span>ls
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>python/<span class="w">  </span>javascript/<span class="w">  </span>go/<span class="w">  </span>rust/
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>btk:/tags/programming$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>python
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>btk:/tags/programming/python$<span class="w"> </span>ls
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>web/<span class="w">  </span>data-science/<span class="w">  </span>testing/
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="m">3298</span><span class="w">  </span><span class="m">4095</span><span class="w">  </span><span class="m">5124</span><span class="w">  </span><span class="m">5789</span><span class="w">  </span><span class="o">(</span>bookmark<span class="w"> </span>IDs<span class="o">)</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>btk:/tags/programming/python$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>web
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>btk:/tags/programming/python/web$<span class="w"> </span>ls
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>django/<span class="w">  </span>flask/<span class="w">  </span>fastapi/
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="m">1001</span><span class="w">  </span><span class="m">1002</span><span class="w">  </span><span class="m">1003</span><span class="w">  </span><span class="o">(</span>more<span class="w"> </span>bookmark<span class="w"> </span>IDs<span class="o">)</span>
+</code></pre></div>
+<h3 id="hierarchy-best-practices">Hierarchy Best Practices<a class="headerlink" href="#hierarchy-best-practices" title="Permanent link">&para;</a></h3>
+<p><strong>Use consistent patterns:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Good: Consistent depth and naming</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>programming/python/web/django
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>programming/python/web/flask
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>programming/python/data-science/pandas
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="c1"># Avoid: Inconsistent depth</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>programming/python
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>programming/python/web/django/advanced
+</code></pre></div>
+<p><strong>Don't go too deep:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Good: 3-4 levels maximum</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>programming/python/web/django
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Too deep: Hard to navigate</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>programming/languages/python/frameworks/web/backend/django/advanced/deployment
+</code></pre></div>
+<p><strong>Use parent tags strategically:</strong></p>
+<p>If a bookmark is tagged <code>programming/python/web/flask</code>, you can find it by searching for:</p>
+<ul>
+<li><code>programming</code> (finds ALL programming bookmarks)</li>
+<li><code>programming/python</code> (finds ALL Python bookmarks)</li>
+<li><code>programming/python/web</code> (finds ALL Python web bookmarks)</li>
+<li><code>programming/python/web/flask</code> (finds ONLY Flask bookmarks)</li>
+</ul>
+<h2 id="tag-operations">Tag Operations<a class="headerlink" href="#tag-operations" title="Permanent link">&para;</a></h2>
+<h3 id="listing-tags">Listing Tags<a class="headerlink" href="#listing-tags" title="Permanent link">&para;</a></h3>
+<p>View all tags in your collection:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Simple List</label><label for="__tabbed_1_2">Tree View</label><label for="__tabbed_1_3">Statistics</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>list
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># Output:</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>programming
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>programming/python
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>programming/python/web
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>programming/python/web/django
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>programming/python/web/flask
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>programming/python/data-science
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>research
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>tutorial
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>tree
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># Shows hierarchical structure (see above)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>stats
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># Output:</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>Tag<span class="w"> </span>Statistics
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>─────────────────────────────────────────
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>Total<span class="w"> </span>Tags:<span class="w"> </span><span class="m">47</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>Total<span class="w"> </span>Usage:<span class="w"> </span><span class="m">1</span>,234<span class="w"> </span><span class="o">(</span>avg<span class="w"> </span><span class="m">26</span>.3<span class="w"> </span>per<span class="w"> </span>tag<span class="o">)</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>Most<span class="w"> </span>Used<span class="w"> </span>Tags:
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="m">1</span>.<span class="w"> </span>tutorial<span class="w"> </span><span class="o">(</span><span class="m">156</span><span class="w"> </span>bookmarks<span class="o">)</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="m">2</span>.<span class="w"> </span>programming<span class="w"> </span><span class="o">(</span><span class="m">127</span><span class="w"> </span>bookmarks<span class="o">)</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="m">3</span>.<span class="w"> </span>python<span class="w"> </span><span class="o">(</span><span class="m">89</span><span class="w"> </span>bookmarks<span class="o">)</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="m">4</span>.<span class="w"> </span>research<span class="w"> </span><span class="o">(</span><span class="m">67</span><span class="w"> </span>bookmarks<span class="o">)</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="m">5</span>.<span class="w"> </span>web<span class="w"> </span><span class="o">(</span><span class="m">56</span><span class="w"> </span>bookmarks<span class="o">)</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>Least<span class="w"> </span>Used<span class="w"> </span>Tags:
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="m">1</span>.<span class="w"> </span>draft<span class="w"> </span><span class="o">(</span><span class="m">1</span><span class="w"> </span>bookmark<span class="o">)</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="m">2</span>.<span class="w"> </span>archive<span class="w"> </span><span class="o">(</span><span class="m">2</span><span class="w"> </span>bookmarks<span class="o">)</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="m">3</span>.<span class="w"> </span>temp<span class="w"> </span><span class="o">(</span><span class="m">3</span><span class="w"> </span>bookmarks<span class="o">)</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<h3 id="renaming-tags">Renaming Tags<a class="headerlink" href="#renaming-tags" title="Permanent link">&para;</a></h3>
+<p>Rename a tag across all bookmarks using either CLI or shell:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">CLI</label><label for="__tabbed_2_2">Shell</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Simple rename</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>btk<span class="w"> </span>tag<span class="w"> </span>rename<span class="w"> </span>javascript<span class="w"> </span>js
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Rename with hierarchy</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>btk<span class="w"> </span>tag<span class="w"> </span>rename<span class="w"> </span>programming/python/web<span class="w"> </span>programming/python/web-dev
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1"># Reorganize hierarchy</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>btk<span class="w"> </span>tag<span class="w"> </span>rename<span class="w"> </span>backend<span class="w"> </span>programming/backend
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Navigate to tags directory</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>btk:/$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>tags
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># Rename using mv command</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>btk:/tags$<span class="w"> </span>mv<span class="w"> </span>javascript<span class="w"> </span>js
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>Renaming<span class="w"> </span>tag<span class="w"> </span><span class="s1">&#39;javascript&#39;</span><span class="w"> </span>to<span class="w"> </span><span class="s1">&#39;js&#39;</span>...
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>Found<span class="w"> </span><span class="m">47</span><span class="w"> </span>bookmarks<span class="w"> </span>with<span class="w"> </span>tag<span class="w"> </span><span class="s1">&#39;javascript&#39;</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>Confirm<span class="w"> </span>rename?<span class="w"> </span><span class="o">[</span>y/N<span class="o">]</span>:<span class="w"> </span>y
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>✓<span class="w"> </span>Successfully<span class="w"> </span>renamed<span class="w"> </span>tag<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">47</span><span class="w"> </span>bookmarks
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="c1"># Rename with hierarchy</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>btk:/tags$<span class="w"> </span>mv<span class="w"> </span>programming/python/web<span class="w"> </span>programming/python/web-dev
+</code></pre></div>
+</div>
+</div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Global Operation</p>
+<p>Renaming affects ALL bookmarks with that tag. The operation shows how many bookmarks will be affected and asks for confirmation.</p>
+</div>
+<h3 id="copying-tags">Copying Tags<a class="headerlink" href="#copying-tags" title="Permanent link">&para;</a></h3>
+<p>Copy a tag to additional bookmarks:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">CLI</label><label for="__tabbed_3_2">Shell</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Copy to specific bookmarks</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>btk<span class="w"> </span>tag<span class="w"> </span>copy<span class="w"> </span>featured<span class="w"> </span>--to-ids<span class="w"> </span><span class="m">123</span><span class="w"> </span><span class="m">456</span><span class="w"> </span><span class="m">789</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Copy to starred bookmarks</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>btk<span class="w"> </span>tag<span class="w"> </span>copy<span class="w"> </span>high-priority<span class="w"> </span>--starred
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1"># Copy to bookmarks with existing tags</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>btk<span class="w"> </span>tag<span class="w"> </span>copy<span class="w"> </span>reviewed<span class="w"> </span>--filter-tags<span class="w"> </span><span class="s2">&quot;programming/python&quot;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Copy tag to current bookmark</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>btk:/bookmarks/123$<span class="w"> </span>cp<span class="w"> </span>important<span class="w"> </span>.
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># Copy tag to specific bookmark</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>btk:/$<span class="w"> </span>cp<span class="w"> </span>featured<span class="w"> </span><span class="m">123</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># Copy tag to all bookmarks in context</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>btk:/tags/programming/python$<span class="w"> </span>cp<span class="w"> </span>reviewed<span class="w"> </span>*
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>Copying<span class="w"> </span>tag<span class="w"> </span><span class="s1">&#39;reviewed&#39;</span><span class="w"> </span>to<span class="w"> </span><span class="m">127</span><span class="w"> </span>bookmarks...
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>Confirm?<span class="w"> </span><span class="o">[</span>y/N<span class="o">]</span>:<span class="w"> </span>y
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>✓<span class="w"> </span>Added<span class="w"> </span>tag<span class="w"> </span><span class="s1">&#39;reviewed&#39;</span><span class="w"> </span>to<span class="w"> </span><span class="m">127</span><span class="w"> </span>bookmarks
+</code></pre></div>
+</div>
+</div>
+</div>
+<h3 id="filtering-by-tags">Filtering by Tags<a class="headerlink" href="#filtering-by-tags" title="Permanent link">&para;</a></h3>
+<p>Filter bookmarks by tag prefix:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">CLI</label><label for="__tabbed_4_2">Shell</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Filter by tag</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>btk<span class="w"> </span>tag<span class="w"> </span>filter<span class="w"> </span>programming/python
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Use with other commands</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>btk<span class="w"> </span>tag<span class="w"> </span>filter<span class="w"> </span>programming/python<span class="w"> </span><span class="p">|</span><span class="w"> </span>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>output.html<span class="w"> </span>html
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Navigate to tag directory</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>btk:/$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>tags/programming/python
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>btk:/tags/programming/python$<span class="w"> </span>ls
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># Shows only Python bookmarks</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="c1"># Use context-aware commands</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>btk:/tags/programming/python$<span class="w"> </span>recent
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="c1"># Shows only recent Python bookmarks</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="organizational-strategies">Organizational Strategies<a class="headerlink" href="#organizational-strategies" title="Permanent link">&para;</a></h2>
+<h3 id="by-topiccategory">By Topic/Category<a class="headerlink" href="#by-topiccategory" title="Permanent link">&para;</a></h3>
+<p>Organize bookmarks by subject matter:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>programming/
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>├── python/
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>├── javascript/
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>├── go/
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>└── rust/
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>research/
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>├── machine-learning/
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>├── databases/
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>└── networking/
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>design/
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>├── ui-ux/
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a>├── graphics/
+<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a>└── typography/
+</code></pre></div>
+<h3 id="by-project">By Project<a class="headerlink" href="#by-project" title="Permanent link">&para;</a></h3>
+<p>Organize bookmarks by work projects:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>projects/
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>├── website-redesign/
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>│   ├── inspiration/
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>│   ├── tools/
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>│   └── resources/
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>├── ml-classifier/
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>│   ├── papers/
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>│   ├── datasets/
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>│   └── libraries/
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>└── mobile-app/
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>    ├── react-native/
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>    └── apis/
+</code></pre></div>
+<h3 id="by-statusworkflow">By Status/Workflow<a class="headerlink" href="#by-statusworkflow" title="Permanent link">&para;</a></h3>
+<p>Track bookmark lifecycle:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>status/
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>├── to-read/
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>├── reading/
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>├── completed/
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>└── reference/
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>priority/
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>├── high/
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>├── medium/
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a>└── low/
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>work/
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a>├── active/
+<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a>├── backlog/
+<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a>└── archived/
+</code></pre></div>
+<h3 id="by-content-type">By Content Type<a class="headerlink" href="#by-content-type" title="Permanent link">&para;</a></h3>
+<p>Organize by the type of content:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>content-type/
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>├── article/
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>├── video/
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>│   ├── tutorial/
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>│   └── conference-talk/
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>├── documentation/
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>├── tool/
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>└── course/
+</code></pre></div>
+<h3 id="hybrid-approach">Hybrid Approach<a class="headerlink" href="#hybrid-approach" title="Permanent link">&para;</a></h3>
+<p>Combine multiple strategies:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Topic + Status</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>add<span class="w"> </span>https://example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">  </span>--tags<span class="w"> </span><span class="s2">&quot;programming/python/web,status/to-read,priority/high&quot;</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="c1"># Project + Content Type</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>add<span class="w"> </span>https://example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="w">  </span>--tags<span class="w"> </span><span class="s2">&quot;projects/ml-classifier,content-type/paper,research/machine-learning&quot;</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="c1"># Category + Workflow</span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>add<span class="w"> </span>https://example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="w">  </span>--tags<span class="w"> </span><span class="s2">&quot;design/ui-ux,work/active,content-type/tool&quot;</span>
+</code></pre></div>
+<h2 id="tag-maintenance">Tag Maintenance<a class="headerlink" href="#tag-maintenance" title="Permanent link">&para;</a></h2>
+<h3 id="finding-unused-tags">Finding Unused Tags<a class="headerlink" href="#finding-unused-tags" title="Permanent link">&para;</a></h3>
+<p>Find tags with few bookmarks:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>stats
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="c1"># Look at &quot;Least Used Tags&quot; section</span>
+</code></pre></div>
+<h3 id="consolidating-tags">Consolidating Tags<a class="headerlink" href="#consolidating-tags" title="Permanent link">&para;</a></h3>
+<p>Merge similar or duplicate tags:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Find duplicates</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>btk<span class="w"> </span>tag<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;javascript\|js&quot;</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># Consolidate</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>btk<span class="w"> </span>tag<span class="w"> </span>rename<span class="w"> </span>javascript<span class="w"> </span>js
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>btk<span class="w"> </span>tag<span class="w"> </span>rename<span class="w"> </span>js-framework<span class="w"> </span>javascript/framework
+</code></pre></div>
+<h3 id="cleaning-up-hierarchies">Cleaning Up Hierarchies<a class="headerlink" href="#cleaning-up-hierarchies" title="Permanent link">&para;</a></h3>
+<p>Reorganize your tag structure:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Before: Flat structure</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>backend
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>frontend
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>fullstack
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="c1"># After: Hierarchical structure</span>
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>btk<span class="w"> </span>tag<span class="w"> </span>rename<span class="w"> </span>backend<span class="w"> </span>programming/backend
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>btk<span class="w"> </span>tag<span class="w"> </span>rename<span class="w"> </span>frontend<span class="w"> </span>programming/frontend
+<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>btk<span class="w"> </span>tag<span class="w"> </span>rename<span class="w"> </span>fullstack<span class="w"> </span>programming/fullstack
+<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a>
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a><span class="c1"># Result:</span>
+<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>programming/
+<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a>├──<span class="w"> </span>backend/
+<a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a>├──<span class="w"> </span>frontend/
+<a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a>└──<span class="w"> </span>fullstack/
+</code></pre></div>
+<h3 id="batch-tagging">Batch Tagging<a class="headerlink" href="#batch-tagging" title="Permanent link">&para;</a></h3>
+<p>Add tags to groups of bookmarks:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">CLI</label><label for="__tabbed_5_2">Shell</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Tag all starred bookmarks</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>btk<span class="w"> </span>tag<span class="w"> </span>copy<span class="w"> </span>reviewed<span class="w"> </span>--starred
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="c1"># Tag bookmarks with existing tags</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>btk<span class="w"> </span>tag<span class="w"> </span>copy<span class="w"> </span>important<span class="w"> </span>--filter-tags<span class="w"> </span><span class="s2">&quot;priority/high&quot;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Navigate to context</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>btk:/$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>starred
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># Tag all in context</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>btk:/starred$<span class="w"> </span>cp<span class="w"> </span>reviewed<span class="w"> </span>*
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="advanced-tag-techniques">Advanced Tag Techniques<a class="headerlink" href="#advanced-tag-techniques" title="Permanent link">&para;</a></h2>
+<h3 id="multi-dimensional-tagging">Multi-Dimensional Tagging<a class="headerlink" href="#multi-dimensional-tagging" title="Permanent link">&para;</a></h3>
+<p>Use tags from different dimensions to create rich metadata:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Dimension 1: Topic</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="c1"># Dimension 2: Skill Level</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="c1"># Dimension 3: Content Type</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="c1"># Dimension 4: Status</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>add<span class="w"> </span>https://example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="w">  </span>--tags<span class="w"> </span><span class="s2">&quot;programming/python/web,level/advanced,type/tutorial,status/completed&quot;</span>
+</code></pre></div>
+<p>Query using any dimension:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># All advanced Python content</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>btk<span class="w"> </span>tag<span class="w"> </span>filter<span class="w"> </span>level/advanced<span class="w"> </span><span class="p">|</span><span class="w"> </span>btk<span class="w"> </span>tag<span class="w"> </span>filter<span class="w"> </span>programming/python
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="c1"># All completed tutorials</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>btk<span class="w"> </span>tag<span class="w"> </span>filter<span class="w"> </span>type/tutorial<span class="w"> </span><span class="p">|</span><span class="w"> </span>btk<span class="w"> </span>tag<span class="w"> </span>filter<span class="w"> </span>status/completed
+</code></pre></div>
+<h3 id="temporal-tags">Temporal Tags<a class="headerlink" href="#temporal-tags" title="Permanent link">&para;</a></h3>
+<p>Track when bookmarks were added or relevant:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="c1"># Year-based</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>added/2024/
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>├──<span class="w"> </span>q1/
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a>├──<span class="w"> </span>q2/
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a>├──<span class="w"> </span>q3/
+<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a>└──<span class="w"> </span>q4/
+<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a>
+<a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a><span class="c1"># Event-based</span>
+<a id="__codelineno-30-9" name="__codelineno-30-9" href="#__codelineno-30-9"></a>events/
+<a id="__codelineno-30-10" name="__codelineno-30-10" href="#__codelineno-30-10"></a>├──<span class="w"> </span>conference-2024/
+<a id="__codelineno-30-11" name="__codelineno-30-11" href="#__codelineno-30-11"></a>├──<span class="w"> </span>hackathon-spring/
+<a id="__codelineno-30-12" name="__codelineno-30-12" href="#__codelineno-30-12"></a>└──<span class="w"> </span>workshop-ml/
+</code></pre></div>
+<h3 id="source-tags">Source Tags<a class="headerlink" href="#source-tags" title="Permanent link">&para;</a></h3>
+<p>Track where bookmarks came from:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>source/
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>├──<span class="w"> </span>reddit/
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>│<span class="w">   </span>├──<span class="w"> </span>r-programming/
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>│<span class="w">   </span>└──<span class="w"> </span>r-python/
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>├──<span class="w"> </span>twitter/
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>├──<span class="w"> </span>newsletter/
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a>│<span class="w">   </span>├──<span class="w"> </span>python-weekly/
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a>│<span class="w">   </span>└──<span class="w"> </span>javascript-weekly/
+<a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a>└──<span class="w"> </span>personal/
+</code></pre></div>
+<h3 id="relationship-tags">Relationship Tags<a class="headerlink" href="#relationship-tags" title="Permanent link">&para;</a></h3>
+<p>Indicate relationships between bookmarks:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Prerequisites</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>prereq/linear-algebra
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>prereq/probability
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="c1"># Related topics</span>
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>related/docker
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a>related/kubernetes
+<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>
+<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a><span class="c1"># Alternatives</span>
+<a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a>alternative-to/tool-x
+<a id="__codelineno-32-11" name="__codelineno-32-11" href="#__codelineno-32-11"></a>alternative-to/library-y
+</code></pre></div>
+<h2 id="tag-integration-with-shell">Tag Integration with Shell<a class="headerlink" href="#tag-integration-with-shell" title="Permanent link">&para;</a></h2>
+<p>The shell provides powerful ways to work with tags:</p>
+<h3 id="browse-by-tag-hierarchy">Browse by Tag Hierarchy<a class="headerlink" href="#browse-by-tag-hierarchy" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>btk:/$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>tags/programming/python/web
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>btk:/tags/programming/python/web$<span class="w"> </span>ls
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>django/<span class="w">  </span>flask/<span class="w">  </span>fastapi/
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="m">1234</span><span class="w">  </span><span class="m">5678</span><span class="w">  </span><span class="m">9012</span><span class="w">  </span><span class="o">(</span>bookmark<span class="w"> </span>IDs<span class="o">)</span>
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>
+<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a><span class="c1"># View bookmark in tag context</span>
+<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a>btk:/tags/programming/python/web$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="m">1234</span>
+<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>btk:/tags/programming/python/web/1234$<span class="w"> </span>ls
+<a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a>url<span class="w">  </span>title<span class="w">  </span>tags<span class="w">  </span>description
+</code></pre></div>
+<h3 id="context-aware-operations">Context-Aware Operations<a class="headerlink" href="#context-aware-operations" title="Permanent link">&para;</a></h3>
+<p>Commands adapt to your tag context:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># Recent bookmarks in Python web category</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>btk:/tags/programming/python/web$<span class="w"> </span>recent<span class="w"> </span>visited
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="c1"># Statistics for Python web bookmarks</span>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a>btk:/tags/programming/python/web$<span class="w"> </span>stat
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a>
+<a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a><span class="c1"># Search within context</span>
+<a id="__codelineno-34-8" name="__codelineno-34-8" href="#__codelineno-34-8"></a>btk:/tags/programming/python/web$<span class="w"> </span>find<span class="w"> </span><span class="s2">&quot;django&quot;</span>
+</code></pre></div>
+<h3 id="quick-tag-operations">Quick Tag Operations<a class="headerlink" href="#quick-tag-operations" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="c1"># Add tag to bookmark in context</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>btk:/tags/programming/python/web$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="m">1234</span>
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>btk:/tags/programming/python/web/1234$<span class="w"> </span>tag<span class="w"> </span>tutorial<span class="w"> </span>advanced
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>
+<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span class="c1"># Copy tag to all in context</span>
+<a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a>btk:/tags/programming/python$<span class="w"> </span>cp<span class="w"> </span>reviewed<span class="w"> </span>*
+<a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a>
+<a id="__codelineno-35-8" name="__codelineno-35-8" href="#__codelineno-35-8"></a><span class="c1"># Rename tag from anywhere</span>
+<a id="__codelineno-35-9" name="__codelineno-35-9" href="#__codelineno-35-9"></a>btk:/tags$<span class="w"> </span>mv<span class="w"> </span>old-name<span class="w"> </span>new-name
+</code></pre></div>
+<h2 id="tag-patterns-and-anti-patterns">Tag Patterns and Anti-Patterns<a class="headerlink" href="#tag-patterns-and-anti-patterns" title="Permanent link">&para;</a></h2>
+<h3 id="good-patterns">Good Patterns<a class="headerlink" href="#good-patterns" title="Permanent link">&para;</a></h3>
+<p><strong>Consistent naming:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="c1"># Good: Consistent style</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>programming/python
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>programming/javascript
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a>programming/go
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a>
+<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a><span class="c1"># Bad: Inconsistent style</span>
+<a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a>programming/python
+<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a>ProgrammingJavaScript
+<a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a>prog_go
+</code></pre></div>
+<p><strong>Meaningful hierarchies:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="c1"># Good: Clear hierarchy</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>programming/python/web/django
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>programming/python/web/flask
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a>
+<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a><span class="c1"># Bad: Unclear hierarchy</span>
+<a id="__codelineno-37-6" name="__codelineno-37-6" href="#__codelineno-37-6"></a>python-django
+<a id="__codelineno-37-7" name="__codelineno-37-7" href="#__codelineno-37-7"></a>web-python-django
+<a id="__codelineno-37-8" name="__codelineno-37-8" href="#__codelineno-37-8"></a>programming-web-django-python
+</code></pre></div>
+<p><strong>Appropriate specificity:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="c1"># Good: Balance of general and specific</span>
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>programming/python
+<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>programming/python/web
+<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a>programming/python/web/django
+<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a>
+<a id="__codelineno-38-6" name="__codelineno-38-6" href="#__codelineno-38-6"></a><span class="c1"># Bad: Too general or too specific</span>
+<a id="__codelineno-38-7" name="__codelineno-38-7" href="#__codelineno-38-7"></a>programming
+<a id="__codelineno-38-8" name="__codelineno-38-8" href="#__codelineno-38-8"></a>programming/python/web/django/admin/authentication/oauth2
+</code></pre></div>
+<h3 id="anti-patterns-to-avoid">Anti-Patterns to Avoid<a class="headerlink" href="#anti-patterns-to-avoid" title="Permanent link">&para;</a></h3>
+<p><strong>Don't use tags as folders:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="c1"># Bad: Treating tags like exclusive folders</span>
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>folder1/bookmark-a
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>folder2/bookmark-b
+<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="c1"># Bookmarks can&#39;t be in multiple folders</span>
+<a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a>
+<a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a><span class="c1"># Good: Using tags for flexible categorization</span>
+<a id="__codelineno-39-7" name="__codelineno-39-7" href="#__codelineno-39-7"></a>programming/python,<span class="w"> </span>tutorial,<span class="w"> </span>beginner
+<a id="__codelineno-39-8" name="__codelineno-39-8" href="#__codelineno-39-8"></a><span class="c1"># Bookmark can have multiple relevant tags</span>
+</code></pre></div>
+<p><strong>Don't create overly long tag names:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># Bad: Too long</span>
+<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>programming-languages-python-web-frameworks-django-tutorials
+<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>
+<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="c1"># Good: Hierarchical</span>
+<a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a>programming/python/web/django,<span class="w"> </span>tutorial
+</code></pre></div>
+<p><strong>Don't use spaces in tags:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="c1"># Bad: Spaces cause issues</span>
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a><span class="s2">&quot;machine learning&quot;</span>,<span class="w"> </span><span class="s2">&quot;web development&quot;</span>
+<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>
+<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span class="c1"># Good: Use hyphens or hierarchy</span>
+<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a>machine-learning,<span class="w"> </span>web-development
+<a id="__codelineno-41-6" name="__codelineno-41-6" href="#__codelineno-41-6"></a><span class="c1"># or</span>
+<a id="__codelineno-41-7" name="__codelineno-41-7" href="#__codelineno-41-7"></a>ml/machine-learning,<span class="w"> </span>programming/web/development
+</code></pre></div>
+<h2 id="tag-export-and-import">Tag Export and Import<a class="headerlink" href="#tag-export-and-import" title="Permanent link">&para;</a></h2>
+<h3 id="exporting-with-tag-structure">Exporting with Tag Structure<a class="headerlink" href="#exporting-with-tag-structure" title="Permanent link">&para;</a></h3>
+<p>Export bookmarks with hierarchical tag folders:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="c1"># Export as hierarchical HTML</span>
+<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>html<span class="w"> </span>bookmarks.html<span class="w"> </span>--hierarchical
+<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a>
+<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="c1"># Result in browser:</span>
+<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a><span class="c1"># 📁 Programming</span>
+<a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a><span class="c1">#   📁 Python</span>
+<a id="__codelineno-42-7" name="__codelineno-42-7" href="#__codelineno-42-7"></a><span class="c1">#     📁 Web</span>
+<a id="__codelineno-42-8" name="__codelineno-42-8" href="#__codelineno-42-8"></a><span class="c1">#       🔖 Django Tutorial</span>
+<a id="__codelineno-42-9" name="__codelineno-42-9" href="#__codelineno-42-9"></a><span class="c1">#       🔖 Flask Docs</span>
+</code></pre></div>
+<h3 id="importing-tagged-bookmarks">Importing Tagged Bookmarks<a class="headerlink" href="#importing-tagged-bookmarks" title="Permanent link">&para;</a></h3>
+<p>Import bookmarks while preserving tags:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a><span class="c1"># Import HTML with tags</span>
+<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>btk<span class="w"> </span>import<span class="w"> </span>html<span class="w"> </span>bookmarks.html
+<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>
+<a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a><span class="c1"># Import with additional tags</span>
+<a id="__codelineno-43-5" name="__codelineno-43-5" href="#__codelineno-43-5"></a>btk<span class="w"> </span>import<span class="w"> </span>html<span class="w"> </span>bookmarks.html<span class="w"> </span>--add-tags<span class="w"> </span><span class="s2">&quot;imported,backup-2024&quot;</span>
+<a id="__codelineno-43-6" name="__codelineno-43-6" href="#__codelineno-43-6"></a>
+<a id="__codelineno-43-7" name="__codelineno-43-7" href="#__codelineno-43-7"></a><span class="c1"># Import JSON with full tag data</span>
+<a id="__codelineno-43-8" name="__codelineno-43-8" href="#__codelineno-43-8"></a>btk<span class="w"> </span>import<span class="w"> </span>json<span class="w"> </span>bookmarks.json
+</code></pre></div>
+<h2 id="tag-analytics">Tag Analytics<a class="headerlink" href="#tag-analytics" title="Permanent link">&para;</a></h2>
+<h3 id="tag-usage-statistics">Tag Usage Statistics<a class="headerlink" href="#tag-usage-statistics" title="Permanent link">&para;</a></h3>
+<p>Analyze how you use tags:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>stats
+<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>
+<a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a><span class="c1"># Shows:</span>
+<a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a><span class="c1"># - Total tags</span>
+<a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a><span class="c1"># - Total usage</span>
+<a id="__codelineno-44-6" name="__codelineno-44-6" href="#__codelineno-44-6"></a><span class="c1"># - Most/least used tags</span>
+<a id="__codelineno-44-7" name="__codelineno-44-7" href="#__codelineno-44-7"></a><span class="c1"># - Average tags per bookmark</span>
+</code></pre></div>
+<h3 id="finding-tag-patterns">Finding Tag Patterns<a class="headerlink" href="#finding-tag-patterns" title="Permanent link">&para;</a></h3>
+<p>Discover tag relationships:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a><span class="c1"># Bookmarks with multiple Python-related tags</span>
+<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;tags LIKE &#39;%python%&#39;&quot;</span>
+<a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a>
+<a id="__codelineno-45-4" name="__codelineno-45-4" href="#__codelineno-45-4"></a><span class="c1"># Most popular tag combinations</span>
+<a id="__codelineno-45-5" name="__codelineno-45-5" href="#__codelineno-45-5"></a>btk<span class="w"> </span>db<span class="w"> </span>stats<span class="w"> </span>--tags
+</code></pre></div>
+<h3 id="tag-health">Tag Health<a class="headerlink" href="#tag-health" title="Permanent link">&para;</a></h3>
+<p>Identify tag issues:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a><span class="c1"># Find bookmarks with no tags</span>
+<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;tags IS NULL OR tags = &#39;&#39;&quot;</span>
+<a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a>
+<a id="__codelineno-46-4" name="__codelineno-46-4" href="#__codelineno-46-4"></a><span class="c1"># Find bookmarks with many tags (possible over-tagging)</span>
+<a id="__codelineno-46-5" name="__codelineno-46-5" href="#__codelineno-46-5"></a><span class="c1"># Use shell or custom query</span>
+<a id="__codelineno-46-6" name="__codelineno-46-6" href="#__codelineno-46-6"></a>
+<a id="__codelineno-46-7" name="__codelineno-46-7" href="#__codelineno-46-7"></a><span class="c1"># Find single-use tags (candidates for removal)</span>
+<a id="__codelineno-46-8" name="__codelineno-46-8" href="#__codelineno-46-8"></a>btk<span class="w"> </span>tag<span class="w"> </span>stats<span class="w">  </span><span class="c1"># Look at &quot;Least Used Tags&quot;</span>
+</code></pre></div>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="../shell/">Interactive Shell</a></strong> - Learn to navigate tag hierarchies in the shell</li>
+<li><strong><a href="../commands/">Core Commands</a></strong> - Tag management commands</li>
+<li><strong><a href="../search/">Search &amp; Query</a></strong> - Search by tags</li>
+<li><strong><a href="../import-export/">Import &amp; Export</a></strong> - Export hierarchical tag structures</li>
+</ul>
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="../shell/">Shell Guide</a></strong> - Tag navigation in the shell</li>
+<li><strong><a href="../../api/cli/">CLI Reference</a></strong> - Complete tag command reference</li>
+<li><strong><a href="../../development/architecture/">Architecture</a></strong> - How tags are stored</li>
+</ul>
 
 
 
