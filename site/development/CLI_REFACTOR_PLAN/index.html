@@ -12,13 +12,9 @@
         <meta name="author" content="Alex Towell">
       
       
-        <link rel="canonical" href="https://queelius.github.io/bookmark-tk/getting-started/installation/">
+        <link rel="canonical" href="https://queelius.github.io/bookmark-tk/development/CLI_REFACTOR_PLAN/">
       
       
-        <link rel="prev" href="../..">
-      
-      
-        <link rel="next" href="../quickstart/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -26,7 +22,7 @@
     
     
       
-        <title>Installation - Bookmark Toolkit (BTK)</title>
+        <title>BTK CLI Refactoring Plan - Bookmark Toolkit (BTK)</title>
       
     
     
@@ -78,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#installation" class="md-skip">
+        <a href="#btk-cli-refactoring-plan" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Installation
+              BTK CLI Refactoring Plan
             
           </span>
         </div>
@@ -242,13 +238,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../getting-started/installation/" class="md-tabs__link">
           
   
   
@@ -328,7 +322,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../development/contributing/" class="md-tabs__link">
+        <a href="../contributing/" class="md-tabs__link">
           
   
   
@@ -411,31 +405,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   
@@ -448,7 +439,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Getting Started
@@ -459,32 +450,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Installation
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
         
   
   
@@ -495,104 +464,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      Requirements
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#install-from-pypi" class="md-nav__link">
-    <span class="md-ellipsis">
-      Install from PyPI
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#install-from-source" class="md-nav__link">
-    <span class="md-ellipsis">
-      Install from Source
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verify-installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Verify Installation
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optional-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      Optional Dependencies
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Optional Dependencies">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#for-png-graph-export" class="md-nav__link">
-    <span class="md-ellipsis">
-      For PNG Graph Export
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#for-development" class="md-nav__link">
-    <span class="md-ellipsis">
-      For Development
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      Next Steps
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -605,7 +476,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../quickstart/" class="md-nav__link">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
         
   
   
@@ -628,7 +499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
+      <a href="../../getting-started/configuration/" class="md-nav__link">
         
   
   
@@ -1158,7 +1029,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/contributing/" class="md-nav__link">
+      <a href="../contributing/" class="md-nav__link">
         
   
   
@@ -1181,7 +1052,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/architecture/" class="md-nav__link">
+      <a href="../architecture/" class="md-nav__link">
         
   
   
@@ -1204,7 +1075,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/testing/" class="md-nav__link">
+      <a href="../testing/" class="md-nav__link">
         
   
   
@@ -1227,7 +1098,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/changelog/" class="md-nav__link">
+      <a href="../changelog/" class="md-nav__link">
         
   
   
@@ -1277,64 +1148,109 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
+  <a href="#goal" class="md-nav__link">
     <span class="md-ellipsis">
-      Requirements
+      Goal
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#install-from-pypi" class="md-nav__link">
+  <a href="#new-command-structure" class="md-nav__link">
     <span class="md-ellipsis">
-      Install from PyPI
+      New Command Structure
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#install-from-source" class="md-nav__link">
+  <a href="#command-groups-detail" class="md-nav__link">
     <span class="md-ellipsis">
-      Install from Source
+      Command Groups Detail
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verify-installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Verify Installation
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optional-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      Optional Dependencies
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Optional Dependencies">
+    <nav class="md-nav" aria-label="Command Groups Detail">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#for-png-graph-export" class="md-nav__link">
+  <a href="#1-btk-bookmark-core-bookmark-crud" class="md-nav__link">
     <span class="md-ellipsis">
-      For PNG Graph Export
+      1. btk bookmark - Core bookmark CRUD
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#for-development" class="md-nav__link">
+  <a href="#2-btk-tag-tag-management" class="md-nav__link">
     <span class="md-ellipsis">
-      For Development
+      2. btk tag - Tag management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-btk-content-content-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. btk content - Content operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-btk-import-import-bookmarks" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. btk import - Import bookmarks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-btk-export-export-bookmarks" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. btk export - Export bookmarks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-btk-db-database-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. btk db - Database management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-btk-graph-graph-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. btk graph - Graph analysis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-btk-config-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. btk config - Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-btk-shell-interactive-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. btk shell - Interactive shell
     </span>
   </a>
   
@@ -1346,9 +1262,84 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
+  <a href="#implementation-strategy" class="md-nav__link">
     <span class="md-ellipsis">
-      Next Steps
+      Implementation Strategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-create-new-grouped-parsers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: Create new grouped parsers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-migrate-functionality" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: Migrate functionality
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-remove-old-structure-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: Remove old structure (optional)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-shell-parity-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      CLI-Shell Parity Matrix
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Migration Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#old-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      Old → New
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#benefits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benefits
     </span>
   </a>
   
@@ -1373,35 +1364,408 @@
   
 
 
-<h1 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h1>
-<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Python 3.8 or higher</li>
-<li>pip (Python package installer)</li>
-</ul>
-<h2 id="install-from-pypi">Install from PyPI<a class="headerlink" href="#install-from-pypi" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>bookmark-tk
+<h1 id="btk-cli-refactoring-plan">BTK CLI Refactoring Plan<a class="headerlink" href="#btk-cli-refactoring-plan" title="Permanent link">&para;</a></h1>
+<h2 id="goal">Goal<a class="headerlink" href="#goal" title="Permanent link">&para;</a></h2>
+<p>Reorganize CLI into logical command groups with clean separation and CLI-shell parity for stateless commands.</p>
+<h2 id="new-command-structure">New Command Structure<a class="headerlink" href="#new-command-structure" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>btk bookmark &lt;command&gt;  # Core CRUD operations
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>btk tag &lt;command&gt;       # Tag management
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>btk content &lt;command&gt;   # Content operations
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>btk import &lt;source&gt;     # Import from sources
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>btk export &lt;format&gt;     # Export to formats
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>btk db &lt;command&gt;        # Database management
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>btk graph &lt;command&gt;     # Graph analysis
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>btk config &lt;command&gt;    # Configuration
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>btk shell               # Interactive shell
 </code></pre></div>
-<h2 id="install-from-source">Install from Source<a class="headerlink" href="#install-from-source" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/queelius/bookmark-tk.git
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">cd</span><span class="w"> </span>bookmark-tk
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+<h2 id="command-groups-detail">Command Groups Detail<a class="headerlink" href="#command-groups-detail" title="Permanent link">&para;</a></h2>
+<h3 id="1-btk-bookmark-core-bookmark-crud">1. <code>btk bookmark</code> - Core bookmark CRUD<a class="headerlink" href="#1-btk-bookmark-core-bookmark-crud" title="Permanent link">&para;</a></h3>
+<p><strong>Stateless, has CLI-shell parity</strong></p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+<th>Shell Equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>add &lt;url&gt;</code></td>
+<td>Add bookmark</td>
+<td>N/A (shell is for browsing)</td>
+</tr>
+<tr>
+<td><code>get &lt;id&gt;</code></td>
+<td>Get bookmark by ID</td>
+<td><code>cat all</code> (when cd'd to bookmark)</td>
+</tr>
+<tr>
+<td><code>list</code></td>
+<td>List all bookmarks</td>
+<td><code>ls</code> (in /bookmarks)</td>
+</tr>
+<tr>
+<td><code>search &lt;query&gt;</code></td>
+<td>Search bookmarks</td>
+<td><code>find</code></td>
+</tr>
+<tr>
+<td><code>update &lt;id&gt;</code></td>
+<td>Update bookmark</td>
+<td><code>tag</code>, <code>star</code>, etc.</td>
+</tr>
+<tr>
+<td><code>delete &lt;id&gt;...</code></td>
+<td>Delete bookmarks</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td><code>query &lt;sql&gt;</code></td>
+<td>Advanced SQL query</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Options:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>add<span class="w"> </span>https://example.com<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Example&quot;</span><span class="w"> </span>--tags<span class="w"> </span><span class="s2">&quot;web,demo&quot;</span><span class="w"> </span>--star
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>list<span class="w"> </span>--limit<span class="w"> </span><span class="m">10</span><span class="w"> </span>--sort<span class="w"> </span>visit_count<span class="w"> </span>--starred
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;python&quot;</span><span class="w"> </span>--tags<span class="w"> </span><span class="s2">&quot;programming&quot;</span><span class="w"> </span>--limit<span class="w"> </span><span class="m">20</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>get<span class="w"> </span><span class="m">123</span><span class="w"> </span>--details
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>update<span class="w"> </span><span class="m">123</span><span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;New&quot;</span><span class="w"> </span>--add-tags<span class="w"> </span><span class="s2">&quot;important&quot;</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>delete<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">3</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>query<span class="w"> </span><span class="s2">&quot;stars = true AND visit_count &gt; 10&quot;</span>
+</code></pre></div></p>
+<h3 id="2-btk-tag-tag-management">2. <code>btk tag</code> - Tag management<a class="headerlink" href="#2-btk-tag-tag-management" title="Permanent link">&para;</a></h3>
+<p><strong>Stateless, has CLI-shell parity</strong></p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+<th>Shell Equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>list</code></td>
+<td>List all tags</td>
+<td><code>ls</code> (in /tags)</td>
+</tr>
+<tr>
+<td><code>add &lt;tag&gt; &lt;id&gt;</code></td>
+<td>Add tag to bookmark(s)</td>
+<td><code>tag &lt;id&gt; &lt;tags&gt;</code> or <code>cp &lt;tag&gt; &lt;id&gt;</code></td>
+</tr>
+<tr>
+<td><code>remove &lt;tag&gt; &lt;id&gt;</code></td>
+<td>Remove tag from bookmark(s)</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td><code>rename &lt;old&gt; &lt;new&gt;</code></td>
+<td>Rename tag globally</td>
+<td><code>mv &lt;old&gt; &lt;new&gt;</code></td>
+</tr>
+<tr>
+<td><code>copy &lt;tag&gt; &lt;target&gt;</code></td>
+<td>Copy tag to bookmark(s)</td>
+<td><code>cp &lt;tag&gt; &lt;target&gt;</code></td>
+</tr>
+<tr>
+<td><code>stats</code></td>
+<td>Tag statistics</td>
+<td><code>stat</code> (in /tags)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Options:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>btk<span class="w"> </span>tag<span class="w"> </span>list
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>btk<span class="w"> </span>tag<span class="w"> </span>add<span class="w"> </span>python<span class="w"> </span><span class="m">123</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>btk<span class="w"> </span>tag<span class="w"> </span>add<span class="w"> </span>featured<span class="w"> </span>--all<span class="w">  </span><span class="c1"># Add to all bookmarks</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>btk<span class="w"> </span>tag<span class="w"> </span>remove<span class="w"> </span>deprecated<span class="w"> </span><span class="m">456</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>btk<span class="w"> </span>tag<span class="w"> </span>rename<span class="w"> </span><span class="s2">&quot;old-name&quot;</span><span class="w"> </span><span class="s2">&quot;new-name&quot;</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>btk<span class="w"> </span>tag<span class="w"> </span>copy<span class="w"> </span>important<span class="w"> </span>--starred<span class="w">  </span><span class="c1"># Copy to all starred</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>btk<span class="w"> </span>tag<span class="w"> </span>stats
+</code></pre></div></p>
+<h3 id="3-btk-content-content-operations">3. <code>btk content</code> - Content operations<a class="headerlink" href="#3-btk-content-content-operations" title="Permanent link">&para;</a></h3>
+<p><strong>Stateless, some shell parity</strong></p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+<th>Shell Equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>refresh</code></td>
+<td>Refresh cached content</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td><code>view &lt;id&gt;</code></td>
+<td>View cached content</td>
+<td><code>cat</code> (sort of)</td>
+</tr>
+<tr>
+<td><code>auto-tag</code></td>
+<td>Auto-generate tags</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Options:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>btk<span class="w"> </span>content<span class="w"> </span>refresh<span class="w"> </span>--id<span class="w"> </span><span class="m">123</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>btk<span class="w"> </span>content<span class="w"> </span>refresh<span class="w"> </span>--all
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>btk<span class="w"> </span>content<span class="w"> </span>view<span class="w"> </span><span class="m">123</span><span class="w"> </span>--html
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>btk<span class="w"> </span>content<span class="w"> </span>auto-tag<span class="w"> </span>--id<span class="w"> </span><span class="m">123</span><span class="w"> </span>--apply
+</code></pre></div></p>
+<h3 id="4-btk-import-import-bookmarks">4. <code>btk import</code> - Import bookmarks<a class="headerlink" href="#4-btk-import-import-bookmarks" title="Permanent link">&para;</a></h3>
+<p><strong>Stateless, no shell equivalent</strong></p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>html &lt;file&gt;</code></td>
+<td>Import from HTML</td>
+</tr>
+<tr>
+<td><code>json &lt;file&gt;</code></td>
+<td>Import from JSON</td>
+</tr>
+<tr>
+<td><code>csv &lt;file&gt;</code></td>
+<td>Import from CSV</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Options:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>btk<span class="w"> </span>import<span class="w"> </span>html<span class="w"> </span>bookmarks.html
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>btk<span class="w"> </span>import<span class="w"> </span>json<span class="w"> </span>data.json
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>btk<span class="w"> </span>import<span class="w"> </span>csv<span class="w"> </span>export.csv
+</code></pre></div></p>
+<h3 id="5-btk-export-export-bookmarks">5. <code>btk export</code> - Export bookmarks<a class="headerlink" href="#5-btk-export-export-bookmarks" title="Permanent link">&para;</a></h3>
+<p><strong>Stateless, no shell equivalent</strong></p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>html &lt;file&gt;</code></td>
+<td>Export to HTML</td>
+</tr>
+<tr>
+<td><code>json &lt;file&gt;</code></td>
+<td>Export to JSON</td>
+</tr>
+<tr>
+<td><code>csv &lt;file&gt;</code></td>
+<td>Export to CSV</td>
+</tr>
+<tr>
+<td><code>markdown &lt;file&gt;</code></td>
+<td>Export to Markdown</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Options:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>html<span class="w"> </span>bookmarks.html
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>json<span class="w"> </span>data.json<span class="w"> </span>--starred
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>btk<span class="w"> </span><span class="nb">export</span><span class="w"> </span>markdown<span class="w"> </span>README.md<span class="w"> </span>--tags<span class="w"> </span><span class="s2">&quot;important&quot;</span>
+</code></pre></div></p>
+<h3 id="6-btk-db-database-management">6. <code>btk db</code> - Database management<a class="headerlink" href="#6-btk-db-database-management" title="Permanent link">&para;</a></h3>
+<p><strong>Stateless, no shell equivalent</strong></p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>info</code></td>
+<td>Database information</td>
+</tr>
+<tr>
+<td><code>schema</code></td>
+<td>Show schema</td>
+</tr>
+<tr>
+<td><code>stats</code></td>
+<td>Statistics</td>
+</tr>
+<tr>
+<td><code>vacuum</code></td>
+<td>Optimize database</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Options:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>btk<span class="w"> </span>db<span class="w"> </span>info
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>btk<span class="w"> </span>db<span class="w"> </span>schema
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>btk<span class="w"> </span>db<span class="w"> </span>stats
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>btk<span class="w"> </span>db<span class="w"> </span>vacuum
+</code></pre></div></p>
+<h3 id="7-btk-graph-graph-analysis">7. <code>btk graph</code> - Graph analysis<a class="headerlink" href="#7-btk-graph-graph-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Stateless, no shell equivalent</strong></p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>build</code></td>
+<td>Build similarity graph</td>
+</tr>
+<tr>
+<td><code>analyze</code></td>
+<td>Analyze relationships</td>
+</tr>
+<tr>
+<td><code>communities</code></td>
+<td>Detect communities</td>
+</tr>
+</tbody>
+</table>
+<h3 id="8-btk-config-configuration">8. <code>btk config</code> - Configuration<a class="headerlink" href="#8-btk-config-configuration" title="Permanent link">&para;</a></h3>
+<p><strong>Stateless, no shell equivalent</strong></p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get &lt;key&gt;</code></td>
+<td>Get config value</td>
+</tr>
+<tr>
+<td><code>set &lt;key&gt; &lt;value&gt;</code></td>
+<td>Set config value</td>
+</tr>
+<tr>
+<td><code>list</code></td>
+<td>List all config</td>
+</tr>
+</tbody>
+</table>
+<h3 id="9-btk-shell-interactive-shell">9. <code>btk shell</code> - Interactive shell<a class="headerlink" href="#9-btk-shell-interactive-shell" title="Permanent link">&para;</a></h3>
+<p><strong>Stateful, shell-only</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>btk<span class="w"> </span>shell<span class="w">  </span><span class="c1"># Launch interactive shell</span>
 </code></pre></div>
-<h2 id="verify-installation">Verify Installation<a class="headerlink" href="#verify-installation" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>btk<span class="w"> </span>--version
+<h2 id="implementation-strategy">Implementation Strategy<a class="headerlink" href="#implementation-strategy" title="Permanent link">&para;</a></h2>
+<h3 id="phase-1-create-new-grouped-parsers">Phase 1: Create new grouped parsers<a class="headerlink" href="#phase-1-create-new-grouped-parsers" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Keep existing commands working</li>
+<li>Add new grouped commands alongside</li>
+<li>Test both work in parallel</li>
+</ol>
+<h3 id="phase-2-migrate-functionality">Phase 2: Migrate functionality<a class="headerlink" href="#phase-2-migrate-functionality" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Update command functions to work with both old and new parsers</li>
+<li>Add deprecation warnings to old commands</li>
+<li>Update documentation to show new commands</li>
+</ol>
+<h3 id="phase-3-remove-old-structure-optional">Phase 3: Remove old structure (optional)<a class="headerlink" href="#phase-3-remove-old-structure-optional" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Remove old flat commands</li>
+<li>Clean up code</li>
+<li>Update all examples</li>
+</ol>
+<h2 id="cli-shell-parity-matrix">CLI-Shell Parity Matrix<a class="headerlink" href="#cli-shell-parity-matrix" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>CLI</th>
+<th>Shell</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>List bookmarks</td>
+<td><code>btk bookmark list</code></td>
+<td><code>ls</code> (in /bookmarks)</td>
+</tr>
+<tr>
+<td>Search</td>
+<td><code>btk bookmark search "term"</code></td>
+<td><code>find "term"</code></td>
+</tr>
+<tr>
+<td>Get bookmark</td>
+<td><code>btk bookmark get 123</code></td>
+<td><code>cd bookmarks/123; ls</code></td>
+</tr>
+<tr>
+<td>Add tag</td>
+<td><code>btk tag add python 123</code></td>
+<td><code>tag 123 python</code> or <code>cp python 123</code></td>
+</tr>
+<tr>
+<td>Rename tag</td>
+<td><code>btk tag rename old new</code></td>
+<td><code>mv old new</code></td>
+</tr>
+<tr>
+<td>Copy tag</td>
+<td><code>btk tag copy tag 123</code></td>
+<td><code>cp tag 123</code></td>
+</tr>
+<tr>
+<td>Star bookmark</td>
+<td><code>btk bookmark update 123 --star</code></td>
+<td><code>star 123</code> or <code>star</code> (in context)</td>
+</tr>
+<tr>
+<td>Recent activity</td>
+<td><code>btk bookmark list --sort visited --limit 10</code></td>
+<td><code>recent</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="migration-examples">Migration Examples<a class="headerlink" href="#migration-examples" title="Permanent link">&para;</a></h2>
+<h3 id="old-new">Old → New<a class="headerlink" href="#old-new" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Old</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>btk<span class="w"> </span>add<span class="w"> </span>https://example.com<span class="w"> </span>--tags<span class="w"> </span><span class="s2">&quot;web&quot;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>btk<span class="w"> </span>list<span class="w"> </span>--limit<span class="w"> </span><span class="m">10</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>btk<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;python&quot;</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>btk<span class="w"> </span>update<span class="w"> </span><span class="m">123</span><span class="w"> </span>--tags<span class="w"> </span><span class="s2">&quot;python,web&quot;</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>btk<span class="w"> </span>tags
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1"># New</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>add<span class="w"> </span>https://example.com<span class="w"> </span>--tags<span class="w"> </span><span class="s2">&quot;web&quot;</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>list<span class="w"> </span>--limit<span class="w"> </span><span class="m">10</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;python&quot;</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>btk<span class="w"> </span>bookmark<span class="w"> </span>update<span class="w"> </span><span class="m">123</span><span class="w"> </span>--tags<span class="w"> </span><span class="s2">&quot;python,web&quot;</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>btk<span class="w"> </span>tag<span class="w"> </span>list
 </code></pre></div>
-<h2 id="optional-dependencies">Optional Dependencies<a class="headerlink" href="#optional-dependencies" title="Permanent link">&para;</a></h2>
-<h3 id="for-png-graph-export">For PNG Graph Export<a class="headerlink" href="#for-png-graph-export" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pip<span class="w"> </span>install<span class="w"> </span>cairosvg
-</code></pre></div>
-<h3 id="for-development">For Development<a class="headerlink" href="#for-development" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
-</code></pre></div>
-<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="../quickstart/">Quick Start</a> - Learn the basics</li>
-<li><a href="../configuration/">Configuration</a> - Set up your preferences</li>
-</ul>
+<h2 id="benefits">Benefits<a class="headerlink" href="#benefits" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Logical Grouping</strong> - Related commands together</li>
+<li><strong>Discoverability</strong> - <code>btk tag --help</code> shows all tag operations</li>
+<li><strong>Scalability</strong> - Easy to add new commands</li>
+<li><strong>CLI-Shell Parity</strong> - Clear mapping for stateless operations</li>
+<li><strong>Clean Separation</strong> - Stateful (shell) vs stateless (CLI) commands</li>
+<li><strong>Consistency</strong> - Similar operations have similar syntax across groups</li>
+</ol>
 
 
 

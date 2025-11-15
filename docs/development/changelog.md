@@ -5,6 +5,58 @@ All notable changes to BTK (Bookmark Toolkit) are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2025-11-15
+
+### Added - Test Coverage
+
+**Comprehensive Test Suite for v0.7.1 Features**
+
+This release significantly improves test coverage for the smart collections and time-based recent navigation features introduced in v0.7.1.
+
+#### Test Suite Improvements
+
+- **82 new tests** added for v0.7.1 features (26 smart collections + 56 time-based navigation)
+- **597 total tests** now passing (up from 515)
+- **Overall coverage increased to 63.43%** (up from 60.87%)
+- **Shell module coverage increased to 61.44%** (up from 50%)
+
+#### Smart Collections Tests (`test_shell_smart_collections.py`)
+
+- 26 comprehensive tests covering all 5 smart collections
+- Test coverage for: `/unread`, `/popular`, `/broken`, `/untagged`, `/pdfs`
+- Validates filter functions, context detection, navigation, and dynamic updates
+- Tests edge cases: empty collections, full collections, collection updates
+
+#### Time-Based Recent Navigation Tests (`test_shell_time_based_recent.py`)
+
+- 56 comprehensive tests covering hierarchical time-based navigation
+- Tests all 6 time periods: today, yesterday, this-week, last-week, this-month, last-month
+- Tests all 3 activity types: visited, added, starred
+- Tests all 18 subdirectory combinations (6 periods × 3 activities)
+- Validates time range calculations and timezone handling
+- Tests backward compatibility with `/recent/{id}` pattern
+
+#### Test Quality
+
+Following TDD best practices:
+- Behavior-focused tests (test what, not how)
+- Clear Given-When-Then structure
+- Descriptive test names
+- Proper test isolation and independence
+- Comprehensive edge case coverage
+- Fast execution (~30 seconds for full suite)
+
+### Fixed
+
+- Timezone handling in time-based navigation tests
+- Context detection test patterns to match shell implementation
+- Test data setup for activity filtering tests
+
+### Documentation
+
+- Created `TEST_SUITE_SUCCESS.md` documenting test suite status and quality metrics
+- Updated test coverage reports and recommendations
+
 ## [0.7.1] - 2025-10-20
 
 ### Added - Smart Collections
