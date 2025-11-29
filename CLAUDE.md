@@ -4,168 +4,198 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Bookmark Toolkit (btk) is a Python command-line tool for managing and analyzing bookmarks. It provides features for importing, searching, editing, and exporting bookmarks, as well as querying them using JMESPath and LLM integration.
+Bookmark Toolkit (btk) is a Python command-line tool for managing and analyzing bookmarks using a SQLite database. It provides:
 
-## Key Commands
+- Multi-format import/export (HTML, JSON, CSV, Markdown)
+- Interactive shell with virtual filesystem navigation
+- Hierarchical tag system
+- Content caching with full-text search
+- Auto-tagging via NLP/TF-IDF
+- Plugin system for extensibility
 
-### Build and Development
+**Current Version:** 0.7.2
+**Package Name:** bookmark-tk (PyPI)
+**Python:** >=3.8
+
+## Build and Development Commands
 
 ```bash
-# Use the Makefile for common tasks
+# Use the Makefile for all development tasks
 make help           # Show all available commands
-make venv          # Create virtual environment
-make install-dev    # Install with development dependencies (creates venv automatically)
-make test          # Run tests
-make test-coverage # Run tests with coverage report
-make lint          # Run linting
-make format        # Format code with black
-make check         # Run all quality checks
+make venv           # Create virtual environment at .venv/
+make install-dev    # Install with dev dependencies (auto-creates venv)
+make test           # Run all tests
+make test-coverage  # Run tests with coverage report
+make lint           # Run flake8 linting
+make format         # Format code with black
+make typecheck      # Run mypy type checking
+make check          # Run all quality checks (lint + format-check + typecheck)
+make build          # Build distribution packages
+make clean          # Clean build artifacts
 
-# Note: The Makefile automatically manages a virtual environment at .venv/
-# All commands will create and use the virtual environment as needed
+# Useful shortcuts
+make quick-test     # Fast test run (-x --tb=short)
+make ci             # Full CI pipeline (install-dev, check, test-coverage)
+make test-file FILE=tests/test_shell.py    # Run specific test file
+make test-match MATCH=test_import          # Run tests matching pattern
 ```
 
-### Testing and Linting
+## Testing
 
 ```bash
-# Run tests
+# Run all tests (597 tests as of v0.7.2)
 pytest
 
-# Run tests with coverage
+# Run with coverage
 pytest --cov=btk --cov-report=term-missing
 
-# Run linting
-flake8 btk tests
+# Test specific modules
+pytest tests/test_shell.py -v
+pytest tests/test_db.py -v
 
-# Format code
-black btk tests
-
-# Type checking
-mypy btk
-
-# Install pre-commit hooks
-pre-commit install
-
-# Run all pre-commit hooks on all files
-pre-commit run --all-files
+# Test coverage highlights:
+# - graph.py: 97%
+# - models.py: 97%
+# - tag_utils.py: 96%
+# - shell.py: 61%
+# - Overall: 63%
 ```
-
-## Common BTK Commands
-
-### Import Commands
-
-- `btk import nbf <file>` - Import from Netscape Bookmark Format (HTML)
-- `btk import html <file>` - Import from generic HTML (extracts all links)
-- `btk import json <file>` - Import from JSON file
-- `btk import csv <file>` - Import from CSV file  
-- `btk import markdown <file>` - Extract and import links from Markdown files
-- `btk import dir <directory>` - Recursively scan and import all supported files from a directory
-
-### Export Commands
-
-- `btk export <lib_dir> html` - Export to Netscape HTML format (browser-compatible)
-- `btk export <lib_dir> json` - Export to JSON format
-- `btk export <lib_dir> csv` - Export to CSV format
-- `btk export <lib_dir> markdown` - Export to Markdown format (organized by tags)
-- `btk export <lib_dir> zip` - Export as ZIP archive
-- `btk export <lib_dir> hierarchical` - Export bookmarks organized by tag hierarchy
-  - `--hierarchical-format` - Output format: markdown, json, or html (default: markdown)
-  - `--tag-separator` - Tag separator character (default: /)
-
-### Bookmark Management
-
-- `btk add <lib_dir> <url>` - Add a new bookmark
-- `btk remove <lib_dir> <id>` - Remove bookmark by ID
-- `btk edit <lib_dir> <id>` - Edit bookmark details
-- `btk list <lib_dir>` - List all bookmarks
-- `btk search <lib_dir> <query>` - Search bookmarks
-- `btk jmespath <lib_dir> <query>` - Query using JMESPath
-- `btk dedupe <lib_dir>` - Find and remove duplicate bookmarks
-  - `--strategy` - Deduplication strategy: merge, keep_first, keep_last, keep_most_visited
-  - `--preview` - Preview changes without applying
-  - `--stats` - Show duplicate statistics only
-
-### Tag Management
-
-- `btk tag tree <lib_dir>` - Display tags in hierarchical tree structure
-- `btk tag stats <lib_dir>` - Show tag usage statistics
-- `btk tag rename <lib_dir> <old_tag> <new_tag>` - Rename a tag and all its children
-- `btk tag merge <lib_dir> <tag1> <tag2>... --into <target>` - Merge multiple tags into one
-- `btk tag filter <lib_dir> <prefix>` - Filter bookmarks by tag prefix (e.g., "programming/")
-
-### Bulk Operations
-
-- `btk bulk add <lib_dir> --from-file <urls.txt>` - Add multiple bookmarks from a file
-  - `--tags` - Comma-separated tags to apply to all bookmarks
-  - `--no-fetch-titles` - Don't fetch titles from URLs
-- `btk bulk edit <lib_dir>` - Edit multiple bookmarks matching criteria
-  - `--filter-tags <prefix>` - Filter by tag prefix
-  - `--filter-url <pattern>` - Filter by URL pattern
-  - `--filter-starred/--filter-unstarred` - Filter by starred status
-  - `--add-tags` - Tags to add
-  - `--remove-tags` - Tags to remove
-  - `--set-stars true/false` - Set starred status
-  - `--set-description` - Set description
-  - `--preview` - Preview changes without applying
-- `btk bulk remove <lib_dir>` - Remove multiple bookmarks matching criteria
-  - `--filter-tags`, `--filter-url` - Same as bulk edit
-  - `--filter-visits-min/max` - Filter by visit count range
-  - `--filter-no-description` - Filter bookmarks without description
-  - `--preview` - Preview removals without applying
-  - `--output-removed` - Save removed bookmarks to directory
-
-### Other Commands
-
-- `btk merge union|intersection|difference <lib1> <lib2>...` - Merge bookmark libraries
-- `btk visit <lib_dir> <id>` - Visit bookmark in browser
-- `btk reachable <lib_dir>` - Check which bookmarks are reachable
-- `btk purge <lib_dir> --unreachable` - Remove unreachable bookmarks
 
 ## Code Architecture
 
-The project is organized as a Python package with the following structure:
+```
+btk/
+├── __init__.py          # Version: __version__ = "0.7.2"
+├── cli.py               # Grouped argparse CLI (btk <group> <command>)
+├── shell.py             # Interactive shell with VFS interface
+├── db.py                # SQLAlchemy database operations
+├── models.py            # ORM models (Bookmark, Tag, ContentCache, etc.)
+├── importers.py         # Import from HTML, JSON, CSV, Markdown, text
+├── exporters.py         # Export to various formats
+├── graph.py             # Bookmark relationship graphs
+├── tag_utils.py         # Hierarchical tag operations
+├── content_fetcher.py   # Web content fetching
+├── content_cache.py     # Content cache management (zlib compression)
+├── content_extractor.py # HTML/Markdown/PDF extraction
+├── auto_tag.py          # NLP-based auto-tagging
+├── dedup.py             # Deduplication strategies
+├── plugins.py           # Plugin system architecture
+├── archiver.py          # Web archive integration
+├── browser_import.py    # Chrome/Firefox bookmark import
+├── config.py            # Configuration management
+├── utils.py             # Utility functions
+├── constants.py         # Application constants
+└── progress.py          # Progress bar utilities
+```
 
-- **btk/cli.py**: Main entry point containing the argparse-based CLI interface. Implements all btk commands.
+### Key Components
 
-- **btk/utils.py**: Core utility functions for bookmark management including:
-  - Loading/saving bookmark libraries
-  - Managing favicons
-  - URL validation and normalization
-  - Bookmark data structure handling
+- **shell.py**: Virtual filesystem interface with POSIX-like commands (cd, ls, pwd, cat). Supports:
+  - Smart collections: `/unread`, `/popular`, `/broken`, `/untagged`, `/pdfs`
+  - Time-based navigation: `/recent/{today,week,month,year}/{added,visited,starred}`
+  - Tag hierarchy browsing: `/tags/programming/python`
 
-- **btk/tools.py**: Implementation of bookmark operations including:
-  - Import/export functions for all formats
-  - Search and filtering
-  - Bookmark manipulation (add, remove, edit)
-  - Reachability checking
+- **db.py**: Database layer using SQLAlchemy ORM with SQLite backend
 
-- **btk/merge.py**: Set operations for merging bookmark libraries (union, intersection, difference)
+- **models.py**: Data models including Bookmark, Tag, ContentCache, BookmarkHealth, Collection
 
-### Data Structure
+- **cli.py**: Grouped command structure: `btk bookmark add`, `btk tag list`, `btk import html`, etc.
 
-Bookmarks are stored in JSON format in a library directory with:
+## Database Schema (SQLite)
 
-- `bookmarks.json`: Main bookmark data file
-- `favicons/`: Directory containing downloaded favicon images
+```
+bookmarks: id, unique_id, url, title, description, added, stars, visit_count, last_visited, reachable
+tags: id, name, description, color
+bookmark_tags: bookmark_id, tag_id (many-to-many)
+content_cache: id, bookmark_id, html_content, markdown_content, content_hash, fetched_at, status_code
+```
 
-Each bookmark entry contains fields like: id, unique_id, title, url, added, stars, tags, visit_count, description, favicon, last_visited, reachable.
+## Common CLI Commands
 
-## Project Structure
+```bash
+# Start interactive shell (recommended)
+btk shell
 
-- `btk/` - Main package directory
-  - `cli.py` - Command-line interface
-  - `tools.py` - Core bookmark operations
-  - `utils.py` - Utility functions
-  - `merge.py` - Bookmark library merging operations
-  - `viz.py` - Visualization tools (to be moved to integrations)
-- `tests/` - Test suite with unit and integration tests
-- `integrations/` - External integrations
-  - `mcp-btk/` - Model Context Protocol server for AI integration
-  - `viz-btk/` - Visualization tools (future)
+# Bookmark operations
+btk bookmark add https://example.com --title "Example" --tags web,tutorial
+btk bookmark list
+btk bookmark search "python"
+btk bookmark get 42 --details
+
+# Tag management
+btk tag list
+btk tag tree                    # Hierarchical view
+btk tag add python 42 43
+
+# Import/Export
+btk import html bookmarks.html
+btk export output.html html --hierarchical
+
+# Database operations
+btk db info
+btk db vacuum
+btk db dedupe --strategy merge --preview
+```
+
+## Shell Virtual Filesystem
+
+```
+/                      # Root - shows top-level directories
+├── bookmarks/         # All bookmarks by ID
+│   └── <id>/          # Individual bookmark (cat for details)
+├── tags/              # Hierarchical tag navigation
+│   └── programming/
+│       └── python/    # Bookmarks with this tag
+├── starred/           # Starred bookmarks
+├── archived/          # Archived bookmarks
+├── domains/           # Bookmarks by domain
+├── recent/            # Time-based navigation
+│   ├── today/         # added/, visited/, starred/
+│   ├── week/
+│   ├── month/
+│   └── year/
+├── unread/            # Smart: never visited
+├── popular/           # Smart: visit_count > 5
+├── broken/            # Smart: unreachable URLs
+├── untagged/          # Smart: no tags
+└── pdfs/              # Smart: PDF URLs
+```
 
 ## Important Notes
 
-- The tool uses JMESPath for structured querying of bookmarks. Numbers in JMESPath queries must be wrapped in backticks (e.g., `[?visit_count > \`5\`]`)
-- Bookmark libraries are directories containing bookmarks.json and associated assets
-- The project follows a modular architecture with integrations kept separate from the core tool
-- Test coverage: Core modules (tools.py, utils.py) have 60-70% coverage, CLI has integration tests
+- **Database-first**: Uses SQLite via SQLAlchemy, not JSON files
+- **Virtual environment**: Makefile auto-manages `.venv/` directory
+- **JMESPath**: Numbers must be backtick-wrapped: `[?visit_count > \`5\`]`
+- **Hierarchical tags**: Use `/` separator (e.g., `programming/python/web`)
+- **Testing**: Always run `make test` after changes; aim for high coverage
+
+## Release Process
+
+```bash
+# 1. Bump version in: pyproject.toml, btk/__init__.py, btk/shell.py
+# 2. Update docs/development/changelog.md
+# 3. Run tests
+make test-coverage
+
+# 4. Git commit and tag
+git add -A && git commit -m "Release vX.Y.Z: ..."
+git tag vX.Y.Z
+git push origin master --tags
+
+# 5. Build and publish to PyPI
+make build
+twine upload dist/*
+
+# 6. Deploy docs (if using mkdocs)
+mkdocs gh-deploy
+```
+
+## Project Structure
+
+```
+btk/                    # Main package
+tests/                  # Test suite (20 test files, 597 tests)
+integrations/
+└── mcp-btk/            # Model Context Protocol server (Node.js)
+docs/                   # MkDocs documentation
+```

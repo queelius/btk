@@ -497,7 +497,7 @@ def cmd_auto_tag(args):
     import os
 
     # Import the NLP tagger
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'integrations', 'auto_tag_nlp'))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'plugins', 'auto_tag_nlp'))
     from nlp_tagger import NLPTagSuggester
 
     tagger = NLPTagSuggester()
@@ -1245,6 +1245,142 @@ def cmd_config(args):
         console.print(f"[green]Created config at {config_path}[/green]")
 
 
+def cmd_browser(args):
+    """Browser bookmark operations."""
+    from btk.browser_import import (
+        list_browser_profiles,
+        import_from_browser,
+        auto_import_all_browsers,
+        find_browser_profiles
+    )
+
+    if args.browser_command == "list":
+        # List all detected browser profiles
+        profiles = list_browser_profiles()
+
+        if not profiles:
+            console.print("[yellow]No browser profiles detected[/yellow]")
+            return
+
+        if args.output == "json":
+            print(json.dumps(profiles, indent=2))
+        else:
+            from rich.table import Table
+            table = Table(title="Detected Browser Profiles")
+            table.add_column("Browser", style="cyan")
+            table.add_column("Profile", style="white")
+            table.add_column("Path", style="dim")
+            table.add_column("Default", style="green")
+
+            for profile in profiles:
+                table.add_row(
+                    profile["browser"],
+                    profile["profile_name"],
+                    str(profile["path"]),
+                    "✓" if profile.get("is_default") else ""
+                )
+
+            console.print(table)
+            console.print(f"\n[dim]Total: {len(profiles)} profiles[/dim]")
+
+    elif args.browser_command == "import":
+        db = get_db(args.db)
+        browser = args.browser
+        include_history = args.history
+        history_limit = args.history_limit
+        update_existing = args.update
+
+        # Import bookmarks
+        if browser == "all":
+            console.print("[cyan]Importing from all detected browsers...[/cyan]")
+            all_bookmarks = auto_import_all_browsers(
+                include_history=include_history,
+                history_limit=history_limit
+            )
+            bookmarks = []
+            for browser_name, browser_bookmarks in all_bookmarks.items():
+                if browser_bookmarks:
+                    console.print(f"  Found {len(browser_bookmarks)} bookmarks in {browser_name}")
+                    bookmarks.extend(browser_bookmarks)
+        else:
+            console.print(f"[cyan]Importing from {browser}...[/cyan]")
+            bookmarks = import_from_browser(
+                browser=browser,
+                profile_path=args.profile,
+                include_history=include_history,
+                history_limit=history_limit
+            )
+
+        if not bookmarks:
+            console.print("[yellow]No bookmarks found[/yellow]")
+            return
+
+        # Import into database with merge logic
+        added = 0
+        updated = 0
+        skipped = 0
+
+        for bm in bookmarks:
+            url = bm.get("url")
+            if not url:
+                continue
+
+            # Check if bookmark already exists
+            existing = db.search(url=url)
+
+            if existing:
+                if update_existing:
+                    # Update existing bookmark
+                    updates = {}
+                    if bm.get("title") and bm["title"] != existing[0].title:
+                        updates["title"] = bm["title"]
+                    if bm.get("tags"):
+                        # Merge tags
+                        existing_tags = [t.name for t in existing[0].tags]
+                        new_tags = bm.get("tags", [])
+                        merged_tags = list(set(existing_tags + new_tags))
+                        if merged_tags != existing_tags:
+                            updates["tags"] = merged_tags
+
+                    if updates:
+                        db.update(existing[0].id, **updates)
+                        updated += 1
+                    else:
+                        skipped += 1
+                else:
+                    skipped += 1
+            else:
+                # Add new bookmark
+                tags = bm.get("tags", [])
+                # Add browser source tag
+                if browser != "all":
+                    tags.append(f"imported/{browser}")
+
+                # Convert ISO date string to datetime if needed
+                added_date = bm.get("added")
+                if added_date and isinstance(added_date, str):
+                    from datetime import datetime
+                    try:
+                        added_date = datetime.fromisoformat(added_date.replace('Z', '+00:00'))
+                    except ValueError:
+                        added_date = None
+
+                db.add(
+                    url=url,
+                    title=bm.get("title", url),
+                    tags=tags,
+                    added=added_date
+                )
+                added += 1
+
+        # Summary
+        console.print(f"\n[green]Import complete![/green]")
+        console.print(f"  Added: {added}")
+        if update_existing:
+            console.print(f"  Updated: {updated}")
+        console.print(f"  Skipped (duplicates): {skipped}")
+
+
 def cmd_shell(args):
     """Launch interactive bookmark shell."""
     from btk.shell import BookmarkShell
@@ -1260,6 +1396,125 @@ def cmd_shell(args):
         console.print(f"[red]Error: {e}[/red]")
         import traceback
         traceback.print_exc()
+
+
+def cmd_serve(args):
+    """Start the BTK REST API server."""
+    from btk.serve import run_server
+
+    db_path = args.db if hasattr(args, 'db') else 'btk.db'
+    port = args.port if hasattr(args, 'port') else 8000
+    host = args.host if hasattr(args, 'host') else '127.0.0.1'
+
+    run_server(db_path=db_path, port=port, host=host)
+
+
+def cmd_plugin(args):
+    """Plugin management operations."""
+    from btk.plugins import create_default_registry, PluginRegistry
+
+    registry = create_default_registry()
+
+    if args.plugin_command == "list":
+        # List all registered plugins
+        info = registry.get_plugin_info()
+
+        if args.output == "json":
+            print(json.dumps(info, indent=2))
+        else:
+            from rich.table import Table
+            from rich.panel import Panel
+
+            # Show plugin types and their plugins
+            has_plugins = False
+            for plugin_type, plugins in info.items():
+                if plugins:
+                    has_plugins = True
+                    table = Table(title=f"Plugin Type: {plugin_type}")
+                    table.add_column("Name", style="cyan")
+                    table.add_column("Version", style="green")
+                    table.add_column("Priority", style="yellow")
+                    table.add_column("Enabled", style="magenta")
+                    table.add_column("Description", style="white")
+
+                    for plugin in plugins:
+                        table.add_row(
+                            plugin["name"],
+                            plugin["version"],
+                            str(plugin["priority"]),
+                            "✓" if plugin["enabled"] else "✗",
+                            plugin["description"][:50] if plugin["description"] else ""
+                        )
+
+                    console.print(table)
+                    console.print()
+
+            if not has_plugins:
+                console.print("[yellow]No plugins registered[/yellow]")
+                console.print("\n[dim]Plugins can be loaded from the plugins/ directory.[/dim]")
+                console.print("[dim]Create a plugin module with a register_plugins(registry) function.[/dim]")
+
+            # Show available plugin types
+            console.print("\n[cyan]Available plugin types:[/cyan]")
+            for ptype in registry.PLUGIN_INTERFACES.keys():
+                console.print(f"  • {ptype}")
+
+    elif args.plugin_command == "info":
+        # Show info about a specific plugin
+        plugin_name = args.name
+
+        # Search across all plugin types
+        found = False
+        info = registry.get_plugin_info()
+
+        for plugin_type, plugins in info.items():
+            for plugin in plugins:
+                if plugin["name"] == plugin_name:
+                    found = True
+
+                    if args.output == "json":
+                        print(json.dumps({
+                            "type": plugin_type,
+                            **plugin
+                        }, indent=2))
+                    else:
+                        from rich.panel import Panel
+                        from rich.table import Table as RichTable
+
+                        details = RichTable(show_header=False, box=None)
+                        details.add_column("Field", style="cyan bold")
+                        details.add_column("Value", style="white")
+
+                        details.add_row("Name", plugin["name"])
+                        details.add_row("Type", plugin_type)
+                        details.add_row("Version", plugin["version"])
+                        details.add_row("Author", plugin["author"] or "(not specified)")
+                        details.add_row("Description", plugin["description"] or "(not specified)")
+                        details.add_row("Priority", str(plugin["priority"]))
+                        details.add_row("Enabled", "Yes" if plugin["enabled"] else "No")
+
+                        if plugin["dependencies"]:
+                            details.add_row("Dependencies", ", ".join(plugin["dependencies"]))
+
+                        panel = Panel(details, title=f"Plugin: {plugin_name}", border_style="blue")
+                        console.print(panel)
+                    break
+
+            if found:
+                break
+
+        if not found:
+            console.print(f"[red]Plugin not found: {plugin_name}[/red]")
+            console.print("\n[dim]Use 'btk plugin list' to see available plugins.[/dim]")
+
+    elif args.plugin_command == "types":
+        # List available plugin types
+        if args.output == "json":
+            print(json.dumps(list(registry.PLUGIN_INTERFACES.keys()), indent=2))
+        else:
+            console.print("[cyan]Available plugin types:[/cyan]")
+            for ptype, interface in registry.PLUGIN_INTERFACES.items():
+                console.print(f"  • [green]{ptype}[/green]: {interface.__doc__ or 'No description'}")
 
 
 def main():
@@ -1556,6 +1811,32 @@ Configuration:
     graph_parser.set_defaults(func=cmd_graph)
 
     # =================
+    # BROWSER GROUP
+    # =================
+    browser_parser = subparsers.add_parser("browser", help="Browser bookmark operations")
+    browser_subparsers = browser_parser.add_subparsers(dest="browser_command", required=True)
+
+    # browser list
+    browser_list = browser_subparsers.add_parser("list", help="List detected browser profiles")
+    browser_list.set_defaults(func=cmd_browser)
+
+    # browser import
+    browser_import = browser_subparsers.add_parser("import", help="Import bookmarks from browser")
+    browser_import.add_argument("browser",
+                                choices=["chrome", "firefox", "safari", "edge", "brave", "chromium", "all"],
+                                help="Browser to import from (or 'all')")
+    browser_import.add_argument("--profile", "-p", help="Specific profile path to import from")
+    browser_import.add_argument("--history", "-H", action="store_true",
+                                help="Also import browsing history as bookmarks")
+    browser_import.add_argument("--history-limit", type=int, default=1000,
+                                help="Maximum history entries to import (default: 1000)")
+    browser_import.add_argument("--update", "-u", action="store_true",
+                                help="Update existing bookmarks if browser version differs")
+    browser_import.set_defaults(func=cmd_browser)
+
+    browser_parser.set_defaults(func=cmd_browser)
+
+    # =================
     # CONFIG GROUP
     # =================
     config_parser = subparsers.add_parser("config", help="Manage configuration")
@@ -1570,6 +1851,37 @@ Configuration:
     # =================
     shell_parser = subparsers.add_parser("shell", help="Interactive bookmark shell")
     shell_parser.set_defaults(func=cmd_shell)
+
+    # =================
+    # SERVE COMMAND
+    # =================
+    serve_parser = subparsers.add_parser("serve", help="Start REST API server with web UI")
+    serve_parser.add_argument("--port", "-p", type=int, default=8000,
+                              help="Port to listen on (default: 8000)")
+    serve_parser.add_argument("--host", "-H", default="127.0.0.1",
+                              help="Host to bind to (default: 127.0.0.1)")
+    serve_parser.set_defaults(func=cmd_serve)
+
+    # =================
+    # PLUGIN GROUP
+    # =================
+    plugin_parser = subparsers.add_parser("plugin", help="Plugin management")
+    plugin_subparsers = plugin_parser.add_subparsers(dest="plugin_command", required=True)
+
+    # plugin list
+    plugin_list = plugin_subparsers.add_parser("list", help="List registered plugins")
+    plugin_list.set_defaults(func=cmd_plugin)
+
+    # plugin info
+    plugin_info = plugin_subparsers.add_parser("info", help="Show info about a plugin")
+    plugin_info.add_argument("name", help="Plugin name")
+    plugin_info.set_defaults(func=cmd_plugin)
+
+    # plugin types
+    plugin_types = plugin_subparsers.add_parser("types", help="List available plugin types")
+    plugin_types.set_defaults(func=cmd_plugin)
+
+    plugin_parser.set_defaults(func=cmd_plugin)
 
     # Parse arguments
     args = parser.parse_args()

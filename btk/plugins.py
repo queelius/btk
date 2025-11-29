@@ -433,42 +433,42 @@ def create_default_registry() -> PluginRegistry:
     """
     registry = PluginRegistry(validate_strict=False)
     
-    # Load built-in plugins from integrations if available
+    # Load built-in plugins if available
     try:
-        from integrations import load_builtin_plugins
+        from plugins import load_builtin_plugins
         load_builtin_plugins(registry)
     except ImportError:
-        logger.debug("No built-in integrations found")
+        logger.debug("No built-in plugins found")
     
     return registry
 
 
 # ============================================================================
-# Plugin Loading from Integrations
+# Plugin Loading
 # ============================================================================
 
-def load_integration_plugins(registry: PluginRegistry, integration_names: List[str]) -> None:
+def load_plugins(registry: PluginRegistry, plugin_names: List[str]) -> None:
     """
-    Load plugins from specified integrations.
-    
+    Load plugins by name.
+
     Args:
         registry: The plugin registry to register to
-        integration_names: List of integration names (e.g., ['cache', 'archive'])
+        plugin_names: List of plugin names (e.g., ['auto_tag_nlp', 'link_checker'])
     """
-    for name in integration_names:
+    for name in plugin_names:
         try:
-            # Try to import the integration module
+            # Try to import the plugin module
             import importlib
-            module = importlib.import_module(f'integrations.{name}')
-            
+            module = importlib.import_module(f'plugins.{name}')
+
             # Look for a register_plugins function
             if hasattr(module, 'register_plugins'):
                 module.register_plugins(registry)
-                logger.info(f"Loaded plugins from integration: {name}")
+                logger.info(f"Loaded plugin: {name}")
             else:
-                logger.warning(f"Integration {name} has no register_plugins function")
+                logger.warning(f"Plugin {name} has no register_plugins function")
                 
         except ImportError as e:
-            logger.debug(f"Integration {name} not available: {e}")
+            logger.debug(f"Plugin {name} not available: {e}")
         except Exception as e:
-            logger.error(f"Failed to load integration {name}: {e}")
+            logger.error(f"Failed to load plugin {name}: {e}")

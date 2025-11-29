@@ -251,3 +251,76 @@ def export_text(bookmarks: List[Bookmark], path: Path) -> None:
     with open(path, "w", encoding="utf-8") as f:
         for b in bookmarks:
             f.write(f"{b.url}\n")
+
+
+def export_to_string(bookmarks: List[Bookmark], format: str) -> str:
+    """
+    Export bookmarks to a string in the specified format.
+
+    Args:
+        bookmarks: List of bookmarks to export
+        format: Export format (json, html, csv, markdown)
+
+    Returns:
+        Exported content as string
+    """
+    import io
+    from pathlib import Path
+
+    if format == 'json':
+        # JSON export to string
+        result = []
+        for b in bookmarks:
+            result.append({
+                "url": b.url,
+                "title": b.title,
+                "description": b.description,
+                "added": b.added.isoformat() if b.added else None,
+                "tags": [t.name for t in b.tags],
+                "stars": b.stars,
+                "visit_count": b.visit_count
+            })
+        import json
+        return json.dumps(result, indent=2, default=str)
+
+    elif format == 'csv':
+        output = io.StringIO()
+        output.write("url,title,description,tags,added,stars\n")
+        for b in bookmarks:
+            tags = ";".join(t.name for t in b.tags)
+            title = (b.title or "").replace('"', '""')
+            desc = (b.description or "").replace('"', '""')
+            added = b.added.isoformat() if b.added else ""
+            output.write(f'"{b.url}","{title}","{desc}","{tags}","{added}",{b.stars}\n')
+        return output.getvalue()
+
+    elif format == 'html':
+        lines = [
+            '<!DOCTYPE NETSCAPE-Bookmark-file-1>',
+            '<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">',
+            '<TITLE>Bookmarks</TITLE>',
+            '<H1>Bookmarks</H1>',
+            '<DL><p>'
+        ]
+        for b in bookmarks:
+            title = b.title or b.url
+            added_ts = int(b.added.timestamp()) if b.added else ""
+            lines.append(f'    <DT><A HREF="{b.url}" ADD_DATE="{added_ts}">{title}</A>')
+            if b.description:
+                lines.append(f'    <DD>{b.description}')
+        lines.append('</DL><p>')
+        return '\n'.join(lines)
+
+    elif format == 'markdown':
+        lines = ['# Bookmarks', '']
+        for b in bookmarks:
+            title = b.title or b.url
+            star = ' :star:' if b.stars else ''
+            lines.append(f'- [{title}]({b.url}){star}')
+            if b.description:
+                lines.append(f'  > {b.description}')
+        return '\n'.join(lines)
+
+    else:
+        # Plain text - just URLs
+        return '\n'.join(b.url for b in bookmarks)

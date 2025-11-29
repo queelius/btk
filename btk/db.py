@@ -472,6 +472,9 @@ class Database:
             if 'untagged' in filters and filters['untagged']:
                 # Filter to bookmarks with no tags
                 query_filters.append(~Bookmark.tags.any())
+            if 'url' in filters:
+                # Exact URL match
+                query_filters.append(Bookmark.url == filters['url'])
 
             # Build query
             query_obj = select(Bookmark).options(selectinload(Bookmark.tags))

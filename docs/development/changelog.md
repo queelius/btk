@@ -5,6 +5,74 @@ All notable changes to BTK (Bookmark Toolkit) are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3] - 2025-11-29
+
+### Added - New CLI Commands
+
+**Browser Import, Plugin Management, and REST API Server**
+
+This release adds three new command groups for browser integration, plugin management, and web-based access.
+
+#### Browser Commands (`btk browser`)
+
+- **`btk browser list`** - Detect and list browser profiles
+  - Supports Chrome, Firefox, Safari, Edge, Brave, Chromium
+  - Shows profile names, paths, and default status
+  - JSON output with `--output json`
+
+- **`btk browser import <browser>`** - Import bookmarks from browsers
+  - Import from specific browser or `all` for all detected browsers
+  - `--profile` to specify profile path
+  - `--history` to include browsing history
+  - `--update` to update existing bookmarks on re-import
+  - Automatic duplicate detection by URL
+  - Tags imported bookmarks with `imported/<browser>`
+
+#### Plugin Commands (`btk plugin`)
+
+- **`btk plugin list`** - List all registered plugins
+  - Groups plugins by type (tag_suggester, content_extractor, etc.)
+  - Shows name, version, priority, enabled status, description
+  - JSON output with `--output json`
+
+- **`btk plugin info <name>`** - Show detailed plugin information
+  - Displays full metadata including author and dependencies
+
+- **`btk plugin types`** - List available plugin interface types
+  - Shows all 5 plugin types with descriptions
+
+#### REST API Server (`btk serve`)
+
+- **`btk serve`** - Start REST API server with web UI
+  - `--port` to set port (default: 8000)
+  - `--host` to set bind address (default: 127.0.0.1)
+  - Serves JSON API at `/bookmarks`, `/tags`, `/stats`, `/search`
+  - Export endpoints at `/export/{json,html,csv,markdown}`
+  - CORS support for frontend development
+  - Static file serving for btk-frontend
+
+### Changed - Project Structure
+
+- **Renamed `integrations/` to `plugins/`** for clarity
+- **Created `tools/` directory** for standalone applications
+  - Moved btk-frontend, mcp-btk, miniweb, viz-btk to tools/
+- **Removed deprecated components**
+  - Removed browser_sync (bidirectional sync was problematic)
+  - Removed bookmark_scheduler (spaced repetition out of scope)
+
+### Improved - Test Coverage
+
+- **787 total tests** now passing (up from 597)
+- Added comprehensive tests for browser CLI commands (7 tests)
+- Added comprehensive tests for plugin CLI commands (6 tests)
+- Added tests for serve module and REST API
+
+### Fixed
+
+- URL filter in `db.search(url=...)` now works correctly
+- ISO datetime string conversion in browser import
+- Path references updated from 'integrations' to 'plugins'
+
 ## [0.7.2] - 2025-11-15
 
 ### Added - Test Coverage

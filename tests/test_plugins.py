@@ -5,11 +5,11 @@ Tests for the BTK plugin system.
 import pytest
 from unittest.mock import MagicMock, Mock, patch
 from btk.plugins import (
-    PluginRegistry, PluginMetadata, Plugin, PluginError, 
+    PluginRegistry, PluginMetadata, Plugin, PluginError,
     PluginVersionError, PluginValidationError, PluginPriority,
     TagSuggester, ContentExtractor, SimilarityFinder,
     SearchEnhancer, BookmarkEnricher,
-    create_default_registry, load_integration_plugins
+    create_default_registry, load_plugins
 )
 
 
@@ -427,35 +427,35 @@ class TestFactoryFunctions:
         assert registry.validate_strict == False
     
     @patch('importlib.import_module')
-    def test_load_integration_plugins(self, mock_import):
-        """Test loading integration plugins."""
+    def test_load_plugins(self, mock_import):
+        """Test loading plugins."""
         mock_module = Mock()
         mock_module.register_plugins = Mock()
         mock_import.return_value = mock_module
-        
+
         registry = PluginRegistry()
-        load_integration_plugins(registry, ["test_integration"])
-        
-        mock_import.assert_called_once_with("integrations.test_integration")
+        load_plugins(registry, ["test_plugin"])
+
+        mock_import.assert_called_once_with("plugins.test_plugin")
         mock_module.register_plugins.assert_called_once_with(registry)
-    
+
     @patch('importlib.import_module')
-    def test_load_integration_no_register_function(self, mock_import):
-        """Test loading integration without register function."""
+    def test_load_plugin_no_register_function(self, mock_import):
+        """Test loading plugin without register function."""
         mock_module = Mock(spec=[])  # No register_plugins attribute
         mock_import.return_value = mock_module
-        
+
         registry = PluginRegistry()
-        load_integration_plugins(registry, ["test_integration"])
-        
+        load_plugins(registry, ["test_plugin"])
+
         # Should not raise, just log warning
-    
+
     @patch('importlib.import_module')
-    def test_load_integration_import_error(self, mock_import):
-        """Test handling import errors when loading integrations."""
+    def test_load_plugin_import_error(self, mock_import):
+        """Test handling import errors when loading plugins."""
         mock_import.side_effect = ImportError("Module not found")
-        
+
         registry = PluginRegistry()
-        load_integration_plugins(registry, ["nonexistent"])
-        
+        load_plugins(registry, ["nonexistent"])
+
         # Should not raise, just log debug message

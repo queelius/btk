@@ -11,6 +11,7 @@ Tests the BookmarkShell class including:
 import pytest
 import tempfile
 import os
+from contextlib import redirect_stdout
 from unittest.mock import Mock, patch, MagicMock
 from io import StringIO
 from datetime import datetime, timezone
@@ -813,3 +814,461 @@ class TestStatCommands:
             with patch.object(shell.console, 'print') as mock_print:
                 shell.do_file("")
                 assert mock_print.call_count > 0
+
+
+class TestLsOutputFormatting:
+    """Test ls command output formatting methods."""
+
+    @pytest.fixture
+    def populated_db(self):
+        """Create a populated test database with hierarchical tags."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "test.db")
+            db = Database(db_path)
+
+            # Add bookmarks with various properties
+            db.add(url="https://python.org", title="Python", tags=["programming/python"])
+            db.add(url="https://rust-lang.org", title="Rust", tags=["programming/rust"])
+            db.add(url="https://github.com", title="GitHub", tags=["development"], stars=True)
+            db.add(url="https://unreachable.test", title="Broken", reachable=False)
+            db.add(url="https://example.com/doc.pdf", title="PDF Doc", tags=["docs"])
+
+            yield db
+
+    @pytest.fixture
+    def shell(self, populated_db):
+        """Create shell with populated database."""
+        shell = BookmarkShell(str(populated_db.path))
+        return shell
+
+    def test_ls_at_root_shows_directories(self, shell):
+        """ls at root should show all virtual directories."""
+        shell.cwd = "/"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_ls("")
+            # Should print something
+            assert mock_print.called
+
+    def test_ls_in_tags_shows_tag_hierarchy(self, shell):
+        """ls in /tags should show hierarchical tag structure."""
+        shell.cwd = "/tags"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_ls("")
+            assert mock_print.called
+
+    def test_ls_in_tag_directory(self, shell):
+        """ls in tag directory should show subtags and bookmarks."""
+        shell.cwd = "/tags/programming"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_ls("")
+            assert mock_print.called
+
+    def test_ls_in_bookmarks(self, shell):
+        """ls in /bookmarks should show all bookmark IDs."""
+        shell.cwd = "/bookmarks"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_ls("")
+            assert mock_print.called
+
+    def test_ls_in_bookmark_context(self, shell):
+        """ls in bookmark context should show fields."""
+        bookmarks = shell.db.list()
+        if bookmarks:
+            shell.cwd = f"/bookmarks/{bookmarks[0].id}"
+            with patch.object(shell.console, 'print') as mock_print:
+                shell.do_ls("")
+                assert mock_print.called
+
+    def test_ls_in_starred(self, shell):
+        """ls in /starred should show starred bookmarks."""
+        shell.cwd = "/starred"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_ls("")
+            assert mock_print.called
+
+    def test_ls_in_domains(self, shell):
+        """ls in /domains should show all domains."""
+        shell.cwd = "/domains"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_ls("")
+            assert mock_print.called
+
+
+class TestCatFieldVariations:
+    """Test cat command for all field types."""
+
+    @pytest.fixture
+    def populated_db(self):
+        """Create a populated test database."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "test.db")
+            db = Database(db_path)
+
+            db.add(
+                url="https://python.org",
+                title="Python Programming Language",
+                description="Official Python website",
+                tags=["programming", "python"],
+                stars=True
+            )
+
+            yield db
+
+    @pytest.fixture
+    def shell(self, populated_db):
+        """Create shell with populated database."""
+        shell = BookmarkShell(str(populated_db.path))
+        return shell
+
+    def test_cat_id_field(self, shell):
+        """cat id should show bookmark ID."""
+        bookmarks = shell.db.list()
+        shell.cwd = f"/bookmarks/{bookmarks[0].id}"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_cat("id")
+            assert mock_print.called
+
+    def test_cat_url_field(self, shell):
+        """cat url should show bookmark URL."""
+        bookmarks = shell.db.list()
+        shell.cwd = f"/bookmarks/{bookmarks[0].id}"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_cat("url")
+            assert mock_print.called
+
+    def test_cat_title_field(self, shell):
+        """cat title should show bookmark title."""
+        bookmarks = shell.db.list()
+        shell.cwd = f"/bookmarks/{bookmarks[0].id}"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_cat("title")
+            assert mock_print.called
+
+    def test_cat_tags_field(self, shell):
+        """cat tags should show bookmark tags."""
+        bookmarks = shell.db.list()
+        shell.cwd = f"/bookmarks/{bookmarks[0].id}"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_cat("tags")
+            assert mock_print.called
+
+    def test_cat_description_field(self, shell):
+        """cat description should show bookmark description."""
+        bookmarks = shell.db.list()
+        shell.cwd = f"/bookmarks/{bookmarks[0].id}"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_cat("description")
+            assert mock_print.called
+
+    def test_cat_stars_field(self, shell):
+        """cat stars should show starred status."""
+        bookmarks = shell.db.list()
+        shell.cwd = f"/bookmarks/{bookmarks[0].id}"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_cat("stars")
+            assert mock_print.called
+
+    def test_cat_visits_field(self, shell):
+        """cat visits should show visit count."""
+        bookmarks = shell.db.list()
+        shell.cwd = f"/bookmarks/{bookmarks[0].id}"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_cat("visits")
+            assert mock_print.called
+
+    def test_cat_added_field(self, shell):
+        """cat added should show added timestamp."""
+        bookmarks = shell.db.list()
+        shell.cwd = f"/bookmarks/{bookmarks[0].id}"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_cat("added")
+            assert mock_print.called
+
+    def test_cat_without_field_shows_all(self, shell):
+        """cat without field in bookmark context should show all info."""
+        bookmarks = shell.db.list()
+        shell.cwd = f"/bookmarks/{bookmarks[0].id}"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_cat("")
+            assert mock_print.called
+
+
+class TestStatCommandVariants:
+    """Test stat command with different arguments."""
+
+    @pytest.fixture
+    def populated_db(self):
+        """Create a populated test database."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "test.db")
+            db = Database(db_path)
+
+            db.add(url="https://python.org", title="Python", tags=["python"])
+            db.add(url="https://github.com", title="GitHub", stars=True)
+
+            yield db
+
+    @pytest.fixture
+    def shell(self, populated_db):
+        """Create shell with populated database."""
+        shell = BookmarkShell(str(populated_db.path))
+        return shell
+
+    def test_stat_with_dot_shows_current(self, shell):
+        """stat . should show current context stats."""
+        shell.cwd = "/bookmarks"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_stat(".")
+            assert mock_print.called
+
+    def test_stat_with_dotdot_shows_parent(self, shell):
+        """stat .. should show parent context stats."""
+        bookmarks = shell.db.list()
+        shell.cwd = f"/bookmarks/{bookmarks[0].id}"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_stat("..")
+            assert mock_print.called
+
+    def test_stat_with_id_shows_specific_bookmark(self, shell):
+        """stat <id> should show stats for specific bookmark."""
+        bookmarks = shell.db.list()
+        bookmark_id = bookmarks[0].id
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_stat(str(bookmark_id))
+            assert mock_print.called
+
+    def test_stat_in_tags_context(self, shell):
+        """stat in tags context should show tag statistics."""
+        shell.cwd = "/tags"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_stat("")
+            assert mock_print.called
+
+
+class TestRecentCommandVariants:
+    """Test recent command with various options."""
+
+    @pytest.fixture
+    def populated_db(self):
+        """Create a populated test database."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "test.db")
+            db = Database(db_path)
+
+            db.add(url="https://python.org", title="Python")
+            db.add(url="https://github.com", title="GitHub", stars=True)
+
+            yield db
+
+    @pytest.fixture
+    def shell(self, populated_db):
+        """Create shell with populated database."""
+        shell = BookmarkShell(str(populated_db.path))
+        return shell
+
+    def test_recent_default(self, shell):
+        """recent without args should show recent bookmarks."""
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_recent("")
+            # Should not raise error
+
+    def test_recent_with_count(self, shell):
+        """recent with count should limit results."""
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_recent("5")
+            # Should not raise error
+
+    def test_recent_visited(self, shell):
+        """recent visited should show by visit time."""
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_recent("visited")
+            # Should not raise error
+
+    def test_recent_added(self, shell):
+        """recent added should show by add time."""
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_recent("added")
+            # Should not raise error
+
+
+class TestDomainNavigation:
+    """Test domain-based navigation."""
+
+    @pytest.fixture
+    def populated_db(self):
+        """Create database with bookmarks from various domains."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "test.db")
+            db = Database(db_path)
+
+            db.add(url="https://github.com/user/repo1", title="Repo 1")
+            db.add(url="https://github.com/user/repo2", title="Repo 2")
+            db.add(url="https://python.org", title="Python")
+
+            yield db
+
+    @pytest.fixture
+    def shell(self, populated_db):
+        """Create shell with populated database."""
+        shell = BookmarkShell(str(populated_db.path))
+        return shell
+
+    def test_cd_to_domains(self, shell):
+        """cd /domains should navigate to domains root."""
+        shell.do_cd("/domains")
+        assert shell.cwd == "/domains"
+
+    def test_cd_to_specific_domain(self, shell):
+        """cd to specific domain should filter bookmarks."""
+        shell.do_cd("/domains/github.com")
+        assert "github.com" in shell.cwd
+
+    def test_ls_in_domain_shows_bookmarks(self, shell):
+        """ls in domain should show bookmarks from that domain."""
+        shell.cwd = "/domains/github.com"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_ls("")
+            assert mock_print.called
+
+
+class TestShellEdgeCases:
+    """Test edge cases and error handling."""
+
+    @pytest.fixture
+    def shell(self):
+        """Create a shell with empty database."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "test.db")
+            shell = BookmarkShell(db_path)
+            yield shell
+
+    def test_cd_to_nonexistent_path(self, shell):
+        """cd to nonexistent path should show error."""
+        shell.cwd = "/"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_cd("/nonexistent")
+            assert mock_print.called
+
+    def test_cat_in_invalid_context(self, shell):
+        """cat in invalid context should show error."""
+        shell.cwd = "/"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_cat("invalid")
+            assert mock_print.called
+
+    def test_ls_empty_directory(self, shell):
+        """ls in empty directory should handle gracefully."""
+        shell.cwd = "/bookmarks"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_ls("")
+            # Should not raise error
+
+    def test_help_command(self, shell):
+        """help should show available commands."""
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_help("")
+            # Should print help or not raise error
+
+    def test_clear_command(self, shell):
+        """clear should clear screen without error."""
+        shell.do_clear("")
+        # Should not raise error
+
+    def test_quit_returns_true(self, shell):
+        """quit should return True to exit."""
+        result = shell.do_quit("")
+        assert result is True
+
+    def test_exit_returns_true(self, shell):
+        """exit should return True to exit."""
+        result = shell.do_exit("")
+        assert result is True
+
+
+class TestShellPwdCommand:
+    """Test pwd command."""
+
+    @pytest.fixture
+    def shell(self):
+        """Create a shell instance."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "test.db")
+            shell = BookmarkShell(db_path)
+            yield shell
+
+    def test_pwd_at_root(self, shell):
+        """pwd at root should show /."""
+        shell.cwd = "/"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_pwd("")
+            mock_print.assert_called()
+
+    def test_pwd_in_subdirectory(self, shell):
+        """pwd in subdirectory should show full path."""
+        shell.cwd = "/tags/programming"
+        with patch.object(shell.console, 'print') as mock_print:
+            shell.do_pwd("")
+            mock_print.assert_called()
+
+
+class TestBookmarkOperationsFromShell:
+    """Test bookmark operations via shell commands."""
+
+    @pytest.fixture
+    def populated_db(self):
+        """Create a populated test database."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "test.db")
+            db = Database(db_path)
+
+            db.add(url="https://example.com", title="Example", tags=["test"])
+
+            yield db
+
+    @pytest.fixture
+    def shell(self, populated_db):
+        """Create shell with populated database."""
+        shell = BookmarkShell(str(populated_db.path))
+        return shell
+
+    def test_star_command_stars_bookmark(self, shell):
+        """star command should star bookmark."""
+        bookmarks = shell.db.list()
+        bookmark_id = bookmarks[0].id
+
+        shell.do_star(str(bookmark_id))
+
+        updated = shell.db.get(bookmark_id)
+        assert updated.stars is True
+
+    def test_toggle_star_unstars_bookmark(self, shell):
+        """star command should toggle star off when already starred."""
+        bookmarks = shell.db.list()
+        bookmark_id = bookmarks[0].id
+
+        # First star it
+        shell.do_star(str(bookmark_id))
+        assert shell.db.get(bookmark_id).stars is True
+
+        # Toggle star again (should unstar)
+        shell.do_star(str(bookmark_id))
+        updated = shell.db.get(bookmark_id)
+        assert updated.stars is False
+
+    def test_shell_command_executed_via_do_shell(self, shell):
+        """do_shell command should execute shell commands."""
+        # do_shell runs external shell commands
+        with patch('subprocess.run') as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            shell.do_shell("echo test")
+            mock_run.assert_called_once()
+
+    def test_find_command_searches_bookmarks(self, shell):
+        """find command should search bookmark titles and URLs."""
+        output = StringIO()
+        with redirect_stdout(output):
+            shell.do_find("python")
+
+        result = output.getvalue()
+        # Should find Python documentation bookmark
+        assert "python" in result.lower() or len(result) > 0

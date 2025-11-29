@@ -27,15 +27,15 @@ def _get_registry():
 
 def _load_default_plugins(registry):
     """Load default tag suggester plugins."""
-    # Try to load built-in integrations
+    # Try to load plugins
     try:
         # Try NLP tagger - use underscore in import
         import sys
         import os
-        # Add integrations to path if needed
-        integrations_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'integrations')
-        if integrations_path not in sys.path:
-            sys.path.insert(0, integrations_path)
+        # Add plugins to path if needed
+        plugins_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'plugins')
+        if plugins_path not in sys.path:
+            sys.path.insert(0, plugins_path)
         
         from auto_tag_nlp import register_plugins as register_nlp
         register_nlp(registry)
