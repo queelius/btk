@@ -211,7 +211,12 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
         if format_type == 'stats':
             # Return tag statistics
             from .tag_utils import get_tag_statistics
-            stats = get_tag_statistics(self.db)
+            bookmarks = self.db.list(limit=10000)
+            bookmark_dicts = [
+                {'id': b.id, 'tags': [t.name for t in b.tags]}
+                for b in bookmarks
+            ]
+            stats = get_tag_statistics(bookmark_dicts)
             self.send_json(stats)
         else:
             # Return simple tag list
