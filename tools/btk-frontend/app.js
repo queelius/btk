@@ -1,25 +1,36 @@
-// BTK Dashboard Application
-const API_URL = 'http://localhost:8000';
+// BTK Frontend Application
+const API_URL = window.location.origin;
 
 // State
-let bookmarks = [];
+let allBookmarks = [];
+let filteredBookmarks = [];
 let tags = [];
-let stats = {};
-let currentTab = 'recent';
-let activityChartInstance = null; // Store chart instance
+let currentFilter = 'all';
+let currentTag = null;
+let currentSort = 'added_desc';
+let currentView = 'list';
+let currentPage = 1;
+let searchQuery = '';
+const PAGE_SIZE = 50;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     feather.replace();
-    loadDashboard();
+    loadData();
     setupEventListeners();
 });
 
 // Setup event listeners
 function setupEventListeners() {
-    // Search
+    // Search with debounce
+    let searchTimeout;
     document.getElementById('searchInput').addEventListener('input', (e) => {
-        searchBookmarks(e.target.value);
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            searchQuery = e.target.value;
+            currentPage = 1;
+            applyFilters();
+        }, 300);
     });
 
     // Add bookmark form
@@ -27,331 +38,392 @@ function setupEventListeners() {
         e.preventDefault();
         await addBookmark(new FormData(e.target));
         hideAddModal();
-        loadDashboard();
+        e.target.reset();
+    });
+
+    // Edit bookmark form
+    document.getElementById('editBookmarkForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await updateBookmark(new FormData(e.target));
+        hideEditModal();
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            hideAddModal();
+            hideEditModal();
+        }
+        if (e.key === '/' && !e.target.matches('input, textarea')) {
+            e.preventDefault();
+            document.getElementById('searchInput').focus();
+        }
     });
 }
 
-// Load dashboard data
-async function loadDashboard() {
+// Load all data
+async function loadData() {
     try {
-        // Load bookmarks
-        const bookmarksResponse = await fetch(`${API_URL}/bookmarks`);
-        bookmarks = await bookmarksResponse.json();
-        
-        // Load stats
-        const statsResponse = await fetch(`${API_URL}/stats`);
-        stats = await statsResponse.json();
-        
-        // Load tags
-        const tagsResponse = await fetch(`${API_URL}/tags?format=stats`);
-        const tagStats = await tagsResponse.json();
-        tags = Object.entries(tagStats).map(([tag, stat]) => ({
-            name: tag,
+        const [bookmarksRes, tagsRes, statsRes] = await Promise.all([
+            fetch(`${API_URL}/bookmarks?limit=10000`),
+            fetch(`${API_URL}/tags?format=stats`),
+            fetch(`${API_URL}/stats`)
+        ]);
+
+        allBookmarks = await bookmarksRes.json();
+        const tagStats = await tagsRes.json();
+        const stats = await statsRes.json();
+
+        // Convert tag stats to array
+        tags = Object.entries(tagStats).map(([name, stat]) => ({
+            name,
             count: stat.bookmark_count
-        }));
-        
+        })).sort((a, b) => b.count - a.count);
+
         // Update UI
-        updateStats();
-        updateBookmarksList();
-        updateTagCloud();
-        updateDomainStats();
-        updateActivityChart();
-        
+        document.getElementById('totalCount').textContent = stats.total_bookmarks || allBookmarks.length;
+        updateTagList();
+        applyFilters();
+
     } catch (error) {
-        console.error('Failed to load dashboard:', error);
-        showNotification('Failed to load dashboard data', 'error');
+        console.error('Failed to load data:', error);
+        showNotification('Failed to load bookmarks', 'error');
     }
 }
 
-// Update statistics cards
-function updateStats() {
-    document.getElementById('totalBookmarks').textContent = stats.total_bookmarks || 0;
-    document.getElementById('totalTags').textContent = stats.total_tags || 0;
-    document.getElementById('starredCount').textContent = stats.starred_count || 0;
-    document.getElementById('duplicateCount').textContent = stats.duplicate_count || 0;
+// Update tag list in sidebar
+function updateTagList() {
+    const container = document.getElementById('tagList');
+
+    if (tags.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-sm px-3">No tags</p>';
+        return;
+    }
+
+    container.innerHTML = tags.slice(0, 50).map(tag => `
+        <button onclick="setTagFilter('${escapeHtml(tag.name)}')"
+                class="tag-item w-full text-left px-3 py-1.5 rounded text-sm flex items-center justify-between ${currentTag === tag.name ? 'active' : ''}"
+                data-tag="${escapeHtml(tag.name)}">
+            <span class="truncate">${escapeHtml(tag.name)}</span>
+            <span class="text-gray-400 text-xs">${tag.count}</span>
+        </button>
+    `).join('');
+}
+
+// Apply filters and update display
+function applyFilters() {
+    let results = [...allBookmarks];
+
+    // Apply quick filter
+    if (currentFilter === 'starred') {
+        results = results.filter(b => b.stars);
+    } else if (currentFilter === 'unread') {
+        results = results.filter(b => b.visit_count === 0);
+    } else if (currentFilter === 'recent') {
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        results = results.filter(b => new Date(b.added) > weekAgo);
+    }
+
+    // Apply tag filter
+    if (currentTag) {
+        results = results.filter(b => b.tags && b.tags.includes(currentTag));
+    }
+
+    // Apply search
+    if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        results = results.filter(b =>
+            (b.title && b.title.toLowerCase().includes(query)) ||
+            (b.url && b.url.toLowerCase().includes(query)) ||
+            (b.description && b.description.toLowerCase().includes(query)) ||
+            (b.tags && b.tags.some(t => t.toLowerCase().includes(query)))
+        );
+    }
+
+    // Apply sort
+    results = sortBookmarks(results);
+
+    filteredBookmarks = results;
+    updateDisplay();
+}
+
+// Sort bookmarks
+function sortBookmarks(bookmarks) {
+    const [field, direction] = currentSort.split('_');
+    const mult = direction === 'desc' ? -1 : 1;
+
+    return bookmarks.sort((a, b) => {
+        if (field === 'added') {
+            return mult * (new Date(a.added) - new Date(b.added));
+        } else if (field === 'title') {
+            return mult * (a.title || '').localeCompare(b.title || '');
+        } else if (field === 'visits') {
+            return mult * ((a.visit_count || 0) - (b.visit_count || 0));
+        }
+        return 0;
+    });
+}
+
+// Update display
+function updateDisplay() {
+    updateFilterLabel();
+    updateBookmarksList();
+    updatePagination();
+    feather.replace();
+}
+
+// Update filter label
+function updateFilterLabel() {
+    let label = 'All Bookmarks';
+    if (currentFilter === 'starred') label = 'Starred';
+    else if (currentFilter === 'unread') label = 'Unread';
+    else if (currentFilter === 'recent') label = 'Recent (7 days)';
+
+    if (currentTag) {
+        label = `Tag: ${currentTag}`;
+    }
+
+    if (searchQuery) {
+        label = `Search: "${searchQuery}"`;
+    }
+
+    document.getElementById('currentFilter').textContent = label;
+    document.getElementById('resultCount').textContent = `(${filteredBookmarks.length})`;
+
+    // Update active states
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('bg-indigo-100', btn.dataset.filter === currentFilter && !currentTag);
+        btn.classList.toggle('text-indigo-700', btn.dataset.filter === currentFilter && !currentTag);
+    });
+
+    document.querySelectorAll('.tag-item').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tag === currentTag);
+    });
 }
 
 // Update bookmarks list
 function updateBookmarksList() {
     const container = document.getElementById('bookmarksContainer');
-    let filteredBookmarks = bookmarks;
-    
-    // Filter based on current tab
-    if (currentTab === 'starred') {
-        filteredBookmarks = bookmarks.filter(b => b.stars);
-    } else if (currentTab === 'unvisited') {
-        filteredBookmarks = bookmarks.filter(b => b.visit_count === 0);
-    } else {
-        // Recent - sort by added date
-        filteredBookmarks = [...bookmarks].sort((a, b) => 
-            new Date(b.added) - new Date(a.added)
-        );
-    }
-    
-    // Limit to 20 bookmarks
-    filteredBookmarks = filteredBookmarks.slice(0, 20);
-    
-    if (filteredBookmarks.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-center py-8">No bookmarks found</p>';
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageBookmarks = filteredBookmarks.slice(start, start + PAGE_SIZE);
+
+    if (pageBookmarks.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center py-12">No bookmarks found</p>';
         return;
     }
-    
-    container.innerHTML = filteredBookmarks.map(bookmark => `
-        <div class="bookmark-card bg-gray-50 rounded-lg p-4 hover:bg-gray-100">
-            <div class="flex items-start justify-between">
-                <div class="flex-1">
-                    <h4 class="font-medium text-gray-800 mb-1">
-                        ${bookmark.stars ? '<i data-feather="star" class="inline w-4 h-4 text-yellow-500 mr-1"></i>' : ''}
-                        ${escapeHtml(bookmark.title)}
-                    </h4>
-                    <a href="${escapeHtml(bookmark.url)}" target="_blank" 
-                       class="text-sm text-indigo-600 hover:text-indigo-800 break-all">
-                        ${escapeHtml(bookmark.url)}
-                    </a>
-                    ${bookmark.description ? `
-                        <p class="text-sm text-gray-600 mt-1">${escapeHtml(bookmark.description)}</p>
-                    ` : ''}
-                    <div class="flex items-center gap-4 mt-2">
-                        ${bookmark.tags && bookmark.tags.length > 0 ? `
-                            <div class="flex flex-wrap gap-1">
-                                ${bookmark.tags.map(tag => `
-                                    <span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded">
-                                        ${escapeHtml(tag)}
-                                    </span>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                        <span class="text-xs text-gray-500">
-                            ${bookmark.visit_count} visits
-                        </span>
+
+    if (currentView === 'grid') {
+        container.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+        container.innerHTML = pageBookmarks.map(b => renderBookmarkCard(b, 'grid')).join('');
+    } else {
+        container.className = 'space-y-2';
+        container.innerHTML = pageBookmarks.map(b => renderBookmarkCard(b, 'list')).join('');
+    }
+}
+
+// Render bookmark card
+function renderBookmarkCard(bookmark, view) {
+    const domain = getDomain(bookmark.url);
+    const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+
+    if (view === 'grid') {
+        return `
+            <div class="bookmark-card bg-white rounded-lg p-4 border transition-all">
+                <div class="flex items-start gap-3">
+                    <img src="${favicon}" class="w-6 h-6 rounded mt-0.5" onerror="this.style.display='none'">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-medium text-gray-800 truncate">
+                            ${bookmark.stars ? '<i data-feather="star" class="inline w-3 h-3 text-yellow-500 mr-1"></i>' : ''}
+                            ${escapeHtml(bookmark.title || bookmark.url)}
+                        </h4>
+                        <a href="${escapeHtml(bookmark.url)}" target="_blank"
+                           class="text-xs text-indigo-600 hover:underline truncate block">${escapeHtml(domain)}</a>
                     </div>
                 </div>
-                <div class="flex gap-2 ml-4">
-                    <button onclick="editBookmark(${bookmark.id})" 
-                            class="text-gray-400 hover:text-gray-600">
-                        <i data-feather="edit-2" class="w-4 h-4"></i>
-                    </button>
-                    <button onclick="deleteBookmark(${bookmark.id})" 
-                            class="text-gray-400 hover:text-red-600">
-                        <i data-feather="trash-2" class="w-4 h-4"></i>
-                    </button>
+                ${bookmark.tags && bookmark.tags.length > 0 ? `
+                    <div class="flex flex-wrap gap-1 mt-3">
+                        ${bookmark.tags.slice(0, 3).map(tag => `
+                            <span onclick="setTagFilter('${escapeHtml(tag)}')"
+                                  class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded cursor-pointer hover:bg-indigo-100">
+                                ${escapeHtml(tag)}
+                            </span>
+                        `).join('')}
+                        ${bookmark.tags.length > 3 ? `<span class="text-xs text-gray-400">+${bookmark.tags.length - 3}</span>` : ''}
+                    </div>
+                ` : ''}
+                <div class="flex items-center justify-between mt-3 pt-3 border-t">
+                    <span class="text-xs text-gray-400">${formatDate(bookmark.added)}</span>
+                    <div class="flex gap-1">
+                        <button onclick="editBookmark(${bookmark.id})" class="p-1 text-gray-400 hover:text-gray-600">
+                            <i data-feather="edit-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button onclick="deleteBookmark(${bookmark.id})" class="p-1 text-gray-400 hover:text-red-600">
+                            <i data-feather="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
+        `;
+    }
+
+    // List view
+    return `
+        <div class="bookmark-card bg-white rounded-lg px-4 py-3 border transition-all flex items-center gap-4">
+            <img src="${favicon}" class="w-5 h-5 rounded flex-shrink-0" onerror="this.style.display='none'">
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                    ${bookmark.stars ? '<i data-feather="star" class="w-3.5 h-3.5 text-yellow-500 flex-shrink-0"></i>' : ''}
+                    <a href="${escapeHtml(bookmark.url)}" target="_blank"
+                       class="font-medium text-gray-800 hover:text-indigo-600 truncate">
+                        ${escapeHtml(bookmark.title || bookmark.url)}
+                    </a>
+                    <span class="text-xs text-gray-400 flex-shrink-0">${escapeHtml(domain)}</span>
+                </div>
+                ${bookmark.tags && bookmark.tags.length > 0 ? `
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        ${bookmark.tags.map(tag => `
+                            <span onclick="setTagFilter('${escapeHtml(tag)}')"
+                                  class="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded cursor-pointer hover:bg-indigo-100">
+                                ${escapeHtml(tag)}
+                            </span>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <span class="text-xs text-gray-400">${formatDate(bookmark.added)}</span>
+                <span class="text-xs text-gray-400" title="Visits">${bookmark.visit_count || 0}</span>
+                <button onclick="editBookmark(${bookmark.id})" class="p-1 text-gray-400 hover:text-gray-600">
+                    <i data-feather="edit-2" class="w-4 h-4"></i>
+                </button>
+                <button onclick="deleteBookmark(${bookmark.id})" class="p-1 text-gray-400 hover:text-red-600">
+                    <i data-feather="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
         </div>
-    `).join('');
-    
-    // Re-render feather icons
+    `;
+}
+
+// Update pagination
+function updatePagination() {
+    const container = document.getElementById('pagination');
+    const totalPages = Math.ceil(filteredBookmarks.length / PAGE_SIZE);
+
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+
+    // Previous button
+    html += `<button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}
+                     class="px-3 py-1.5 rounded border text-sm ${currentPage === 1 ? 'text-gray-300' : 'hover:bg-gray-100'}">
+                <i data-feather="chevron-left" class="w-4 h-4"></i>
+             </button>`;
+
+    // Page numbers
+    const pages = getPageNumbers(currentPage, totalPages);
+    for (const page of pages) {
+        if (page === '...') {
+            html += '<span class="px-2 text-gray-400">...</span>';
+        } else {
+            html += `<button onclick="goToPage(${page})"
+                             class="px-3 py-1.5 rounded text-sm ${page === currentPage ? 'bg-indigo-600 text-white' : 'border hover:bg-gray-100'}">
+                        ${page}
+                     </button>`;
+        }
+    }
+
+    // Next button
+    html += `<button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}
+                     class="px-3 py-1.5 rounded border text-sm ${currentPage === totalPages ? 'text-gray-300' : 'hover:bg-gray-100'}">
+                <i data-feather="chevron-right" class="w-4 h-4"></i>
+             </button>`;
+
+    container.innerHTML = html;
     feather.replace();
 }
 
-// Update tag cloud
-function updateTagCloud() {
-    const container = document.getElementById('tagCloud');
-    
-    // Sort tags by count and take top 20
-    const topTags = tags.sort((a, b) => b.count - a.count).slice(0, 20);
-    
-    if (topTags.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-center">No tags yet</p>';
-        return;
+// Get page numbers to display
+function getPageNumbers(current, total) {
+    if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+
+    const pages = [];
+    pages.push(1);
+
+    if (current > 3) pages.push('...');
+
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+        pages.push(i);
     }
-    
-    // Calculate font sizes based on count
-    const maxCount = Math.max(...topTags.map(t => t.count));
-    const minCount = Math.min(...topTags.map(t => t.count));
-    
-    container.innerHTML = topTags.map(tag => {
-        const size = calculateTagSize(tag.count, minCount, maxCount);
-        return `
-            <span class="inline-block px-3 py-1 m-1 bg-indigo-50 text-indigo-700 rounded-full cursor-pointer hover:bg-indigo-100"
-                  style="font-size: ${size}px"
-                  onclick="filterByTag('${escapeHtml(tag.name)}')">
-                ${escapeHtml(tag.name)} (${tag.count})
-            </span>
-        `;
-    }).join('');
+
+    if (current < total - 2) pages.push('...');
+
+    pages.push(total);
+    return pages;
 }
 
-// Update domain statistics
-function updateDomainStats() {
-    const container = document.getElementById('domainStats');
-    
-    // Count bookmarks per domain
-    const domainCounts = {};
-    bookmarks.forEach(bookmark => {
-        try {
-            const url = new URL(bookmark.url);
-            const domain = url.hostname;
-            domainCounts[domain] = (domainCounts[domain] || 0) + 1;
-        } catch (e) {
-            // Invalid URL
-        }
-    });
-    
-    // Sort and take top 5
-    const topDomains = Object.entries(domainCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5);
-    
-    if (topDomains.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-center">No domains yet</p>';
-        return;
-    }
-    
-    const maxCount = topDomains[0][1];
-    
-    container.innerHTML = topDomains.map(([domain, count]) => `
-        <div class="flex items-center justify-between py-2">
-            <span class="text-sm text-gray-700">${escapeHtml(domain)}</span>
-            <div class="flex items-center gap-2">
-                <div class="w-24 bg-gray-200 rounded-full h-2">
-                    <div class="bg-indigo-600 h-2 rounded-full" 
-                         style="width: ${(count / maxCount) * 100}%"></div>
-                </div>
-                <span class="text-sm text-gray-600 w-8 text-right">${count}</span>
-            </div>
-        </div>
-    `).join('');
+// Navigation functions
+function goToPage(page) {
+    const totalPages = Math.ceil(filteredBookmarks.length / PAGE_SIZE);
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    updateDisplay();
+    window.scrollTo(0, 0);
 }
 
-// Update activity chart
-function updateActivityChart() {
-    const ctx = document.getElementById('activityChart').getContext('2d');
-    
-    // Destroy existing chart instance if it exists
-    if (activityChartInstance) {
-        activityChartInstance.destroy();
-    }
-    
-    // Group bookmarks by month
-    const monthCounts = {};
-    const now = new Date();
-    
-    // Initialize last 6 months
-    for (let i = 5; i >= 0; i--) {
-        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        monthCounts[key] = 0;
-    }
-    
-    // Count bookmarks
-    bookmarks.forEach(bookmark => {
-        if (bookmark.added) {
-            const date = new Date(bookmark.added);
-            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-            if (monthCounts.hasOwnProperty(key)) {
-                monthCounts[key]++;
-            }
-        }
-    });
-    
-    const labels = Object.keys(monthCounts).map(key => {
-        const [year, month] = key.split('-');
-        return new Date(year, month - 1).toLocaleDateString('en', { month: 'short' });
-    });
-    
-    activityChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Bookmarks Added',
-                data: Object.values(monthCounts),
-                borderColor: 'rgb(99, 102, 241)',
-                backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                intersect: false,
-                mode: 'index'
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
-                    }
-                }
-            }
-        }
-    });
+function setFilter(filter) {
+    currentFilter = filter;
+    currentTag = null;
+    currentPage = 1;
+    applyFilters();
 }
 
-// Tab switching
-function switchTab(tab) {
-    currentTab = tab;
-    
-    // Update tab styles
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        if (btn.dataset.tab === tab) {
-            btn.className = 'tab-btn px-6 py-3 text-sm font-medium text-indigo-600 border-b-2 border-indigo-600';
-        } else {
-            btn.className = 'tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700';
-        }
-    });
-    
+function setTagFilter(tag) {
+    currentTag = tag === currentTag ? null : tag;
+    currentFilter = 'all';
+    currentPage = 1;
+    applyFilters();
+}
+
+function handleSort() {
+    currentSort = document.getElementById('sortSelect').value;
+    applyFilters();
+}
+
+function setView(view) {
+    currentView = view;
+    document.getElementById('viewList').className = `px-3 py-1.5 text-sm rounded-l-lg ${view === 'list' ? 'bg-indigo-100 text-indigo-700' : 'hover:bg-gray-100'}`;
+    document.getElementById('viewGrid').className = `px-3 py-1.5 text-sm rounded-r-lg ${view === 'grid' ? 'bg-indigo-100 text-indigo-700' : 'hover:bg-gray-100'}`;
     updateBookmarksList();
+    feather.replace();
 }
 
-// Search bookmarks
-async function searchBookmarks(query) {
-    if (!query) {
-        updateBookmarksList();
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_URL}/search`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query, limit: 20 })
-        });
-        
-        const results = await response.json();
-        
-        // Update bookmarks list with search results
-        const container = document.getElementById('bookmarksContainer');
-        container.innerHTML = results.map(bookmark => `
-            <!-- Same bookmark card HTML as in updateBookmarksList -->
-        `).join('');
-        
-        feather.replace();
-    } catch (error) {
-        console.error('Search failed:', error);
-    }
-}
-
-// Add bookmark
+// CRUD operations
 async function addBookmark(formData) {
     const bookmark = {
         url: formData.get('url'),
-        title: formData.get('title'),
-        tags: formData.get('tags').split(',').map(t => t.trim()).filter(t => t),
-        description: formData.get('description'),
+        title: formData.get('title') || undefined,
+        tags: formData.get('tags') ? formData.get('tags').split(',').map(t => t.trim()).filter(t => t) : [],
+        description: formData.get('description') || undefined,
         stars: formData.get('stars') === 'on'
     };
-    
+
     try {
         const response = await fetch(`${API_URL}/bookmarks`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(bookmark)
         });
-        
+
         if (response.ok) {
-            showNotification('Bookmark added successfully', 'success');
+            showNotification('Bookmark added', 'success');
+            loadData();
         } else {
             const error = await response.json();
-            showNotification(error.detail || 'Failed to add bookmark', 'error');
+            showNotification(error.error || 'Failed to add bookmark', 'error');
         }
     } catch (error) {
         console.error('Failed to add bookmark:', error);
@@ -359,20 +431,57 @@ async function addBookmark(formData) {
     }
 }
 
-// Delete bookmark
-async function deleteBookmark(id) {
-    if (!confirm('Are you sure you want to delete this bookmark?')) {
-        return;
-    }
-    
+async function editBookmark(id) {
+    const bookmark = allBookmarks.find(b => b.id === id);
+    if (!bookmark) return;
+
+    document.getElementById('editId').value = id;
+    document.getElementById('editUrl').value = bookmark.url;
+    document.getElementById('editTitle').value = bookmark.title || '';
+    document.getElementById('editTags').value = (bookmark.tags || []).join(', ');
+    document.getElementById('editDescription').value = bookmark.description || '';
+    document.getElementById('editStars').checked = bookmark.stars;
+
+    document.getElementById('editModal').classList.remove('hidden');
+}
+
+async function updateBookmark(formData) {
+    const id = formData.get('id');
+    const data = {
+        url: formData.get('url'),
+        title: formData.get('title') || undefined,
+        tags: formData.get('tags') ? formData.get('tags').split(',').map(t => t.trim()).filter(t => t) : [],
+        description: formData.get('description') || undefined,
+        stars: formData.get('stars') === 'on'
+    };
+
     try {
         const response = await fetch(`${API_URL}/bookmarks/${id}`, {
-            method: 'DELETE'
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
         });
-        
+
+        if (response.ok) {
+            showNotification('Bookmark updated', 'success');
+            loadData();
+        } else {
+            showNotification('Failed to update bookmark', 'error');
+        }
+    } catch (error) {
+        console.error('Failed to update bookmark:', error);
+        showNotification('Failed to update bookmark', 'error');
+    }
+}
+
+async function deleteBookmark(id) {
+    if (!confirm('Delete this bookmark?')) return;
+
+    try {
+        const response = await fetch(`${API_URL}/bookmarks/${id}`, {method: 'DELETE'});
         if (response.ok) {
             showNotification('Bookmark deleted', 'success');
-            loadDashboard();
+            loadData();
         }
     } catch (error) {
         console.error('Failed to delete bookmark:', error);
@@ -380,87 +489,58 @@ async function deleteBookmark(id) {
     }
 }
 
-// Export bookmarks
-async function exportBookmarks(format) {
-    try {
-        const response = await fetch(`${API_URL}/export/${format}`);
-        const blob = await response.blob();
-        
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `bookmarks.${format}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        
-        showNotification(`Exported as ${format.toUpperCase()}`, 'success');
-    } catch (error) {
-        console.error('Export failed:', error);
-        showNotification('Export failed', 'error');
-    }
-}
-
-// Filter by tag
-function filterByTag(tag) {
-    document.getElementById('searchInput').value = `tag:${tag}`;
-    searchBookmarks(`tag:${tag}`);
-}
-
-// Refresh data
-function refreshData() {
-    loadDashboard();
-    showNotification('Dashboard refreshed', 'success');
-}
-
 // Modal functions
 function showAddModal() {
     document.getElementById('addModal').classList.remove('hidden');
+    document.querySelector('#addBookmarkForm input[name="url"]').focus();
 }
 
 function hideAddModal() {
     document.getElementById('addModal').classList.add('hidden');
-    document.getElementById('addBookmarkForm').reset();
 }
 
-function showDedupeModal() {
-    // TODO: Implement deduplication modal
-    alert('Deduplication feature coming soon!');
-}
-
-function showImportModal() {
-    // TODO: Implement import modal
-    alert('Import feature coming soon!');
+function hideEditModal() {
+    document.getElementById('editModal').classList.add('hidden');
 }
 
 // Utility functions
 function escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
-function calculateTagSize(count, min, max) {
-    const minSize = 12;
-    const maxSize = 24;
-    if (max === min) return minSize;
-    return minSize + ((count - min) / (max - min)) * (maxSize - minSize);
+function getDomain(url) {
+    try {
+        return new URL(url).hostname;
+    } catch {
+        return url;
+    }
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`;
+    return date.toLocaleDateString();
 }
 
 function showNotification(message, type = 'info') {
-    // Simple notification (could be replaced with a toast library)
     const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white z-50 ${
-        type === 'success' ? 'bg-green-500' : 
-        type === 'error' ? 'bg-red-500' : 
+    notification.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white text-sm z-50 ${
+        type === 'success' ? 'bg-green-500' :
+        type === 'error' ? 'bg-red-500' :
         'bg-blue-500'
     }`;
     notification.textContent = message;
     document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
+    setTimeout(() => notification.remove(), 3000);
 }

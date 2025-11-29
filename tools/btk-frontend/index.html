@@ -3,207 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BTK Dashboard - Bookmark Toolkit</title>
+    <title>BTK - Bookmark Toolkit</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .tag-cloud span {
-            display: inline-block;
-            margin: 0.25rem;
-            transition: all 0.3s ease;
-        }
-        .tag-cloud span:hover {
-            transform: scale(1.1);
-        }
-        .bookmark-card {
-            transition: all 0.3s ease;
-        }
-        .bookmark-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        .loading { animation: pulse 2s infinite; }
+        .bookmark-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .tag-item:hover { background-color: #e0e7ff; }
+        .tag-item.active { background-color: #c7d2fe; font-weight: 500; }
+        .sidebar { min-width: 240px; max-width: 280px; }
+        .main-content { min-width: 0; }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 min-h-screen">
     <!-- Header -->
-    <nav class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <h1 class="text-2xl font-bold text-gray-800">
-                        <i data-feather="bookmark" class="inline w-6 h-6 mr-2 text-indigo-600"></i>
-                        BTK Dashboard
+    <nav class="bg-white shadow-sm border-b sticky top-0 z-40">
+        <div class="max-w-full mx-auto px-4 sm:px-6">
+            <div class="flex justify-between h-14">
+                <div class="flex items-center gap-4">
+                    <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <i data-feather="bookmark" class="w-5 h-5 text-indigo-600"></i>
+                        BTK
                     </h1>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <div class="relative">
-                        <input type="text" id="searchInput" 
-                               class="w-64 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                               placeholder="Search bookmarks...">
-                        <i data-feather="search" class="absolute right-3 top-2.5 w-5 h-5 text-gray-400"></i>
+                    <div class="text-sm text-gray-500" id="statsBar">
+                        <span id="totalCount">-</span> bookmarks
                     </div>
-                    <button onclick="showAddModal()" 
-                            class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
-                        <i data-feather="plus" class="inline w-4 h-4 mr-1"></i>
-                        Add Bookmark
-                    </button>
-                    <button onclick="refreshData()" 
-                            class="text-gray-600 hover:text-gray-800 transition">
-                        <i data-feather="refresh-cw" class="w-5 h-5"></i>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <input type="text" id="searchInput"
+                               class="w-72 px-4 py-1.5 pl-9 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                               placeholder="Search bookmarks...">
+                        <i data-feather="search" class="absolute left-3 top-2 w-4 h-4 text-gray-400"></i>
+                    </div>
+                    <button onclick="showAddModal()"
+                            class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 text-sm flex items-center gap-1">
+                        <i data-feather="plus" class="w-4 h-4"></i>
+                        Add
                     </button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="stat-card rounded-xl p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-white/80 text-sm">Total Bookmarks</p>
-                        <p class="text-3xl font-bold mt-1" id="totalBookmarks">-</p>
-                    </div>
-                    <i data-feather="bookmark" class="w-8 h-8 text-white/50"></i>
-                </div>
-            </div>
-            
-            <div class="bg-gradient-to-br from-green-500 to-teal-600 rounded-xl p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-white/80 text-sm">Total Tags</p>
-                        <p class="text-3xl font-bold mt-1" id="totalTags">-</p>
-                    </div>
-                    <i data-feather="tag" class="w-8 h-8 text-white/50"></i>
-                </div>
-            </div>
-            
-            <div class="bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-white/80 text-sm">Starred</p>
-                        <p class="text-3xl font-bold mt-1" id="starredCount">-</p>
-                    </div>
-                    <i data-feather="star" class="w-8 h-8 text-white/50"></i>
-                </div>
-            </div>
-            
-            <div class="bg-gradient-to-br from-red-500 to-pink-600 rounded-xl p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-white/80 text-sm">Duplicates</p>
-                        <p class="text-3xl font-bold mt-1" id="duplicateCount">-</p>
-                    </div>
-                    <i data-feather="copy" class="w-8 h-8 text-white/50"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Left Column - Bookmarks List -->
-            <div class="lg:col-span-2">
-                <!-- Tabs -->
-                <div class="bg-white rounded-xl shadow-sm mb-6">
-                    <div class="border-b">
-                        <nav class="flex -mb-px">
-                            <button onclick="switchTab('recent')" 
-                                    class="tab-btn px-6 py-3 text-sm font-medium text-indigo-600 border-b-2 border-indigo-600"
-                                    data-tab="recent">
-                                Recent Bookmarks
-                            </button>
-                            <button onclick="switchTab('starred')" 
-                                    class="tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700"
-                                    data-tab="starred">
-                                Starred
-                            </button>
-                            <button onclick="switchTab('unvisited')" 
-                                    class="tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700"
-                                    data-tab="unvisited">
-                                Unvisited
-                            </button>
-                        </nav>
-                    </div>
-                    
-                    <!-- Bookmarks Container -->
-                    <div id="bookmarksContainer" class="p-6 space-y-4 max-h-96 overflow-y-auto">
-                        <div class="loading text-gray-500 text-center py-8">
-                            Loading bookmarks...
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Activity Chart -->
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Activity Timeline</h3>
-                    <div style="position: relative; height: 200px;">
-                        <canvas id="activityChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Column - Sidebar -->
-            <div class="space-y-6">
-                <!-- Tag Cloud -->
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Popular Tags</h3>
-                    <div id="tagCloud" class="tag-cloud">
-                        <div class="loading text-gray-500 text-center py-4">
-                            Loading tags...
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
-                    <div class="space-y-3">
-                        <button onclick="exportBookmarks('json')" 
-                                class="w-full text-left px-4 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                            <i data-feather="download" class="inline w-4 h-4 mr-2 text-gray-600"></i>
-                            Export as JSON
+    <div class="flex">
+        <!-- Sidebar - Tags -->
+        <aside class="sidebar bg-white border-r h-[calc(100vh-56px)] sticky top-14 overflow-y-auto">
+            <div class="p-4">
+                <!-- Quick Filters -->
+                <div class="mb-6">
+                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Quick Filters</h3>
+                    <div class="space-y-1">
+                        <button onclick="setFilter('all')" class="filter-btn w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-100" data-filter="all">
+                            <i data-feather="grid" class="w-4 h-4"></i>
+                            All Bookmarks
                         </button>
-                        <button onclick="exportBookmarks('html')" 
-                                class="w-full text-left px-4 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                            <i data-feather="code" class="inline w-4 h-4 mr-2 text-gray-600"></i>
-                            Export as HTML
+                        <button onclick="setFilter('starred')" class="filter-btn w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-100" data-filter="starred">
+                            <i data-feather="star" class="w-4 h-4 text-yellow-500"></i>
+                            Starred
                         </button>
-                        <button onclick="showDedupeModal()" 
-                                class="w-full text-left px-4 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                            <i data-feather="git-merge" class="inline w-4 h-4 mr-2 text-gray-600"></i>
-                            Remove Duplicates
+                        <button onclick="setFilter('unread')" class="filter-btn w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-100" data-filter="unread">
+                            <i data-feather="eye-off" class="w-4 h-4 text-gray-500"></i>
+                            Unread
                         </button>
-                        <button onclick="showImportModal()" 
-                                class="w-full text-left px-4 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                            <i data-feather="upload" class="inline w-4 h-4 mr-2 text-gray-600"></i>
-                            Import Bookmarks
+                        <button onclick="setFilter('recent')" class="filter-btn w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-100" data-filter="recent">
+                            <i data-feather="clock" class="w-4 h-4 text-blue-500"></i>
+                            Recent
                         </button>
                     </div>
                 </div>
 
-                <!-- Domain Stats -->
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Top Domains</h3>
-                    <div id="domainStats" class="space-y-2">
-                        <div class="loading text-gray-500 text-center py-4">
-                            Loading domains...
-                        </div>
+                <!-- Tags -->
+                <div>
+                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Tags</h3>
+                    <div id="tagList" class="space-y-0.5">
+                        <p class="text-gray-400 text-sm px-3">Loading...</p>
                     </div>
                 </div>
             </div>
-        </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content flex-1 p-6">
+            <!-- Toolbar -->
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <span id="currentFilter" class="text-lg font-semibold text-gray-800">All Bookmarks</span>
+                    <span id="resultCount" class="text-sm text-gray-500"></span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <select id="sortSelect" onchange="handleSort()" class="text-sm border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="added_desc">Newest First</option>
+                        <option value="added_asc">Oldest First</option>
+                        <option value="title_asc">Title A-Z</option>
+                        <option value="title_desc">Title Z-A</option>
+                        <option value="visits_desc">Most Visited</option>
+                    </select>
+                    <div class="flex border rounded-lg">
+                        <button onclick="setView('list')" id="viewList" class="px-3 py-1.5 text-sm rounded-l-lg bg-indigo-100 text-indigo-700">
+                            <i data-feather="list" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="setView('grid')" id="viewGrid" class="px-3 py-1.5 text-sm rounded-r-lg hover:bg-gray-100">
+                            <i data-feather="grid" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bookmarks Container -->
+            <div id="bookmarksContainer" class="space-y-2">
+                <p class="text-gray-500 text-center py-8">Loading bookmarks...</p>
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="flex items-center justify-center gap-2 mt-6">
+            </div>
+        </main>
     </div>
 
     <!-- Add Bookmark Modal -->
@@ -218,7 +134,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                    <input type="text" name="title" required
+                    <input type="text" name="title"
                            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div>
@@ -228,14 +144,14 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <textarea name="description" rows="3"
+                    <textarea name="description" rows="2"
                               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                 </div>
                 <div class="flex items-center">
                     <input type="checkbox" name="stars" id="stars" class="mr-2">
                     <label for="stars" class="text-sm text-gray-700">Star this bookmark</label>
                 </div>
-                <div class="flex justify-end space-x-3 pt-4">
+                <div class="flex justify-end gap-3 pt-4">
                     <button type="button" onclick="hideAddModal()"
                             class="px-4 py-2 text-gray-600 hover:text-gray-800">
                         Cancel
@@ -243,6 +159,50 @@
                     <button type="submit"
                             class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
                         Add Bookmark
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Bookmark Modal -->
+    <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <h2 class="text-xl font-semibold mb-4">Edit Bookmark</h2>
+            <form id="editBookmarkForm" class="space-y-4">
+                <input type="hidden" name="id" id="editId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
+                    <input type="url" name="url" id="editUrl" required
+                           class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                    <input type="text" name="title" id="editTitle"
+                           class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tags (comma-separated)</label>
+                    <input type="text" name="tags" id="editTags"
+                           class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="description" id="editDescription" rows="2"
+                              class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" name="stars" id="editStars" class="mr-2">
+                    <label for="editStars" class="text-sm text-gray-700">Starred</label>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="hideEditModal()"
+                            class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        Save Changes
                     </button>
                 </div>
             </form>
