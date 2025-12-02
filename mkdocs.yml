@@ -1,10 +1,10 @@
 site_name: Bookmark Toolkit (BTK)
 site_description: A modern, database-first bookmark manager with powerful features
 site_author: Alex Towell
-site_url: https://queelius.github.io/bookmark-tk/
+site_url: https://queelius.github.io/btk/
 
-repo_name: queelius/bookmark-tk
-repo_url: https://github.com/queelius/bookmark-tk
+repo_name: queelius/btk
+repo_url: https://github.com/queelius/btk
 edit_uri: edit/master/docs/
 
 theme:
@@ -91,7 +91,7 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/queelius/bookmark-tk
+      link: https://github.com/queelius/btk
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/bookmark-tk/
 
