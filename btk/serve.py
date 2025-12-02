@@ -63,6 +63,14 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
         # API routes
         if path == '/bookmarks':
             self.handle_list_bookmarks(query)
+        elif path == '/bookmarks/by-date':
+            self.handle_bookmarks_by_date(query)
+        elif path == '/queue':
+            self.handle_get_queue(query)
+        elif path == '/queue/next':
+            self.handle_queue_next()
+        elif path == '/queue/stats':
+            self.handle_queue_stats()
         elif path == '/stats':
             self.handle_stats()
         elif path == '/tags':
@@ -73,6 +81,8 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
         elif path.startswith('/export/'):
             format_type = path.split('/')[-1]
             self.handle_export(format_type)
+        elif path == '/fts/stats':
+            self.handle_fts_stats()
         else:
             # Serve static files
             self.serve_static(path)
@@ -96,6 +106,16 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
             self.handle_add_bookmark(data)
         elif path == '/search':
             self.handle_search(data)
+        elif path == '/import':
+            self.handle_import(data)
+        elif path == '/bookmarks/health':
+            self.handle_health_check(data)
+        elif path == '/queue':
+            self.handle_queue_operation(data)
+        elif path == '/fts/search':
+            self.handle_fts_search(data)
+        elif path == '/fts/build':
+            self.handle_fts_build(data)
         else:
             self.send_error_json('Not found', 404)
 
@@ -161,13 +181,27 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
             self.send_error_json('URL is required', 400)
             return
 
-        bookmark = self.db.add(
-            url=url,
-            title=data.get('title'),
-            description=data.get('description'),
-            tags=data.get('tags', [])
-        )
-        self.send_json(self._bookmark_to_dict(bookmark), 201)
+        try:
+            bookmark = self.db.add(
+                url=url,
+                title=data.get('title'),
+                description=data.get('description'),
+                tags=data.get('tags', []),
+                stars=data.get('stars', False)
+            )
+            if bookmark:
+                # Re-fetch to get a fresh session with tags loaded
+                fresh_bookmark = self.db.get(id=bookmark.id)
+                self.send_json(self._bookmark_to_dict(fresh_bookmark), 201)
+            else:
+                # Duplicate - return the existing bookmark
+                existing = self.db.get(url=url)
+                if existing:
+                    self.send_json(self._bookmark_to_dict(existing), 200)
+                else:
+                    self.send_error_json('Bookmark already exists', 409)
+        except Exception as e:
+            self.send_error_json(f'Failed to add bookmark: {str(e)}', 500)
 
     def handle_update_bookmark(self, bookmark_id: str, data: Dict):
         """Update a bookmark."""
@@ -227,6 +261,136 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
                     tags.add(t.name)
             self.send_json(sorted(list(tags)))
 
+    def handle_bookmarks_by_date(self, query: Dict):
+        """Get bookmarks grouped by date.
+
+        Query params:
+            field: 'added', 'last_visited' (default: 'added')
+            granularity: 'day', 'month', 'year' (default: 'month')
+            year: filter to specific year (optional)
+            month: filter to specific month 1-12 (optional, requires year)
+            day: filter to specific day 1-31 (optional, requires year+month)
+        """
+        from datetime import datetime
+        from collections import defaultdict
+
+        field = query.get('field', ['added'])[0]
+        granularity = query.get('granularity', ['month'])[0]
+
+        # Validate field
+        if field not in ['added', 'last_visited']:
+            self.send_error_json(f'Invalid field: {field}. Use "added" or "last_visited"', 400)
+            return
+
+        # Validate granularity
+        if granularity not in ['day', 'month', 'year']:
+            self.send_error_json(f'Invalid granularity: {granularity}. Use "day", "month", or "year"', 400)
+            return
+
+        # Get filter parameters
+        filter_year = query.get('year', [None])[0]
+        filter_month = query.get('month', [None])[0]
+        filter_day = query.get('day', [None])[0]
+
+        # Convert to int if provided
+        if filter_year:
+            filter_year = int(filter_year)
+        if filter_month:
+            filter_month = int(filter_month)
+        if filter_day:
+            filter_day = int(filter_day)
+
+        bookmarks = self.db.list(limit=10000)
+
+        # Group bookmarks by date
+        grouped = defaultdict(list)
+
+        for b in bookmarks:
+            date_value = getattr(b, field)
+            if not date_value:
+                continue
+
+            # Apply filters
+            if filter_year and date_value.year != filter_year:
+                continue
+            if filter_month and date_value.month != filter_month:
+                continue
+            if filter_day and date_value.day != filter_day:
+                continue
+
+            # Generate key based on granularity
+            if granularity == 'year':
+                key = str(date_value.year)
+            elif granularity == 'month':
+                key = f"{date_value.year}-{date_value.month:02d}"
+            else:  # day
+                key = f"{date_value.year}-{date_value.month:02d}-{date_value.day:02d}"
+
+            grouped[key].append(self._bookmark_to_dict(b))
+
+        # Sort keys in reverse chronological order
+        sorted_keys = sorted(grouped.keys(), reverse=True)
+
+        # Build result with counts
+        result = {
+            'field': field,
+            'granularity': granularity,
+            'filters': {
+                'year': filter_year,
+                'month': filter_month,
+                'day': filter_day
+            },
+            'groups': [
+                {
+                    'key': key,
+                    'count': len(grouped[key]),
+                    'bookmarks': grouped[key]
+                }
+                for key in sorted_keys
+            ],
+            'total': sum(len(grouped[k]) for k in grouped)
+        }
+
+        self.send_json(result)
+
+    def handle_import(self, data: Dict):
+        """Import bookmarks from content."""
+        import tempfile
+
+        content = data.get('content', '')
+        format_type = data.get('format', 'html')
+
+        if not content:
+            self.send_error_json('No content provided', 400)
+            return
+
+        # Write to temp file and use existing importers
+        ext_map = {
+            'html': '.html',
+            'json': '.json',
+            'csv': '.csv',
+            'markdown': '.md',
+            'text': '.txt'
+        }
+
+        ext = ext_map.get(format_type, '.html')
+
+        try:
+            from .importers import import_file
+
+            with tempfile.NamedTemporaryFile(mode='w', suffix=ext, delete=False, encoding='utf-8') as f:
+                f.write(content)
+                temp_path = f.name
+
+            count = import_file(self.db, Path(temp_path), format=format_type)
+
+            # Clean up temp file
+            Path(temp_path).unlink(missing_ok=True)
+
+            self.send_json({'imported': count, 'format': format_type})
+        except Exception as e:
+            self.send_error_json(f'Import failed: {str(e)}', 500)
+
     def handle_export(self, format_type: str):
         """Export bookmarks."""
         from .exporters import export_to_string
@@ -251,6 +415,267 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         self.wfile.write(content.encode())
+
+    def handle_health_check(self, data: Dict):
+        """Check URL reachability for bookmarks.
+
+        POST /bookmarks/health
+        Body:
+            ids: List of bookmark IDs to check (optional, checks all if not provided)
+            broken_only: If true, only check previously broken bookmarks
+            concurrency: Max concurrent requests (default: 10)
+            timeout: Request timeout in seconds (default: 10)
+            dry_run: If true, don't update database (default: false)
+        """
+        from .health_checker import run_health_check, summarize_results
+
+        bookmark_ids = data.get('ids', [])
+        broken_only = data.get('broken_only', False)
+        concurrency = data.get('concurrency', 10)
+        timeout = data.get('timeout', 10.0)
+        dry_run = data.get('dry_run', False)
+
+        # Get bookmarks to check
+        if bookmark_ids:
+            bookmarks = []
+            for bid in bookmark_ids:
+                b = self.db.get(id=int(bid))
+                if b:
+                    bookmarks.append(b)
+        elif broken_only:
+            bookmarks = self.db.search(reachable=False)
+        else:
+            bookmarks = self.db.list(limit=10000)
+
+        if not bookmarks:
+            self.send_json({
+                'summary': {'total': 0, 'reachable': 0, 'unreachable': 0},
+                'message': 'No bookmarks to check'
+            })
+            return
+
+        # Prepare for health check
+        bookmark_list = [(b.id, b.url) for b in bookmarks]
+
+        # Run health check
+        results = run_health_check(
+            bookmark_list,
+            concurrency=concurrency,
+            timeout=timeout
+        )
+
+        # Update database if not dry run
+        updated_count = 0
+        if not dry_run:
+            for result in results:
+                self.db.update(result.bookmark_id, reachable=result.is_reachable)
+                updated_count += 1
+
+        # Generate summary
+        summary = summarize_results(results)
+
+        self.send_json({
+            'summary': summary,
+            'updated': updated_count if not dry_run else 0,
+            'dry_run': dry_run,
+            'results': [r.to_dict() for r in results]
+        })
+
+    def handle_get_queue(self, query: Dict):
+        """Get reading queue items.
+
+        GET /queue
+        Query params:
+            sort: Sort by (priority, queued_at, progress, title)
+            include_completed: Include completed items (default: false)
+        """
+        from .reading_queue import get_queue
+
+        sort_by = query.get('sort', ['priority'])[0]
+        include_completed = query.get('include_completed', ['false'])[0].lower() == 'true'
+
+        queue = get_queue(self.db, include_completed=include_completed, sort_by=sort_by)
+
+        self.send_json({
+            'items': [item.to_dict() for item in queue],
+            'count': len(queue)
+        })
+
+    def handle_queue_next(self):
+        """Get next recommended item to read.
+
+        GET /queue/next
+        """
+        from .reading_queue import get_next_to_read
+
+        item = get_next_to_read(self.db)
+        if item:
+            self.send_json(item.to_dict())
+        else:
+            self.send_json({'message': 'Queue is empty'}, 404)
+
+    def handle_queue_stats(self):
+        """Get reading queue statistics.
+
+        GET /queue/stats
+        """
+        from .reading_queue import get_queue_stats
+
+        stats = get_queue_stats(self.db)
+        self.send_json(stats)
+
+    def handle_queue_operation(self, data: Dict):
+        """Handle queue operations.
+
+        POST /queue
+        Body:
+            action: 'add', 'remove', 'progress', 'priority'
+            bookmark_id: ID of the bookmark
+            priority: Priority level (1-5, for add/priority actions)
+            progress: Progress percentage (0-100, for progress action)
+        """
+        from .reading_queue import add_to_queue, remove_from_queue, update_progress, set_priority
+
+        action = data.get('action')
+        bookmark_id = data.get('bookmark_id')
+
+        if not action:
+            self.send_error_json('Missing action parameter', 400)
+            return
+
+        if not bookmark_id:
+            self.send_error_json('Missing bookmark_id parameter', 400)
+            return
+
+        try:
+            bookmark_id = int(bookmark_id)
+        except ValueError:
+            self.send_error_json('Invalid bookmark_id', 400)
+            return
+
+        success = False
+        message = ''
+
+        if action == 'add':
+            priority = data.get('priority', 3)
+            success = add_to_queue(self.db, bookmark_id, priority=priority)
+            message = 'Added to queue' if success else 'Failed to add to queue'
+
+        elif action == 'remove':
+            success = remove_from_queue(self.db, bookmark_id)
+            message = 'Removed from queue' if success else 'Failed to remove from queue'
+
+        elif action == 'progress':
+            progress = data.get('progress', 0)
+            success = update_progress(self.db, bookmark_id, progress)
+            message = f'Progress updated to {progress}%' if success else 'Failed to update progress'
+
+        elif action == 'priority':
+            priority = data.get('priority', 3)
+            success = set_priority(self.db, bookmark_id, priority)
+            message = f'Priority set to {priority}' if success else 'Failed to set priority'
+
+        else:
+            self.send_error_json(f'Unknown action: {action}', 400)
+            return
+
+        self.send_json({
+            'success': success,
+            'message': message,
+            'bookmark_id': bookmark_id
+        })
+
+    # =========================================================================
+    # FTS Search
+    # =========================================================================
+
+    def handle_fts_search(self, data: Dict):
+        """Search bookmarks using full-text search.
+
+        POST /fts/search
+        Body:
+            query: Search query (supports FTS5 syntax)
+            limit: Max results (default: 50)
+            in_content: Search in cached content too (default: True)
+        """
+        from .fts import get_fts_index
+
+        query = data.get('query', '')
+        limit = data.get('limit', 50)
+        in_content = data.get('in_content', True)
+
+        if not query:
+            self.send_json([])
+            return
+
+        if not self.db.path:
+            self.send_error_json('FTS not available for this database type', 400)
+            return
+
+        fts = get_fts_index(str(self.db.path))
+        results = fts.search(query, limit=limit, in_content=in_content)
+
+        # Enrich results with full bookmark data
+        enriched = []
+        for result in results:
+            bookmark = self.db.get(id=result.bookmark_id)
+            if bookmark:
+                enriched.append({
+                    'bookmark': self._bookmark_to_dict(bookmark),
+                    'rank': result.rank,
+                    'snippet': result.snippet
+                })
+
+        self.send_json(enriched)
+
+    def handle_fts_stats(self):
+        """Get FTS index statistics.
+
+        GET /fts/stats
+        """
+        from .fts import get_fts_index
+
+        if not self.db.path:
+            self.send_error_json('FTS not available for this database type', 400)
+            return
+
+        fts = get_fts_index(str(self.db.path))
+        stats = fts.get_stats()
+        self.send_json(stats)
+
+    def handle_fts_build(self, data: Dict):
+        """Build or rebuild FTS index.
+
+        POST /fts/build
+        Body:
+            rebuild: If True, rebuild from scratch (default: False)
+        """
+        from .fts import get_fts_index
+
+        rebuild = data.get('rebuild', False)
+
+        if not self.db.path:
+            self.send_error_json('FTS not available for this database type', 400)
+            return
+
+        fts = get_fts_index(str(self.db.path))
+
+        if rebuild:
+            success = fts.rebuild()
+        else:
+            success = fts.create()
+            if success:
+                # Index all bookmarks
+                bookmarks = self.db.all()
+                for b in bookmarks:
+                    fts.index_bookmark(b.id, b.url, b.title, b.description or '',
+                                      [t.name for t in b.tags])
+
+        stats = fts.get_stats()
+        self.send_json({
+            'success': success,
+            'stats': stats
+        })
 
     # =========================================================================
     # Static File Serving

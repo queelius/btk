@@ -99,6 +99,11 @@ SMART_COLLECTIONS = {
         filter_func=lambda bms: [b for b in bms if b.url.lower().endswith('.pdf')],
         description="PDF bookmarks"
     ),
+    'queue': SmartCollection(
+        name='queue',
+        filter_func=lambda bms: [b for b in bms if (b.extra_data or {}).get('reading_queue', False)],
+        description="Reading queue"
+    ),
 }
 
 
@@ -178,7 +183,7 @@ class BookmarkShell(cmd.Cmd):
 
     intro = '''
 ╔════════════════════════════════════════════════════════════════╗
-║                     BTK Shell v0.7.2                            ║
+║                     BTK Shell v0.7.4                            ║
 ║          Browse your bookmarks like a filesystem                ║
 ╚════════════════════════════════════════════════════════════════╝
 
@@ -379,6 +384,9 @@ Type 'tutorial' for a quick tour.
                 domain = '/'.join(parts[1:])
                 bookmarks = self._get_bookmarks_by_domain(domain)
                 return {'type': 'domain', 'domain': domain, 'bookmarks': bookmarks}
+
+        elif parts[0] == 'by-date':
+            return self._get_by_date_context(parts)
 
         # Check for smart collections
         elif parts[0] in SMART_COLLECTIONS:
@@ -583,6 +591,9 @@ Type 'tutorial' for a quick tour.
                 bookmarks = self._get_bookmarks_by_domain(domain)
                 return {'type': 'domain', 'domain': domain, 'bookmarks': bookmarks}
 
+        elif parts[0] == 'by-date':
+            return self._get_by_date_context(parts)
+
         # Check for smart collections
         elif parts[0] in SMART_COLLECTIONS:
             collection = SMART_COLLECTIONS[parts[0]]
@@ -605,6 +616,107 @@ Type 'tutorial' for a quick tour.
             }
 
         return {'type': 'unknown'}
+
+    def _get_by_date_context(self, parts):
+        """Get context for /by-date navigation.
+
+        Structure:
+            /by-date                    - Show date field options (added/visited)
+            /by-date/added              - Show years for added dates
+            /by-date/added/2024         - Show months in 2024
+            /by-date/added/2024/03      - Show days in March 2024
+            /by-date/added/2024/03/15   - Show bookmarks from March 15, 2024
+            /by-date/visited            - Show years for last_visited dates
+        """
+        all_bookmarks = self.db.list()
+
+        if len(parts) == 1:
+            # /by-date - show field options
+            return {'type': 'by_date_root', 'bookmarks': []}
+
+        field = parts[1]  # 'added' or 'visited'
+        if field not in ('added', 'visited'):
+            return {'type': 'unknown'}
+
+        # Map field name to attribute
+        attr_name = 'added' if field == 'added' else 'last_visited'
+
+        if len(parts) == 2:
+            # /by-date/added - show years
+            years = self._get_date_groups(all_bookmarks, attr_name, 'year')
+            return {'type': 'by_date_years', 'field': field, 'years': years, 'bookmarks': []}
+
+        year = int(parts[2])
+
+        if len(parts) == 3:
+            # /by-date/added/2024 - show months
+            months = self._get_date_groups(all_bookmarks, attr_name, 'month', year=year)
+            return {'type': 'by_date_months', 'field': field, 'year': year, 'months': months, 'bookmarks': []}
+
+        month = int(parts[3])
+
+        if len(parts) == 4:
+            # /by-date/added/2024/03 - show days
+            days = self._get_date_groups(all_bookmarks, attr_name, 'day', year=year, month=month)
+            return {'type': 'by_date_days', 'field': field, 'year': year, 'month': month, 'days': days, 'bookmarks': []}
+
+        day = int(parts[4])
+
+        # Check if navigating to specific bookmark
+        if len(parts) == 6 and parts[5].isdigit():
+            bookmark_id = int(parts[5])
+            bookmark = self.db.get(bookmark_id)
+            if bookmark:
+                return {'type': 'bookmark', 'bookmark_id': bookmark_id, 'bookmark': bookmark}
+
+        # /by-date/added/2024/03/15 - show bookmarks from that day
+        bookmarks = self._get_bookmarks_by_date(all_bookmarks, attr_name, year, month, day)
+        return {
+            'type': 'by_date_bookmarks',
+            'field': field,
+            'year': year,
+            'month': month,
+            'day': day,
+            'bookmarks': bookmarks
+        }
+
+    def _get_date_groups(self, bookmarks, attr_name, granularity, year=None, month=None):
+        """Get unique date groups from bookmarks."""
+        groups = {}
+
+        for b in bookmarks:
+            date_val = getattr(b, attr_name)
+            if not date_val:
+                continue
+
+            if year and date_val.year != year:
+                continue
+            if month and date_val.month != month:
+                continue
+
+            if granularity == 'year':
+                key = date_val.year
+            elif granularity == 'month':
+                key = date_val.month
+            else:  # day
+                key = date_val.day
+
+            if key not in groups:
+                groups[key] = 0
+            groups[key] += 1
+
+        return groups
+
+    def _get_bookmarks_by_date(self, bookmarks, attr_name, year, month, day):
+        """Get bookmarks from a specific date."""
+        result = []
+        for b in bookmarks:
+            date_val = getattr(b, attr_name)
+            if not date_val:
+                continue
+            if date_val.year == year and date_val.month == month and date_val.day == day:
+                result.append(b)
+        return result
 
     def _get_current_bookmark(self):
         """Get current bookmark from context (if in a bookmark context)."""
@@ -671,6 +783,18 @@ Type 'tutorial' for a quick tour.
             self._ls_domains()
         elif ctx['type'] == 'domain':
             self._ls_bookmarks(ctx['bookmarks'], long_format, title=f"Domain: {ctx['domain']}")
+        elif ctx['type'] == 'by_date_root':
+            self._ls_by_date_root()
+        elif ctx['type'] == 'by_date_years':
+            self._ls_by_date_years(ctx['field'], ctx['years'])
+        elif ctx['type'] == 'by_date_months':
+            self._ls_by_date_months(ctx['field'], ctx['year'], ctx['months'])
+        elif ctx['type'] == 'by_date_days':
+            self._ls_by_date_days(ctx['field'], ctx['year'], ctx['month'], ctx['days'])
+        elif ctx['type'] == 'by_date_bookmarks':
+            months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+            title = f"{ctx['field'].capitalize()}: {months[ctx['month']]} {ctx['day']}, {ctx['year']}"
+            self._ls_bookmarks(ctx['bookmarks'], long_format, title=title)
         else:
             self.console.print(f"[red]Unknown path: {target_path}[/red]")
 
@@ -695,6 +819,7 @@ Type 'tutorial' for a quick tour.
         table.add_row("archived/", f"({archived_count})", "Archived bookmarks")
 
         table.add_row("recent/", "", "Recently active (time-based)")
+        table.add_row("by-date/", "", "Browse by date (year/month/day)")
         table.add_row("domains/", "", "Browse by domain")
 
         # Smart collections
@@ -794,6 +919,59 @@ Type 'tutorial' for a quick tour.
         for domain in domains:
             count = len(self._get_bookmarks_by_domain(domain))
             self.console.print(f"  [blue]{domain}/[/blue]  ({count} bookmarks)")
+
+    def _ls_by_date_root(self):
+        """List date field options at /by-date."""
+        table = Table(show_header=False, box=None, padding=(0, 2))
+        table.add_column("Field", style="cyan")
+        table.add_column("Description", style="dim")
+
+        table.add_row("added/", "Browse by date added")
+        table.add_row("visited/", "Browse by last visited date")
+
+        self.console.print("[bold cyan]Browse by Date:[/bold cyan]")
+        self.console.print(table)
+        self.console.print("\n[dim]Tip: cd into a field to see available years[/dim]")
+
+    def _ls_by_date_years(self, field: str, years: dict):
+        """List years for a date field."""
+        self.console.print(f"[bold cyan]Years ({field}):[/bold cyan]")
+
+        if not years:
+            self.console.print("[yellow]No bookmarks with dates[/yellow]")
+            return
+
+        for year in sorted(years.keys(), reverse=True):
+            count = years[year]
+            self.console.print(f"  [blue]{year}/[/blue]  ({count} bookmarks)")
+
+    def _ls_by_date_months(self, field: str, year: int, months: dict):
+        """List months for a year."""
+        month_names = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        self.console.print(f"[bold cyan]{year} ({field}):[/bold cyan]")
+
+        if not months:
+            self.console.print("[yellow]No bookmarks in this year[/yellow]")
+            return
+
+        for month in sorted(months.keys(), reverse=True):
+            count = months[month]
+            month_str = f"{month:02d}"
+            self.console.print(f"  [blue]{month_str}/[/blue]  {month_names[month]}  ({count} bookmarks)")
+
+    def _ls_by_date_days(self, field: str, year: int, month: int, days: dict):
+        """List days for a month."""
+        month_names = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        self.console.print(f"[bold cyan]{month_names[month]} {year} ({field}):[/bold cyan]")
+
+        if not days:
+            self.console.print("[yellow]No bookmarks in this month[/yellow]")
+            return
+
+        for day in sorted(days.keys(), reverse=True):
+            count = days[day]
+            day_str = f"{day:02d}"
+            self.console.print(f"  [blue]{day_str}/[/blue]  ({count} bookmarks)")
 
     def _ls_bookmarks(self, bookmarks, long_format=False, title=None):
         """List bookmarks in various formats."""

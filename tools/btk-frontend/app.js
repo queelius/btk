@@ -11,7 +11,17 @@ let currentSort = 'added_desc';
 let currentView = 'list';
 let currentPage = 1;
 let searchQuery = '';
+let useFTS = false;  // Full-text search toggle
+let ftsResults = null;  // Cache FTS results
 const PAGE_SIZE = 50;
+
+// Date view state
+let dateViewData = null;
+let dateNavigation = {
+    year: null,
+    month: null,
+    day: null
+};
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -111,7 +121,7 @@ function updateTagList() {
 }
 
 // Apply filters and update display
-function applyFilters() {
+async function applyFilters() {
     let results = [...allBookmarks];
 
     // Apply quick filter
@@ -132,20 +142,93 @@ function applyFilters() {
 
     // Apply search
     if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        results = results.filter(b =>
-            (b.title && b.title.toLowerCase().includes(query)) ||
-            (b.url && b.url.toLowerCase().includes(query)) ||
-            (b.description && b.description.toLowerCase().includes(query)) ||
-            (b.tags && b.tags.some(t => t.toLowerCase().includes(query)))
-        );
+        if (useFTS) {
+            // Use FTS search with server
+            try {
+                const ftsData = await performFTSSearch(searchQuery);
+                ftsResults = ftsData;
+                // Create result list from FTS results
+                results = ftsData.map(r => ({
+                    ...r.bookmark,
+                    _rank: r.rank,
+                    _snippet: r.snippet
+                }));
+                // Apply other filters on top of FTS results
+                if (currentFilter === 'starred') {
+                    results = results.filter(b => b.stars);
+                } else if (currentFilter === 'unread') {
+                    results = results.filter(b => b.visit_count === 0);
+                }
+                if (currentTag) {
+                    results = results.filter(b => b.tags && b.tags.includes(currentTag));
+                }
+            } catch (err) {
+                console.error('FTS search failed:', err);
+                showNotification('FTS search failed, using local search', 'warning');
+                // Fall back to local search
+                const query = searchQuery.toLowerCase();
+                results = results.filter(b =>
+                    (b.title && b.title.toLowerCase().includes(query)) ||
+                    (b.url && b.url.toLowerCase().includes(query)) ||
+                    (b.description && b.description.toLowerCase().includes(query)) ||
+                    (b.tags && b.tags.some(t => t.toLowerCase().includes(query)))
+                );
+            }
+        } else {
+            // Local search
+            const query = searchQuery.toLowerCase();
+            results = results.filter(b =>
+                (b.title && b.title.toLowerCase().includes(query)) ||
+                (b.url && b.url.toLowerCase().includes(query)) ||
+                (b.description && b.description.toLowerCase().includes(query)) ||
+                (b.tags && b.tags.some(t => t.toLowerCase().includes(query)))
+            );
+            ftsResults = null;
+        }
+    } else {
+        ftsResults = null;
     }
 
-    // Apply sort
-    results = sortBookmarks(results);
+    // Apply sort (skip if FTS since results are ranked)
+    if (!useFTS || !searchQuery) {
+        results = sortBookmarks(results);
+    }
 
     filteredBookmarks = results;
     updateDisplay();
+}
+
+// Toggle FTS search mode
+function toggleFTS() {
+    useFTS = !useFTS;
+    const btn = document.getElementById('ftsToggle');
+    if (useFTS) {
+        btn.classList.add('bg-indigo-600', 'text-white');
+        btn.classList.remove('hover:bg-gray-100');
+        document.getElementById('searchInput').placeholder = 'Full-text search...';
+    } else {
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        btn.classList.add('hover:bg-gray-100');
+        document.getElementById('searchInput').placeholder = 'Search bookmarks...';
+    }
+    // Re-apply filters if there's a search query
+    if (searchQuery) {
+        currentPage = 1;
+        applyFilters();
+    }
+}
+
+// Perform FTS search via API
+async function performFTSSearch(query) {
+    const response = await fetch(`${API_URL}/fts/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, limit: 100 })
+    });
+    if (!response.ok) {
+        throw new Error(`FTS search failed: ${response.status}`);
+    }
+    return response.json();
 }
 
 // Sort bookmarks
@@ -179,6 +262,15 @@ function updateFilterLabel() {
     if (currentFilter === 'starred') label = 'Starred';
     else if (currentFilter === 'unread') label = 'Unread';
     else if (currentFilter === 'recent') label = 'Recent (7 days)';
+    else if (currentFilter === 'bydate') {
+        const field = document.getElementById('dateField')?.value || 'added';
+        const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        let datePath = field === 'added' ? 'Added' : 'Visited';
+        if (dateNavigation.year) datePath += `: ${dateNavigation.year}`;
+        if (dateNavigation.month) datePath += ` ${months[dateNavigation.month]}`;
+        if (dateNavigation.day) datePath += ` ${dateNavigation.day}`;
+        label = datePath;
+    }
 
     if (currentTag) {
         label = `Tag: ${currentTag}`;
@@ -378,7 +470,14 @@ function setFilter(filter) {
     currentFilter = filter;
     currentTag = null;
     currentPage = 1;
-    applyFilters();
+
+    // Handle date view toggle
+    if (filter === 'bydate') {
+        showDateOptions(true);
+    } else {
+        showDateOptions(false);
+        applyFilters();
+    }
 }
 
 function setTagFilter(tag) {
@@ -543,4 +642,493 @@ function showNotification(message, type = 'info') {
     notification.textContent = message;
     document.body.appendChild(notification);
     setTimeout(() => notification.remove(), 3000);
+}
+
+// Export functions
+function toggleExportMenu() {
+    const menu = document.getElementById('exportMenu');
+    menu.classList.toggle('hidden');
+
+    // Close menu when clicking outside
+    const closeMenu = (e) => {
+        if (!e.target.closest('#exportMenu') && !e.target.closest('[onclick*="toggleExportMenu"]')) {
+            menu.classList.add('hidden');
+            document.removeEventListener('click', closeMenu);
+        }
+    };
+
+    if (!menu.classList.contains('hidden')) {
+        setTimeout(() => document.addEventListener('click', closeMenu), 0);
+    }
+}
+
+function exportFiltered(format) {
+    toggleExportMenu(); // Close the menu
+
+    if (filteredBookmarks.length === 0) {
+        showNotification('No bookmarks to export', 'error');
+        return;
+    }
+
+    let content, filename, mimeType;
+
+    switch (format) {
+        case 'json':
+            content = JSON.stringify(filteredBookmarks, null, 2);
+            filename = 'bookmarks.json';
+            mimeType = 'application/json';
+            break;
+
+        case 'csv':
+            content = exportToCSV(filteredBookmarks);
+            filename = 'bookmarks.csv';
+            mimeType = 'text/csv';
+            break;
+
+        case 'html':
+            content = exportToNetscapeHTML(filteredBookmarks);
+            filename = 'bookmarks.html';
+            mimeType = 'text/html';
+            break;
+
+        case 'markdown':
+            content = exportToMarkdown(filteredBookmarks);
+            filename = 'bookmarks.md';
+            mimeType = 'text/markdown';
+            break;
+
+        default:
+            showNotification('Unknown format', 'error');
+            return;
+    }
+
+    // Download the file
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showNotification(`Exported ${filteredBookmarks.length} bookmarks as ${format.toUpperCase()}`, 'success');
+}
+
+function exportToCSV(bookmarks) {
+    const headers = ['id', 'url', 'title', 'description', 'tags', 'added', 'stars', 'visit_count'];
+    const rows = [headers.join(',')];
+
+    for (const b of bookmarks) {
+        const row = [
+            b.id,
+            `"${(b.url || '').replace(/"/g, '""')}"`,
+            `"${(b.title || '').replace(/"/g, '""')}"`,
+            `"${(b.description || '').replace(/"/g, '""')}"`,
+            `"${(b.tags || []).join(';')}"`,
+            b.added || '',
+            b.stars ? '1' : '0',
+            b.visit_count || 0
+        ];
+        rows.push(row.join(','));
+    }
+
+    return rows.join('\n');
+}
+
+function exportToNetscapeHTML(bookmarks) {
+    let html = `<!DOCTYPE NETSCAPE-Bookmark-file-1>
+<!-- This is an automatically generated file.
+     It will be read and overwritten.
+     DO NOT EDIT! -->
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<TITLE>Bookmarks</TITLE>
+<H1>Bookmarks</H1>
+<DL><p>
+`;
+
+    for (const b of bookmarks) {
+        const addDate = b.added ? Math.floor(new Date(b.added).getTime() / 1000) : '';
+        const tags = (b.tags || []).join(',');
+        html += `    <DT><A HREF="${escapeHtml(b.url)}" ADD_DATE="${addDate}"${tags ? ` TAGS="${escapeHtml(tags)}"` : ''}>${escapeHtml(b.title || b.url)}</A>\n`;
+        if (b.description) {
+            html += `    <DD>${escapeHtml(b.description)}\n`;
+        }
+    }
+
+    html += `</DL><p>\n`;
+    return html;
+}
+
+function exportToMarkdown(bookmarks) {
+    let md = `# Bookmarks\n\nExported on ${new Date().toLocaleDateString()}\n\n`;
+
+    // Group by tags
+    const byTag = {};
+    const untagged = [];
+
+    for (const b of bookmarks) {
+        if (b.tags && b.tags.length > 0) {
+            const tag = b.tags[0]; // Use first tag for grouping
+            if (!byTag[tag]) byTag[tag] = [];
+            byTag[tag].push(b);
+        } else {
+            untagged.push(b);
+        }
+    }
+
+    // Output grouped bookmarks
+    for (const tag of Object.keys(byTag).sort()) {
+        md += `## ${tag}\n\n`;
+        for (const b of byTag[tag]) {
+            md += `- [${b.title || b.url}](${b.url})`;
+            if (b.description) md += ` - ${b.description}`;
+            md += '\n';
+        }
+        md += '\n';
+    }
+
+    if (untagged.length > 0) {
+        md += `## Untagged\n\n`;
+        for (const b of untagged) {
+            md += `- [${b.title || b.url}](${b.url})`;
+            if (b.description) md += ` - ${b.description}`;
+            md += '\n';
+        }
+    }
+
+    return md;
+}
+
+// Stats modal functions
+function showStatsModal() {
+    document.getElementById('statsModal').classList.remove('hidden');
+    renderStats();
+    feather.replace();
+}
+
+function hideStatsModal() {
+    document.getElementById('statsModal').classList.add('hidden');
+}
+
+function renderStats() {
+    const container = document.getElementById('statsContent');
+
+    // Calculate stats from allBookmarks
+    const totalBookmarks = allBookmarks.length;
+    const starredCount = allBookmarks.filter(b => b.stars).length;
+    const archivedCount = allBookmarks.filter(b => b.archived).length;
+    const unreadCount = allBookmarks.filter(b => b.visit_count === 0).length;
+    const totalVisits = allBookmarks.reduce((sum, b) => sum + (b.visit_count || 0), 0);
+
+    // Domain stats
+    const domainCounts = {};
+    allBookmarks.forEach(b => {
+        const domain = getDomain(b.url);
+        domainCounts[domain] = (domainCounts[domain] || 0) + 1;
+    });
+    const topDomains = Object.entries(domainCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+
+    // Tag stats (use already loaded tags)
+    const topTags = tags.slice(0, 10);
+
+    // Activity by month
+    const monthCounts = {};
+    allBookmarks.forEach(b => {
+        if (b.added) {
+            const date = new Date(b.added);
+            const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            monthCounts[key] = (monthCounts[key] || 0) + 1;
+        }
+    });
+    const recentMonths = Object.entries(monthCounts)
+        .sort((a, b) => b[0].localeCompare(a[0]))
+        .slice(0, 6)
+        .reverse();
+
+    container.innerHTML = `
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-indigo-50 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-indigo-600">${totalBookmarks}</div>
+                <div class="text-sm text-gray-600">Total Bookmarks</div>
+            </div>
+            <div class="bg-yellow-50 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-yellow-600">${starredCount}</div>
+                <div class="text-sm text-gray-600">Starred</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-gray-600">${unreadCount}</div>
+                <div class="text-sm text-gray-600">Unread</div>
+            </div>
+            <div class="bg-green-50 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-green-600">${totalVisits}</div>
+                <div class="text-sm text-gray-600">Total Visits</div>
+            </div>
+        </div>
+
+        <!-- Activity Chart -->
+        <div class="bg-white border rounded-lg p-4">
+            <h3 class="font-medium text-gray-800 mb-3">Activity (Last 6 Months)</h3>
+            <div class="flex items-end gap-2 h-32">
+                ${recentMonths.map(([month, count]) => {
+                    const maxCount = Math.max(...recentMonths.map(r => r[1]));
+                    const height = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                    return `
+                        <div class="flex-1 flex flex-col items-center">
+                            <div class="w-full bg-indigo-500 rounded-t" style="height: ${height}%"></div>
+                            <div class="text-xs text-gray-500 mt-1">${month.slice(5)}</div>
+                            <div class="text-xs text-gray-400">${count}</div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+            <!-- Top Domains -->
+            <div class="bg-white border rounded-lg p-4">
+                <h3 class="font-medium text-gray-800 mb-3">Top Domains</h3>
+                <div class="space-y-2">
+                    ${topDomains.map(([domain, count]) => `
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 truncate">${escapeHtml(domain)}</span>
+                            <span class="text-sm text-gray-400">${count}</span>
+                        </div>
+                    `).join('')}
+                    ${topDomains.length === 0 ? '<p class="text-sm text-gray-400">No bookmarks</p>' : ''}
+                </div>
+            </div>
+
+            <!-- Top Tags -->
+            <div class="bg-white border rounded-lg p-4">
+                <h3 class="font-medium text-gray-800 mb-3">Top Tags</h3>
+                <div class="space-y-2">
+                    ${topTags.map(tag => `
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">${escapeHtml(tag.name)}</span>
+                            <span class="text-sm text-gray-400">${tag.count}</span>
+                        </div>
+                    `).join('')}
+                    ${topTags.length === 0 ? '<p class="text-sm text-gray-400">No tags</p>' : ''}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Import modal functions
+function showImportModal() {
+    document.getElementById('importModal').classList.remove('hidden');
+    document.getElementById('importFile').value = '';
+    feather.replace();
+}
+
+function hideImportModal() {
+    document.getElementById('importModal').classList.add('hidden');
+}
+
+async function performImport() {
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+
+    if (!file) {
+        showNotification('Please select a file to import', 'error');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const content = e.target.result;
+        const filename = file.name.toLowerCase();
+
+        let format = 'html';
+        if (filename.endsWith('.json')) format = 'json';
+        else if (filename.endsWith('.csv')) format = 'csv';
+        else if (filename.endsWith('.md')) format = 'markdown';
+        else if (filename.endsWith('.txt')) format = 'text';
+
+        try {
+            const response = await fetch(`${API_URL}/import`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ content, format })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                showNotification(`Imported ${result.imported || 0} bookmarks`, 'success');
+                hideImportModal();
+                loadData();
+            } else {
+                const error = await response.json();
+                showNotification(error.error || 'Import failed', 'error');
+            }
+        } catch (error) {
+            console.error('Import failed:', error);
+            showNotification('Import failed: ' + error.message, 'error');
+        }
+    };
+
+    reader.readAsText(file);
+}
+
+// Date View Functions
+async function loadDateView() {
+    const field = document.getElementById('dateField').value;
+    const granularity = document.getElementById('dateGranularity').value;
+
+    // Build query params based on navigation state
+    let url = `${API_URL}/bookmarks/by-date?field=${field}&granularity=${granularity}`;
+    if (dateNavigation.year) url += `&year=${dateNavigation.year}`;
+    if (dateNavigation.month) url += `&month=${dateNavigation.month}`;
+    if (dateNavigation.day) url += `&day=${dateNavigation.day}`;
+
+    try {
+        const response = await fetch(url);
+        dateViewData = await response.json();
+        renderDateGroups();
+        updateDateBreadcrumb();
+
+        // If we have specific filters, show the bookmarks
+        if (dateNavigation.year || dateViewData.groups.length === 1) {
+            // Get all bookmarks from the filtered groups
+            filteredBookmarks = dateViewData.groups.flatMap(g => g.bookmarks);
+            filteredBookmarks = sortBookmarks(filteredBookmarks);
+            updateDisplay();
+        }
+    } catch (error) {
+        console.error('Failed to load date view:', error);
+        showNotification('Failed to load date view', 'error');
+    }
+}
+
+function renderDateGroups() {
+    const container = document.getElementById('dateGroups');
+    const granularity = document.getElementById('dateGranularity').value;
+
+    if (!dateViewData || dateViewData.groups.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-sm px-3">No bookmarks</p>';
+        return;
+    }
+
+    container.innerHTML = dateViewData.groups.map(group => {
+        const label = formatDateKey(group.key, granularity);
+        return `
+            <button onclick="navigateDateTo('${group.key}')"
+                    class="date-group-item w-full text-left px-3 py-1.5 rounded text-sm flex items-center justify-between hover:bg-gray-100"
+                    data-key="${group.key}">
+                <span class="truncate">${escapeHtml(label)}</span>
+                <span class="text-gray-400 text-xs">${group.count}</span>
+            </button>
+        `;
+    }).join('');
+}
+
+function formatDateKey(key, granularity) {
+    const parts = key.split('-');
+    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    if (granularity === 'year' || parts.length === 1) {
+        return parts[0];
+    } else if (granularity === 'month' || parts.length === 2) {
+        return `${months[parseInt(parts[1])]} ${parts[0]}`;
+    } else {
+        return `${months[parseInt(parts[1])]} ${parseInt(parts[2])}, ${parts[0]}`;
+    }
+}
+
+function navigateDateTo(key) {
+    const parts = key.split('-');
+    const granularity = document.getElementById('dateGranularity').value;
+
+    if (parts.length === 1) {
+        // Year selected
+        dateNavigation.year = parseInt(parts[0]);
+        dateNavigation.month = null;
+        dateNavigation.day = null;
+        // If granularity is year, show bookmarks; otherwise drill down to month
+        if (granularity === 'year') {
+            loadDateView();
+        } else {
+            // Change to month view for drill-down
+            document.getElementById('dateGranularity').value = 'month';
+            loadDateView();
+        }
+    } else if (parts.length === 2) {
+        // Month selected
+        dateNavigation.year = parseInt(parts[0]);
+        dateNavigation.month = parseInt(parts[1]);
+        dateNavigation.day = null;
+        if (granularity === 'month') {
+            loadDateView();
+        } else {
+            // Change to day view for drill-down
+            document.getElementById('dateGranularity').value = 'day';
+            loadDateView();
+        }
+    } else {
+        // Day selected
+        dateNavigation.year = parseInt(parts[0]);
+        dateNavigation.month = parseInt(parts[1]);
+        dateNavigation.day = parseInt(parts[2]);
+        loadDateView();
+    }
+}
+
+function navigateDateUp() {
+    if (dateNavigation.day) {
+        dateNavigation.day = null;
+        document.getElementById('dateGranularity').value = 'month';
+    } else if (dateNavigation.month) {
+        dateNavigation.month = null;
+        document.getElementById('dateGranularity').value = 'year';
+    } else if (dateNavigation.year) {
+        dateNavigation.year = null;
+    }
+    loadDateView();
+}
+
+function updateDateBreadcrumb() {
+    const breadcrumb = document.getElementById('dateBreadcrumb');
+    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    if (dateNavigation.year || dateNavigation.month || dateNavigation.day) {
+        let path = '';
+        if (dateNavigation.year) path = dateNavigation.year;
+        if (dateNavigation.month) path += ` / ${months[dateNavigation.month]}`;
+        if (dateNavigation.day) path += ` / ${dateNavigation.day}`;
+
+        breadcrumb.innerHTML = `
+            <button onclick="navigateDateUp()" class="text-indigo-600 hover:underline flex items-center gap-1">
+                <i data-feather="arrow-left" class="w-3 h-3"></i>
+                Back
+            </button>
+            <span class="text-gray-600 mt-1 block">${path}</span>
+        `;
+        breadcrumb.classList.remove('hidden');
+        feather.replace();
+    } else {
+        breadcrumb.classList.add('hidden');
+    }
+}
+
+function handleDateOptionsChange() {
+    // Reset navigation when options change
+    dateNavigation = { year: null, month: null, day: null };
+    loadDateView();
+}
+
+function showDateOptions(show) {
+    const dateOptions = document.getElementById('dateOptions');
+    if (show) {
+        dateOptions.classList.remove('hidden');
+        loadDateView();
+    } else {
+        dateOptions.classList.add('hidden');
+        dateNavigation = { year: null, month: null, day: null };
+    }
 }

@@ -5,6 +5,84 @@ All notable changes to BTK (Bookmark Toolkit) are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.4] - 2025-12-02
+
+### Added - Major New Features
+
+**Health Checker, Reading Queue, Full-Text Search, and More**
+
+This release adds significant new functionality for bookmark management and discovery.
+
+#### Bookmark Health Checker (`btk bookmark health`)
+
+- **Async URL checking** with configurable concurrency and timeouts
+- **Status tracking**: OK, redirect, client/server error, timeout, SSL error, connection error
+- **CLI options**: `--broken` (re-check broken), `--unchecked`, `--dry-run`, `--verbose`
+- **REST API**: `POST /bookmarks/health` for batch health checking
+- Updates `reachable` field in database automatically
+
+#### Reading Queue (`btk queue`)
+
+- **Queue management**: Add/remove bookmarks from reading queue
+- **Progress tracking**: Track reading progress (0-100%)
+- **Priority levels**: 5 priority levels (1=highest)
+- **CLI commands**:
+  - `btk queue list` - List queue with progress bars
+  - `btk queue add <ids>` - Add bookmarks with optional `--priority`
+  - `btk queue remove <ids>` - Remove from queue
+  - `btk queue progress <id> <percent>` - Update progress
+  - `btk queue priority <id> <level>` - Set priority
+  - `btk queue next` - Get next recommended item
+  - `btk queue stats` - Queue statistics
+- **REST API**: `GET /queue`, `GET /queue/next`, `GET /queue/stats`, `POST /queue`
+- **Shell**: `/queue` smart collection for browsing queue items
+
+#### Full-Text Search (`btk bookmark search --fts`)
+
+- **SQLite FTS5** virtual table for fast, ranked search
+- **Porter stemmer** tokenization for better matching
+- **Search features**:
+  - Prefix matching (`python*`)
+  - Phrase search (`"exact phrase"`)
+  - Boolean operators (AND, OR, NOT)
+  - BM25 relevance ranking
+- **CLI**: `btk bookmark search --fts <query>`
+- **Index management**:
+  - `btk db build-index` - Build/rebuild FTS index
+  - `btk db index-stats` - Show index statistics
+- Graceful fallback to LIKE search when FTS unavailable
+
+#### Date-Based Navigation
+
+- **Shell**: `/by-date/{added,visited}/{year}/{month}/{day}` hierarchical navigation
+- **CLI**: `btk bookmark list --by-date added|visited --date-granularity year|month|day`
+- **REST API**: `GET /bookmarks/by-date?field=added&granularity=month&year=2024`
+- **Frontend**: Date view tab with drill-down navigation
+
+#### Chrome Extension Enhancements (v0.2.0)
+
+- **Keyboard shortcuts**:
+  - `Alt+B` - Open popup
+  - `Alt+Shift+B` - Quick add current page
+  - `Alt+S` - Toggle star on current page
+- **Context menus**:
+  - "Add page to BTK" on any page
+  - "Add link to BTK" on links
+  - "Add with selected text as description" on selections
+  - "Star this page" for quick starring
+- **Badge indicator**: Shows bookmark/star status on current tab
+- **Date browsing**: New "Dates" tab for time-based navigation
+
+### Tests
+
+- 27 tests for date features
+- 18 tests for health checker
+- 30 tests for reading queue
+- 24 tests for full-text search
+- **99 new tests total**
+
+---
+
 ## [0.7.3] - 2025-11-29
 
 ### Added - New CLI Commands

@@ -188,30 +188,150 @@ def cmd_list(args):
     exclude_archived = not (hasattr(args, 'include_archived') and args.include_archived)
 
     bookmarks = db.list(
-        limit=args.limit,
+        limit=args.limit if not hasattr(args, 'by_date') or not args.by_date else None,
         offset=args.offset,
         order_by=args.sort,
         exclude_archived=exclude_archived
     )
 
-    output_bookmarks(bookmarks, args.output)
+    # Handle --by-date grouping
+    if hasattr(args, 'by_date') and args.by_date:
+        output_bookmarks_by_date(bookmarks, args.by_date, args.date_granularity, args.output)
+    else:
+        output_bookmarks(bookmarks, args.output)
+
+
+def output_bookmarks_by_date(bookmarks: List[Bookmark], field: str, granularity: str, format: str):
+    """Output bookmarks grouped by date."""
+    from collections import defaultdict
+
+    # Map field name to attribute
+    attr_name = 'added' if field == 'added' else 'last_visited'
+
+    # Group bookmarks by date
+    grouped = defaultdict(list)
+    month_names = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    for b in bookmarks:
+        date_val = getattr(b, attr_name)
+        if not date_val:
+            continue
+
+        # Generate key based on granularity
+        if granularity == 'year':
+            key = str(date_val.year)
+        elif granularity == 'month':
+            key = f"{date_val.year}-{date_val.month:02d}"
+        else:  # day
+            key = f"{date_val.year}-{date_val.month:02d}-{date_val.day:02d}"
+
+        grouped[key].append(b)
+
+    # Sort keys in reverse chronological order
+    sorted_keys = sorted(grouped.keys(), reverse=True)
+
+    if format == "json":
+        data = {
+            'field': field,
+            'granularity': granularity,
+            'groups': {
+                key: [{
+                    "id": b.id,
+                    "url": b.url,
+                    "title": b.title,
+                    "tags": [t.name for t in b.tags],
+                    "stars": b.stars,
+                    "visits": b.visit_count,
+                    "added": b.added.isoformat() if b.added else None,
+                } for b in grouped[key]]
+                for key in sorted_keys
+            }
+        }
+        print(json.dumps(data, indent=2))
+    else:
+        # Display grouped output
+        field_label = "Date Added" if field == 'added' else "Last Visited"
+        console.print(f"\n[bold cyan]Bookmarks by {field_label} ({granularity}):[/bold cyan]\n")
+
+        for key in sorted_keys:
+            # Format the key for display
+            parts = key.split('-')
+            if len(parts) == 1:
+                label = parts[0]
+            elif len(parts) == 2:
+                label = f"{month_names[int(parts[1])]} {parts[0]}"
+            else:
+                label = f"{month_names[int(parts[1])]} {int(parts[2])}, {parts[0]}"
+
+            console.print(f"[bold yellow]{label}[/bold yellow] ({len(grouped[key])} bookmarks)")
+
+            for b in grouped[key][:10]:  # Show first 10 per group
+                star = "★" if b.stars else " "
+                console.print(f"  {star} [{b.id}] {b.title[:50]}")
+
+            if len(grouped[key]) > 10:
+                console.print(f"  [dim]... and {len(grouped[key]) - 10} more[/dim]")
+            console.print()
 
 
 def cmd_search(args):
     """Search bookmarks."""
     db = get_db(args.db)
 
-    filters = build_filters(args)
-    bookmarks = db.search(
-        args.query if hasattr(args, 'query') else None,
-        in_content=args.in_content if hasattr(args, 'in_content') else False,
-        **filters
-    )
+    # Use FTS if requested
+    if hasattr(args, 'fts') and args.fts:
+        from btk.fts import get_fts_index
+        from btk.config import get_config
 
-    if args.limit:
-        bookmarks = bookmarks[:args.limit]
+        config = get_config()
+        fts = get_fts_index(config.database)
 
-    output_bookmarks(bookmarks, args.output)
+        results = fts.search(
+            args.query,
+            limit=args.limit or 50,
+            in_content=args.in_content if hasattr(args, 'in_content') else True
+        )
+
+        if not results:
+            console.print("[yellow]No results found[/yellow]")
+            return
+
+        if args.output == "json":
+            data = [r.to_dict() for r in results]
+            print(json.dumps(data, indent=2))
+        else:
+            table = Table(title=f"Search Results for '{args.query}'")
+            table.add_column("ID", style="cyan")
+            table.add_column("Title", style="green")
+            table.add_column("URL", style="blue")
+            table.add_column("Relevance", style="yellow")
+
+            for result in results:
+                table.add_row(
+                    str(result.bookmark_id),
+                    result.title[:40] if result.title else "N/A",
+                    result.url[:40] if result.url else "N/A",
+                    f"{result.rank:.2f}"
+                )
+
+            console.print(table)
+
+            if results and results[0].snippet:
+                console.print("\n[bold]Best match snippet:[/bold]")
+                console.print(f"  {results[0].snippet}")
+    else:
+        # Standard search
+        filters = build_filters(args)
+        bookmarks = db.search(
+            args.query if hasattr(args, 'query') else None,
+            in_content=args.in_content if hasattr(args, 'in_content') else False,
+            **filters
+        )
+
+        if args.limit:
+            bookmarks = bookmarks[:args.limit]
+
+        output_bookmarks(bookmarks, args.output)
 
 
 def cmd_get(args):
@@ -660,6 +780,294 @@ def cmd_query(args):
         sys.exit(1)
 
 
+def cmd_health(args):
+    """Check health of bookmark URLs."""
+    from btk.health_checker import run_health_check, summarize_results, HealthStatus
+
+    db = get_db(args.db)
+
+    # Determine which bookmarks to check
+    if args.id:
+        bookmarks = []
+        for bid in args.id:
+            try:
+                bookmark = db.get(id=int(bid))
+            except ValueError:
+                bookmark = db.get(unique_id=bid)
+            if bookmark:
+                bookmarks.append(bookmark)
+            else:
+                console.print(f"[yellow]Warning: Bookmark not found: {bid}[/yellow]")
+    elif args.broken:
+        bookmarks = db.search(reachable=False)
+        if not bookmarks:
+            console.print("[green]No broken bookmarks found![/green]")
+            return
+    elif args.unchecked:
+        # Get bookmarks that have never been checked (reachable is None)
+        with db.session() as session:
+            from sqlalchemy import select
+            stmt = select(Bookmark).where(Bookmark.reachable.is_(None))
+            bookmarks = list(session.scalars(stmt).all())
+        if not bookmarks:
+            console.print("[green]All bookmarks have been checked![/green]")
+            return
+    else:
+        bookmarks = db.all()
+
+    if not bookmarks:
+        console.print("[yellow]No bookmarks to check[/yellow]")
+        return
+
+    console.print(f"Checking {len(bookmarks)} bookmark(s)...")
+
+    # Prepare bookmark list for health checker
+    bookmark_list = [(b.id, b.url) for b in bookmarks]
+
+    # Progress callback
+    def progress_callback(completed, total):
+        pass  # We'll use rich progress instead
+
+    # Run health check with progress
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console
+    ) as progress:
+        task = progress.add_task(f"Checking 0/{len(bookmark_list)} URLs...", total=len(bookmark_list))
+
+        checked = [0]
+
+        def update_progress(completed, total):
+            checked[0] = completed
+            progress.update(task, description=f"Checking {completed}/{total} URLs...")
+            progress.update(task, completed=completed)
+
+        results = run_health_check(
+            bookmark_list,
+            concurrency=args.concurrency,
+            timeout=args.timeout,
+            progress_callback=update_progress
+        )
+
+    # Update database with results
+    if not args.dry_run:
+        updated_count = 0
+        for result in results:
+            db.update(result.bookmark_id, reachable=result.is_reachable)
+            updated_count += 1
+
+    # Generate summary
+    summary = summarize_results(results)
+
+    # Output results
+    if args.output == "json":
+        output_data = {
+            "summary": summary,
+            "results": [r.to_dict() for r in results] if args.verbose else []
+        }
+        print(json.dumps(output_data, indent=2, default=str))
+    else:
+        # Display summary table
+        table = Table(title="Health Check Results")
+        table.add_column("Status", style="cyan")
+        table.add_column("Count", style="green")
+
+        for status, count in summary["by_status"].items():
+            style = "green" if status in ("ok", "redirect") else "red"
+            table.add_row(status, str(count), style=style)
+
+        table.add_row("─" * 15, "─" * 5)
+        table.add_row("Reachable", str(summary["reachable"]), style="green")
+        table.add_row("Unreachable", str(summary["unreachable"]), style="red")
+
+        if summary["avg_response_time_ms"]:
+            table.add_row("Avg Response", f"{summary['avg_response_time_ms']:.0f}ms")
+
+        console.print(table)
+
+        # Show broken bookmarks
+        if summary["broken_bookmarks"] and (args.verbose or len(summary["broken_bookmarks"]) <= 10):
+            console.print("\n[red]Broken Bookmarks:[/red]")
+            for broken in summary["broken_bookmarks"]:
+                console.print(f"  [{broken['id']}] {broken['url'][:60]}")
+                console.print(f"       Status: {broken['status']}, Error: {broken.get('error', 'N/A')}")
+
+        # Show redirected bookmarks if verbose
+        if args.verbose and summary["redirected_bookmarks"]:
+            console.print("\n[yellow]Redirected Bookmarks:[/yellow]")
+            for redir in summary["redirected_bookmarks"]:
+                console.print(f"  [{redir['id']}] {redir['url'][:50]}")
+                console.print(f"       → {redir['redirect_url'][:50]}")
+
+        if not args.dry_run:
+            console.print(f"\n[green]✓ Updated {updated_count} bookmarks in database[/green]")
+        else:
+            console.print(f"\n[yellow]Dry run - no changes made to database[/yellow]")
+
+
+def cmd_queue(args):
+    """Manage reading queue."""
+    from btk.reading_queue import (
+        get_queue, get_queue_stats, get_next_to_read,
+        add_to_queue, remove_from_queue, update_progress, set_priority
+    )
+
+    db = get_db(args.db)
+    cmd = args.queue_command
+
+    if cmd == "list":
+        sort_by = args.sort or 'priority'
+        queue = get_queue(db, include_completed=args.all, sort_by=sort_by)
+
+        if not queue:
+            console.print("[yellow]Reading queue is empty[/yellow]")
+            return
+
+        if args.output == "json":
+            data = [item.to_dict() for item in queue]
+            print(json.dumps(data, indent=2))
+        else:
+            table = Table(title="Reading Queue")
+            table.add_column("ID", style="cyan")
+            table.add_column("Title", style="green")
+            table.add_column("Progress", style="blue")
+            table.add_column("Pri", style="yellow")
+            table.add_column("Queued", style="magenta")
+
+            for item in queue:
+                progress_bar = f"[{'█' * (item.progress // 10)}{'░' * (10 - item.progress // 10)}] {item.progress}%"
+                queued = item.queued_at.strftime("%Y-%m-%d") if item.queued_at else "N/A"
+                table.add_row(
+                    str(item.bookmark.id),
+                    item.bookmark.title[:40],
+                    progress_bar,
+                    str(item.priority),
+                    queued
+                )
+
+            console.print(table)
+
+    elif cmd == "add":
+        for bid in args.ids:
+            try:
+                bookmark_id = int(bid)
+            except ValueError:
+                bookmark = db.get(unique_id=bid)
+                bookmark_id = bookmark.id if bookmark else None
+
+            if bookmark_id and add_to_queue(db, bookmark_id, priority=args.priority):
+                console.print(f"[green]✓ Added bookmark {bid} to reading queue[/green]")
+            else:
+                console.print(f"[red]✗ Failed to add bookmark {bid}[/red]")
+
+    elif cmd == "remove":
+        for bid in args.ids:
+            try:
+                bookmark_id = int(bid)
+            except ValueError:
+                bookmark = db.get(unique_id=bid)
+                bookmark_id = bookmark.id if bookmark else None
+
+            if bookmark_id and remove_from_queue(db, bookmark_id):
+                console.print(f"[green]✓ Removed bookmark {bid} from reading queue[/green]")
+            else:
+                console.print(f"[red]✗ Failed to remove bookmark {bid}[/red]")
+
+    elif cmd == "progress":
+        try:
+            bookmark_id = int(args.id)
+        except ValueError:
+            bookmark = db.get(unique_id=args.id)
+            bookmark_id = bookmark.id if bookmark else None
+
+        if bookmark_id and update_progress(db, bookmark_id, args.percent):
+            console.print(f"[green]✓ Updated progress to {args.percent}%[/green]")
+            if args.percent >= 100:
+                console.print("[blue]Item marked as complete and removed from queue[/blue]")
+        else:
+            console.print(f"[red]✗ Failed to update progress[/red]")
+
+    elif cmd == "priority":
+        try:
+            bookmark_id = int(args.id)
+        except ValueError:
+            bookmark = db.get(unique_id=args.id)
+            bookmark_id = bookmark.id if bookmark else None
+
+        if bookmark_id and set_priority(db, bookmark_id, args.level):
+            console.print(f"[green]✓ Set priority to {args.level}[/green]")
+        else:
+            console.print(f"[red]✗ Failed to set priority[/red]")
+
+    elif cmd == "next":
+        item = get_next_to_read(db)
+        if item:
+            if args.output == "json":
+                print(json.dumps(item.to_dict(), indent=2))
+            else:
+                console.print(f"[bold green]Next to read:[/bold green]")
+                console.print(f"  [{item.bookmark.id}] {item.bookmark.title}")
+                console.print(f"  URL: {item.bookmark.url}")
+                console.print(f"  Progress: {item.progress}% | Priority: {item.priority}")
+        else:
+            console.print("[yellow]Reading queue is empty[/yellow]")
+
+    elif cmd == "stats":
+        stats = get_queue_stats(db)
+
+        if args.output == "json":
+            print(json.dumps(stats, indent=2))
+        else:
+            table = Table(title="Reading Queue Statistics")
+            table.add_column("Metric", style="cyan")
+            table.add_column("Value", style="green")
+
+            table.add_row("Total in Queue", str(stats['total']))
+            table.add_row("Not Started", str(stats['not_started']))
+            table.add_row("In Progress", str(stats['in_progress']))
+            table.add_row("Completed", str(stats['completed']))
+            table.add_row("Average Progress", f"{stats['avg_progress']}%")
+
+            if stats['estimated_remaining_time']:
+                hours = stats['estimated_remaining_time'] // 60
+                mins = stats['estimated_remaining_time'] % 60
+                table.add_row("Est. Remaining Time", f"{hours}h {mins}m")
+
+            console.print(table)
+
+            if stats['by_priority']:
+                console.print("\n[bold]By Priority:[/bold]")
+                for p, count in sorted(stats['by_priority'].items()):
+                    console.print(f"  Priority {p}: {count} items")
+
+    elif cmd == "estimate-times":
+        from btk.reading_queue import auto_estimate_queue_times
+
+        console.print("Estimating reading times from cached content...")
+
+        estimates = auto_estimate_queue_times(db, overwrite=args.overwrite if hasattr(args, 'overwrite') else False)
+
+        if estimates:
+            if args.output == "json":
+                print(json.dumps(estimates, indent=2))
+            else:
+                table = Table(title="Reading Time Estimates")
+                table.add_column("ID", style="cyan")
+                table.add_column("Est. Time", style="green")
+
+                for bid, minutes in estimates.items():
+                    hours = minutes // 60
+                    mins = minutes % 60
+                    time_str = f"{hours}h {mins}m" if hours > 0 else f"{mins}m"
+                    table.add_row(str(bid), time_str)
+
+                console.print(table)
+                console.print(f"\n[green]✓ Updated {len(estimates)} items[/green]")
+        else:
+            console.print("[yellow]No items to estimate (all have estimates or no cached content)[/yellow]")
+
+
 def cmd_stats(args):
     """Show database statistics."""
     db = get_db(args.db)
@@ -732,6 +1140,119 @@ def cmd_db_schema(args):
 
             console.print(table)
             console.print()  # Add spacing between tables
+
+
+def cmd_fts_build(args):
+    """Build or rebuild the FTS search index."""
+    from btk.fts import get_fts_index
+    from btk.config import get_config
+
+    config = get_config()
+    fts = get_fts_index(config.database)
+
+    console.print("Building full-text search index...")
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console
+    ) as progress:
+        task = progress.add_task("Indexing bookmarks...", total=None)
+
+        def update_progress(current, total):
+            progress.update(task, description=f"Indexed {current}/{total} bookmarks...")
+
+        count = fts.rebuild_index(progress_callback=update_progress)
+
+    console.print(f"[green]✓ Indexed {count} bookmarks[/green]")
+
+
+def cmd_fts_stats(args):
+    """Show FTS index statistics."""
+    from btk.fts import get_fts_index
+    from btk.config import get_config
+
+    config = get_config()
+    fts = get_fts_index(config.database)
+
+    stats = fts.get_stats()
+
+    if args.output == "json":
+        print(json.dumps(stats, indent=2))
+    else:
+        if stats.get('exists'):
+            console.print("[green]FTS Index Status: Active[/green]")
+            console.print(f"  Documents indexed: {stats['documents']}")
+            console.print(f"  Table: {stats['table_name']}")
+        else:
+            console.print("[yellow]FTS Index Status: Not built[/yellow]")
+            console.print("  Run 'btk db build-index' to create the search index")
+
+
+def cmd_cleanup(args):
+    """Auto-cleanup stale and broken bookmarks."""
+    from btk.cleanup import cleanup_all, get_cleanup_preview
+
+    db = get_db(args.db)
+
+    # Parse options
+    broken = not args.no_broken
+    stale_days = args.stale_days if hasattr(args, 'stale_days') else 365
+    unvisited_days = args.unvisited_days if hasattr(args, 'unvisited_days') else 90
+    dry_run = not args.apply if hasattr(args, 'apply') else True
+
+    if args.preview:
+        # Show preview
+        preview = get_cleanup_preview(db, broken, stale_days, unvisited_days)
+
+        if args.output == "json":
+            print(json.dumps(preview, indent=2, default=str))
+        else:
+            console.print("[bold]Cleanup Preview[/bold]\n")
+
+            if preview['broken']:
+                console.print(f"[red]Broken URLs ({len(preview['broken'])}):[/red]")
+                for item in preview['broken'][:10]:
+                    console.print(f"  [{item['id']}] {item['title'][:40]}")
+                if len(preview['broken']) > 10:
+                    console.print(f"  ... and {len(preview['broken']) - 10} more")
+
+            if preview['stale']:
+                console.print(f"\n[yellow]Stale ({len(preview['stale'])}, not visited in {stale_days}+ days):[/yellow]")
+                for item in preview['stale'][:10]:
+                    console.print(f"  [{item['id']}] {item['title'][:40]}")
+                if len(preview['stale']) > 10:
+                    console.print(f"  ... and {len(preview['stale']) - 10} more")
+
+            if preview['unvisited']:
+                console.print(f"\n[cyan]Unvisited ({len(preview['unvisited'])}, added {unvisited_days}+ days ago):[/cyan]")
+                for item in preview['unvisited'][:10]:
+                    console.print(f"  [{item['id']}] {item['title'][:40]}")
+                if len(preview['unvisited']) > 10:
+                    console.print(f"  ... and {len(preview['unvisited']) - 10} more")
+
+            console.print(f"\n[bold]Total: {preview['total']} bookmarks would be archived[/bold]")
+            console.print("\nRun with --apply to archive these bookmarks")
+    else:
+        # Run cleanup
+        summary = cleanup_all(db, broken, stale_days, unvisited_days, dry_run)
+
+        if args.output == "json":
+            print(json.dumps(summary.to_dict(), indent=2))
+        else:
+            if dry_run:
+                console.print("[yellow]Dry run - no changes made[/yellow]\n")
+                console.print(f"Would archive: {summary.skipped} bookmarks")
+                console.print("\nRun with --apply to execute cleanup")
+            else:
+                console.print(f"[green]✓ Archived {summary.archived} bookmarks[/green]")
+
+            if args.verbose and summary.results:
+                console.print("\n[bold]Details:[/bold]")
+                for result in summary.results[:20]:
+                    console.print(f"  [{result.bookmark_id}] {result.title[:40]} - {result.reason}")
+                if len(summary.results) > 20:
+                    console.print(f"  ... and {len(summary.results) - 20} more")
 
 
 def cmd_import(args):
@@ -1598,12 +2119,18 @@ Configuration:
                         default="added", help="Sort order")
     bm_list.add_argument("--include-archived", action="store_true", help="Include archived bookmarks")
     bm_list.add_argument("--starred", action="store_true", help="Filter to starred bookmarks")
+    bm_list.add_argument("--by-date", choices=["added", "visited"],
+                        help="Group bookmarks by date (added or last visited)")
+    bm_list.add_argument("--date-granularity", choices=["year", "month", "day"],
+                        default="month", help="Date grouping level (default: month)")
     bm_list.set_defaults(func=cmd_list)
 
     # bookmark search
     bm_search = bookmark_subparsers.add_parser("search", help="Search bookmarks")
     bm_search.add_argument("query", nargs='?', default='', help="Search query (optional)")
     bm_search.add_argument("--in-content", action="store_true", help="Search within cached content")
+    bm_search.add_argument("--fts", action="store_true",
+                          help="Use FTS5 full-text search (faster, with ranking)")
     bm_search.add_argument("--limit", type=int, help="Maximum results")
     bm_search.add_argument("--starred", action="store_true", help="Filter to starred bookmarks")
     bm_search.add_argument("--archived", action="store_true", help="Filter to archived bookmarks")
@@ -1647,6 +2174,23 @@ Configuration:
     bm_query.add_argument("sql", help="SQL WHERE clause")
     bm_query.set_defaults(func=cmd_query)
 
+    # bookmark health
+    bm_health = bookmark_subparsers.add_parser("health", help="Check URL reachability")
+    bm_health.add_argument("--id", nargs="+", help="Check specific bookmark IDs")
+    bm_health.add_argument("--broken", action="store_true",
+                          help="Re-check only previously broken bookmarks")
+    bm_health.add_argument("--unchecked", action="store_true",
+                          help="Check only bookmarks that have never been checked")
+    bm_health.add_argument("--concurrency", type=int, default=10,
+                          help="Maximum concurrent requests (default: 10)")
+    bm_health.add_argument("--timeout", type=float, default=10.0,
+                          help="Request timeout in seconds (default: 10)")
+    bm_health.add_argument("--dry-run", action="store_true",
+                          help="Check URLs without updating database")
+    bm_health.add_argument("--verbose", "-v", action="store_true",
+                          help="Show detailed results including redirects")
+    bm_health.set_defaults(func=cmd_health)
+
     # =================
     # TAG GROUP
     # =================
@@ -1686,6 +2230,59 @@ Configuration:
     # tag stats
     tag_stats = tag_subparsers.add_parser("stats", help="Show tag statistics")
     tag_stats.set_defaults(func=lambda args: print("tag stats not yet implemented"))
+
+    # =================
+    # QUEUE GROUP
+    # =================
+    queue_parser = subparsers.add_parser("queue", help="Reading queue management")
+    queue_subparsers = queue_parser.add_subparsers(dest="queue_command", required=True)
+
+    # queue list
+    queue_list = queue_subparsers.add_parser("list", help="List reading queue")
+    queue_list.add_argument("--sort", choices=["priority", "queued_at", "progress", "title"],
+                           default="priority", help="Sort order (default: priority)")
+    queue_list.add_argument("--all", action="store_true", help="Include completed items")
+    queue_list.set_defaults(func=cmd_queue)
+
+    # queue add
+    queue_add = queue_subparsers.add_parser("add", help="Add bookmarks to reading queue")
+    queue_add.add_argument("ids", nargs="+", help="Bookmark IDs to add")
+    queue_add.add_argument("--priority", "-p", type=int, default=3, choices=[1, 2, 3, 4, 5],
+                          help="Priority level (1=highest, default: 3)")
+    queue_add.set_defaults(func=cmd_queue)
+
+    # queue remove
+    queue_remove = queue_subparsers.add_parser("remove", help="Remove bookmarks from reading queue")
+    queue_remove.add_argument("ids", nargs="+", help="Bookmark IDs to remove")
+    queue_remove.set_defaults(func=cmd_queue)
+
+    # queue progress
+    queue_progress = queue_subparsers.add_parser("progress", help="Update reading progress")
+    queue_progress.add_argument("id", help="Bookmark ID")
+    queue_progress.add_argument("percent", type=int, help="Progress percentage (0-100)")
+    queue_progress.set_defaults(func=cmd_queue)
+
+    # queue priority
+    queue_priority = queue_subparsers.add_parser("priority", help="Set item priority")
+    queue_priority.add_argument("id", help="Bookmark ID")
+    queue_priority.add_argument("level", type=int, choices=[1, 2, 3, 4, 5],
+                               help="Priority level (1=highest)")
+    queue_priority.set_defaults(func=cmd_queue)
+
+    # queue next
+    queue_next = queue_subparsers.add_parser("next", help="Get next item to read")
+    queue_next.set_defaults(func=cmd_queue)
+
+    # queue stats
+    queue_stats = queue_subparsers.add_parser("stats", help="Show queue statistics")
+    queue_stats.set_defaults(func=cmd_queue)
+
+    # queue estimate-times
+    queue_estimate = queue_subparsers.add_parser("estimate-times",
+                                                  help="Auto-estimate reading times from content")
+    queue_estimate.add_argument("--overwrite", action="store_true",
+                               help="Overwrite existing estimates")
+    queue_estimate.set_defaults(func=cmd_queue)
 
     # =================
     # CONTENT GROUP
@@ -1760,6 +2357,35 @@ Configuration:
     # db stats
     db_stats = db_subparsers.add_parser("stats", help="Show database statistics")
     db_stats.set_defaults(func=cmd_stats)
+
+    # db build-index
+    db_build_index = db_subparsers.add_parser("build-index",
+                                              help="Build full-text search index")
+    db_build_index.set_defaults(func=cmd_fts_build)
+
+    # db index-stats
+    db_index_stats = db_subparsers.add_parser("index-stats",
+                                              help="Show full-text search index statistics")
+    db_index_stats.set_defaults(func=cmd_fts_stats)
+
+    # db cleanup
+    db_cleanup = db_subparsers.add_parser("cleanup",
+                                           help="Auto-cleanup stale and broken bookmarks")
+    db_cleanup.add_argument("--preview", action="store_true",
+                           help="Show what would be cleaned up without making changes")
+    db_cleanup.add_argument("--apply", action="store_true",
+                           help="Actually archive bookmarks (default is dry-run)")
+    db_cleanup.add_argument("--no-broken", action="store_true",
+                           help="Skip broken/unreachable bookmarks")
+    db_cleanup.add_argument("--stale-days", type=int, default=365,
+                           help="Days threshold for stale bookmarks (default: 365, 0 to skip)")
+    db_cleanup.add_argument("--unvisited-days", type=int, default=90,
+                           help="Days threshold for unvisited bookmarks (default: 90, 0 to skip)")
+    db_cleanup.add_argument("-v", "--verbose", action="store_true",
+                           help="Show detailed results")
+    db_cleanup.add_argument("-o", "--output", choices=["table", "json"], default="table",
+                           help="Output format")
+    db_cleanup.set_defaults(func=cmd_cleanup)
 
     # =================
     # GRAPH GROUP
