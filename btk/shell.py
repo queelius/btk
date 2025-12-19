@@ -104,6 +104,11 @@ SMART_COLLECTIONS = {
         filter_func=lambda bms: [b for b in bms if (b.extra_data or {}).get('reading_queue', False)],
         description="Reading queue"
     ),
+    'media': SmartCollection(
+        name='media',
+        filter_func=lambda bms: [b for b in bms if b.media_type is not None],
+        description="All media bookmarks"
+    ),
 }
 
 
@@ -183,7 +188,7 @@ class BookmarkShell(cmd.Cmd):
 
     intro = '''
 ╔════════════════════════════════════════════════════════════════╗
-║                     BTK Shell v0.7.4                            ║
+║                     BTK Shell v0.7.5                            ║
 ║          Browse your bookmarks like a filesystem                ║
 ╚════════════════════════════════════════════════════════════════╝
 
@@ -387,6 +392,10 @@ Type 'tutorial' for a quick tour.
 
         elif parts[0] == 'by-date':
             return self._get_by_date_context(parts)
+
+        # Media collection with hierarchical paths
+        elif parts[0] == 'media':
+            return self._get_media_context(parts)
 
         # Check for smart collections
         elif parts[0] in SMART_COLLECTIONS:
@@ -594,6 +603,10 @@ Type 'tutorial' for a quick tour.
         elif parts[0] == 'by-date':
             return self._get_by_date_context(parts)
 
+        # Media collection with hierarchical paths
+        elif parts[0] == 'media':
+            return self._get_media_context(parts)
+
         # Check for smart collections
         elif parts[0] in SMART_COLLECTIONS:
             collection = SMART_COLLECTIONS[parts[0]]
@@ -718,6 +731,132 @@ Type 'tutorial' for a quick tour.
                 result.append(b)
         return result
 
+    def _get_media_context(self, parts):
+        """Get context for /media navigation.
+
+        Structure:
+            /media                      - Show media subdirectories
+            /media/videos               - Video bookmarks
+            /media/audio                - Audio bookmarks
+            /media/documents            - Document bookmarks (papers, PDFs)
+            /media/by-source            - Show source platforms
+            /media/by-source/youtube    - YouTube bookmarks
+            /media/by-channel           - Show channels/authors
+            /media/by-channel/<name>    - Bookmarks by author
+        """
+        all_bookmarks = self.db.list()
+        media_bookmarks = [b for b in all_bookmarks if b.media_type is not None]
+
+        if len(parts) == 1:
+            # /media root - show subdirectories
+            return {'type': 'media_root', 'bookmarks': media_bookmarks}
+
+        subpath = parts[1]
+
+        # Check if navigating to specific bookmark
+        if subpath.isdigit():
+            bookmark_id = int(subpath)
+            bookmark = self.db.get(bookmark_id)
+            if bookmark and bookmark.media_type:
+                return {'type': 'bookmark', 'bookmark_id': bookmark_id, 'bookmark': bookmark}
+
+        # Media type filters
+        if subpath == 'videos':
+            bookmarks = [b for b in media_bookmarks if b.media_type == 'video']
+            if len(parts) == 3 and parts[2].isdigit():
+                bookmark_id = int(parts[2])
+                bookmark = self.db.get(bookmark_id)
+                if bookmark:
+                    return {'type': 'bookmark', 'bookmark_id': bookmark_id, 'bookmark': bookmark}
+            return {
+                'type': 'smart_collection',
+                'name': 'media/videos',
+                'description': 'Video bookmarks',
+                'bookmarks': bookmarks
+            }
+
+        elif subpath == 'audio':
+            bookmarks = [b for b in media_bookmarks if b.media_type == 'audio']
+            if len(parts) == 3 and parts[2].isdigit():
+                bookmark_id = int(parts[2])
+                bookmark = self.db.get(bookmark_id)
+                if bookmark:
+                    return {'type': 'bookmark', 'bookmark_id': bookmark_id, 'bookmark': bookmark}
+            return {
+                'type': 'smart_collection',
+                'name': 'media/audio',
+                'description': 'Audio bookmarks',
+                'bookmarks': bookmarks
+            }
+
+        elif subpath == 'documents':
+            bookmarks = [b for b in media_bookmarks if b.media_type == 'document']
+            if len(parts) == 3 and parts[2].isdigit():
+                bookmark_id = int(parts[2])
+                bookmark = self.db.get(bookmark_id)
+                if bookmark:
+                    return {'type': 'bookmark', 'bookmark_id': bookmark_id, 'bookmark': bookmark}
+            return {
+                'type': 'smart_collection',
+                'name': 'media/documents',
+                'description': 'Document bookmarks (papers, PDFs)',
+                'bookmarks': bookmarks
+            }
+
+        # Source-based navigation
+        elif subpath == 'by-source':
+            if len(parts) == 2:
+                # Show available sources
+                sources = {}
+                for b in media_bookmarks:
+                    if b.media_source:
+                        sources[b.media_source] = sources.get(b.media_source, 0) + 1
+                return {'type': 'media_sources', 'sources': sources, 'bookmarks': []}
+            else:
+                source = parts[2]
+                bookmarks = [b for b in media_bookmarks if b.media_source == source]
+                if len(parts) == 4 and parts[3].isdigit():
+                    bookmark_id = int(parts[3])
+                    bookmark = self.db.get(bookmark_id)
+                    if bookmark:
+                        return {'type': 'bookmark', 'bookmark_id': bookmark_id, 'bookmark': bookmark}
+                return {
+                    'type': 'smart_collection',
+                    'name': f'media/by-source/{source}',
+                    'description': f'{source.title()} bookmarks',
+                    'bookmarks': bookmarks
+                }
+
+        # Channel/author-based navigation
+        elif subpath == 'by-channel':
+            if len(parts) == 2:
+                # Show available channels
+                channels = {}
+                for b in media_bookmarks:
+                    if b.author_name:
+                        channels[b.author_name] = channels.get(b.author_name, 0) + 1
+                return {'type': 'media_channels', 'channels': channels, 'bookmarks': []}
+            else:
+                channel = '/'.join(parts[2:])
+                # Handle bookmark ID at end
+                channel_parts = channel.split('/')
+                if channel_parts[-1].isdigit():
+                    bookmark_id = int(channel_parts[-1])
+                    bookmark = self.db.get(bookmark_id)
+                    if bookmark:
+                        return {'type': 'bookmark', 'bookmark_id': bookmark_id, 'bookmark': bookmark}
+                    channel = '/'.join(channel_parts[:-1])
+
+                bookmarks = [b for b in media_bookmarks if b.author_name == channel]
+                return {
+                    'type': 'smart_collection',
+                    'name': f'media/by-channel/{channel}',
+                    'description': f'Content by {channel}',
+                    'bookmarks': bookmarks
+                }
+
+        return {'type': 'unknown'}
+
     def _get_current_bookmark(self):
         """Get current bookmark from context (if in a bookmark context)."""
         ctx = self._get_context()
@@ -795,6 +934,12 @@ Type 'tutorial' for a quick tour.
             months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
             title = f"{ctx['field'].capitalize()}: {months[ctx['month']]} {ctx['day']}, {ctx['year']}"
             self._ls_bookmarks(ctx['bookmarks'], long_format, title=title)
+        elif ctx['type'] == 'media_root':
+            self._ls_media_root()
+        elif ctx['type'] == 'media_sources':
+            self._ls_media_sources(ctx['sources'])
+        elif ctx['type'] == 'media_channels':
+            self._ls_media_channels(ctx['channels'])
         else:
             self.console.print(f"[red]Unknown path: {target_path}[/red]")
 
@@ -1030,6 +1175,78 @@ Type 'tutorial' for a quick tour.
 
         for field, value in fields.items():
             table.add_row(field, value[:80])
+
+        self.console.print(table)
+
+    def _ls_media_root(self):
+        """Display /media subdirectories with counts."""
+        all_bms = self.db.list()
+
+        # Count by type
+        videos = [b for b in all_bms if b.media_type == 'video']
+        audio = [b for b in all_bms if b.media_type == 'audio']
+        documents = [b for b in all_bms if b.media_type == 'document']
+        images = [b for b in all_bms if b.media_type == 'image']
+        code = [b for b in all_bms if b.media_type == 'code']
+
+        # Count sources
+        sources = {}
+        for b in all_bms:
+            if b.media_source:
+                sources[b.media_source] = sources.get(b.media_source, 0) + 1
+
+        # Count channels
+        channels = set()
+        for b in all_bms:
+            if b.author_name:
+                channels.add(b.author_name)
+
+        table = Table(show_header=False, box=None, padding=(0, 2))
+        table.add_column("Dir", style="cyan")
+        table.add_column("Count", style="dim", justify="right")
+        table.add_column("Description", style="dim")
+
+        # Media type directories
+        table.add_row("videos/", f"({len(videos)})", "Video content")
+        table.add_row("audio/", f"({len(audio)})", "Audio content")
+        table.add_row("documents/", f"({len(documents)})", "Documents & papers")
+        if images:
+            table.add_row("images/", f"({len(images)})", "Image content")
+        if code:
+            table.add_row("code/", f"({len(code)})", "Code repositories")
+
+        # Grouping directories
+        table.add_row("by-source/", f"({len(sources)})", "Grouped by platform")
+        table.add_row("by-channel/", f"({len(channels)})", "Grouped by creator")
+
+        self.console.print(table)
+
+    def _ls_media_sources(self, sources: dict):
+        """Display available media sources."""
+        table = Table(show_header=False, box=None, padding=(0, 2))
+        table.add_column("Source", style="cyan")
+        table.add_column("Count", style="dim", justify="right")
+
+        for source, count in sorted(sources.items(), key=lambda x: -x[1]):
+            table.add_row(f"{source}/", f"({count})")
+
+        self.console.print(table)
+
+    def _ls_media_channels(self, channels: dict):
+        """Display channels with bookmark counts."""
+        table = Table(show_header=False, box=None, padding=(0, 2))
+        table.add_column("Channel", style="cyan")
+        table.add_column("Count", style="dim", justify="right")
+
+        # Sort by count, then name
+        sorted_channels = sorted(channels.items(), key=lambda x: (-x[1], x[0]))
+        for channel, count in sorted_channels[:50]:
+            # Truncate long channel names
+            display_name = channel[:40] + "..." if len(channel) > 43 else channel
+            table.add_row(f"{display_name}/", f"({count})")
+
+        if len(channels) > 50:
+            self.console.print(f"[dim]... and {len(channels) - 50} more channels[/dim]")
 
         self.console.print(table)
 

@@ -51,7 +51,16 @@ class Bookmark(Base):
         stars: Whether bookmark is starred/favorited
         reachable: Whether URL is reachable (nullable for unchecked)
         favicon_path: Local path to favicon file
-        metadata: JSON field for additional flexible data
+        extra_data: JSON field for additional flexible data
+
+    Media Attributes (nullable, only for media bookmarks):
+        media_type: Type of media (video, audio, document, image)
+        media_source: Platform source (youtube, spotify, arxiv, etc.)
+        media_id: Platform-specific identifier
+        author_name: Content creator/channel name
+        author_url: URL to creator's profile/channel
+        thumbnail_url: URL to thumbnail image
+        published_at: Original publication date
     """
     __tablename__ = 'bookmarks'
 
@@ -88,6 +97,19 @@ class Bookmark(Base):
 
     # Flexible metadata storage for additional fields
     extra_data: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True, default=dict)
+
+    # Media metadata (nullable - only populated for media bookmarks)
+    media_type: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)  # video, audio, document, image
+    media_source: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)  # youtube, spotify, arxiv
+    media_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)  # Platform-specific ID
+    author_name: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)  # Content creator name
+    author_url: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)  # Creator profile URL
+    thumbnail_url: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)  # Thumbnail image URL
+    published_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True
+    )  # Original publication date
 
     # Relationships
     tags: Mapped[List["Tag"]] = relationship(

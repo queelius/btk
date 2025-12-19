@@ -151,6 +151,55 @@ def cmd_add(args):
         stars=args.star
     )
 
+    # Auto-detect media type unless disabled
+    if not getattr(args, 'no_media_detect', False):
+        from btk.media_detector import MediaDetector
+        detector = MediaDetector()
+        media_info = detector.detect(args.url)
+
+        if media_info:
+            # Update bookmark with detected media info
+            updates = {
+                'media_type': media_info.media_type,
+                'media_source': media_info.source,
+                'media_id': media_info.media_id,
+            }
+
+            # Optionally fetch full metadata
+            if getattr(args, 'fetch_metadata', False):
+                try:
+                    from btk.media_fetcher import MediaFetcher
+                    fetcher = MediaFetcher()
+                    metadata = fetcher.fetch(args.url, media_info)
+
+                    if metadata:
+                        if metadata.title and not args.title:
+                            updates['title'] = metadata.title
+                        if metadata.description:
+                            updates['description'] = metadata.description
+                        if metadata.author_name:
+                            updates['author_name'] = metadata.author_name
+                        if metadata.author_url:
+                            updates['author_url'] = metadata.author_url
+                        if metadata.thumbnail_url:
+                            updates['thumbnail_url'] = metadata.thumbnail_url
+                        if metadata.published_at:
+                            updates['published_at'] = metadata.published_at
+                        if metadata.tags and not args.tags:
+                            # Add fetched tags
+                            for tag in metadata.tags[:5]:
+                                db.tag_bookmark(bookmark.id, tag)
+                except Exception as e:
+                    if not args.quiet:
+                        print(f"Warning: Could not fetch metadata: {e}", file=sys.stderr)
+
+            # Apply media updates
+            db.update(bookmark.id, **updates)
+            bookmark = db.get(bookmark.id)  # Refresh
+
+            if not args.quiet:
+                print(f"Detected: {media_info.source} {media_info.media_type}", file=sys.stderr)
+
     if args.quiet:
         print(bookmark.id)
     else:
@@ -1066,6 +1115,325 @@ def cmd_queue(args):
                 console.print(f"\n[green]✓ Updated {len(estimates)} items[/green]")
         else:
             console.print("[yellow]No items to estimate (all have estimates or no cached content)[/yellow]")
+
+
+def cmd_media(args):
+    """Media detection and management operations."""
+    from btk.media_detector import MediaDetector, MediaInfo
+    from btk.media_fetcher import MediaFetcher, YtDlpNotAvailableError, MediaFetchError
+
+    db = get_db(args.db)
+    cmd = args.media_command
+    detector = MediaDetector()
+
+    if cmd == "detect":
+        # Detect media in bookmarks
+        if hasattr(args, 'id') and args.id:
+            bookmarks = [db.get(args.id)]
+            if not bookmarks[0]:
+                console.print(f"[red]Bookmark {args.id} not found[/red]")
+                return
+        elif hasattr(args, 'undetected') and args.undetected:
+            all_bookmarks = db.list()
+            bookmarks = [b for b in all_bookmarks if b.media_type is None]
+        else:
+            bookmarks = db.list()
+
+        detected_count = 0
+        for bookmark in bookmarks:
+            info = detector.detect(bookmark.url)
+            if info:
+                db.update(bookmark.id,
+                         media_type=info.media_type,
+                         media_source=info.source,
+                         media_id=info.media_id)
+                detected_count += 1
+                if args.output != "json":
+                    console.print(f"[green]✓[/green] [{bookmark.id}] {info.source}/{info.media_type}: {bookmark.title[:40]}")
+
+        if args.output == "json":
+            print(json.dumps({"detected": detected_count, "total": len(bookmarks)}))
+        else:
+            console.print(f"\n[green]✓ Detected {detected_count}/{len(bookmarks)} media bookmarks[/green]")
+
+    elif cmd == "refresh":
+        # Refresh media metadata using fetcher
+        fetcher = MediaFetcher()
+
+        if not fetcher.yt_dlp_available:
+            console.print("[yellow]Note: yt-dlp not available. Some metadata may be incomplete.[/yellow]")
+            console.print("[dim]Install with: pip install yt-dlp[/dim]\n")
+
+        # Get bookmarks to refresh
+        if hasattr(args, 'id') and args.id:
+            bookmarks = [db.get(args.id)]
+            if not bookmarks[0]:
+                console.print(f"[red]Bookmark {args.id} not found[/red]")
+                return
+        elif hasattr(args, 'source') and args.source:
+            all_bookmarks = db.list()
+            bookmarks = [b for b in all_bookmarks if b.media_source == args.source]
+        else:
+            all_bookmarks = db.list()
+            bookmarks = [b for b in all_bookmarks if b.media_type is not None]
+
+        refreshed_count = 0
+        for bookmark in bookmarks:
+            try:
+                info = detector.detect(bookmark.url)
+                if info:
+                    metadata = fetcher.fetch(bookmark.url, info)
+                    updates = {}
+                    if metadata.author_name:
+                        updates['author_name'] = metadata.author_name
+                    if metadata.author_url:
+                        updates['author_url'] = metadata.author_url
+                    if metadata.thumbnail_url:
+                        updates['thumbnail_url'] = metadata.thumbnail_url
+                    if metadata.published_at:
+                        updates['published_at'] = metadata.published_at
+
+                    if updates:
+                        db.update(bookmark.id, **updates)
+                        refreshed_count += 1
+                        if args.output != "json":
+                            console.print(f"[green]✓[/green] [{bookmark.id}] {bookmark.title[:40]}")
+            except Exception as e:
+                if args.output != "json":
+                    console.print(f"[red]✗[/red] [{bookmark.id}] Error: {e}")
+
+        if args.output == "json":
+            print(json.dumps({"refreshed": refreshed_count, "total": len(bookmarks)}))
+        else:
+            console.print(f"\n[green]✓ Refreshed {refreshed_count}/{len(bookmarks)} media bookmarks[/green]")
+
+    elif cmd == "list":
+        # List media bookmarks with filters
+        all_bookmarks = db.list()
+
+        # Apply filters
+        bookmarks = [b for b in all_bookmarks if b.media_type is not None]
+
+        if hasattr(args, 'type') and args.type:
+            bookmarks = [b for b in bookmarks if b.media_type == args.type]
+
+        if hasattr(args, 'source') and args.source:
+            bookmarks = [b for b in bookmarks if b.media_source == args.source]
+
+        # Apply limit
+        limit = getattr(args, 'limit', 50) or 50
+        bookmarks = bookmarks[:limit]
+
+        if args.output == "json":
+            data = [{
+                'id': b.id,
+                'title': b.title,
+                'url': b.url,
+                'media_type': b.media_type,
+                'media_source': b.media_source,
+                'author_name': b.author_name,
+            } for b in bookmarks]
+            print(json.dumps(data, indent=2))
+        else:
+            table = Table(title="Media Bookmarks")
+            table.add_column("ID", style="cyan")
+            table.add_column("Type", style="blue")
+            table.add_column("Source", style="magenta")
+            table.add_column("Title", style="white")
+
+            for b in bookmarks:
+                table.add_row(
+                    str(b.id),
+                    b.media_type or "-",
+                    b.media_source or "-",
+                    b.title[:50]
+                )
+
+            console.print(table)
+            console.print(f"\n[dim]Showing {len(bookmarks)} media bookmarks[/dim]")
+
+    elif cmd == "import-playlist":
+        # Import from playlist URL
+        fetcher = MediaFetcher()
+
+        if not fetcher.yt_dlp_available:
+            console.print("[red]Error: yt-dlp is required for playlist import[/red]")
+            console.print("[dim]Install with: pip install yt-dlp[/dim]")
+            return
+
+        url = args.url
+        tags = args.tags.split(',') if hasattr(args, 'tags') and args.tags else []
+        limit = getattr(args, 'limit', None)
+
+        console.print(f"[blue]Importing playlist: {url}[/blue]")
+
+        try:
+            items = fetcher.fetch_playlist(url)
+            if limit:
+                items = items[:limit]
+
+            imported_count = 0
+            for item in items:
+                if item.original_url:
+                    try:
+                        info = detector.detect(item.original_url)
+                        bookmark_id = db.add(
+                            url=item.original_url,
+                            title=item.title or "Untitled",
+                            description=item.description,
+                            tags=tags,
+                            skip_duplicates=True
+                        )
+                        if bookmark_id and info:
+                            db.update(bookmark_id,
+                                     media_type=info.media_type,
+                                     media_source=info.source,
+                                     media_id=info.media_id,
+                                     author_name=item.author_name,
+                                     author_url=item.author_url,
+                                     thumbnail_url=item.thumbnail_url,
+                                     published_at=item.published_at)
+                            imported_count += 1
+                            console.print(f"[green]✓[/green] {item.title[:50]}")
+                    except Exception as e:
+                        console.print(f"[red]✗[/red] {item.title[:50] if item.title else 'Unknown'}: {e}")
+
+            console.print(f"\n[green]✓ Imported {imported_count}/{len(items)} items from playlist[/green]")
+
+        except YtDlpNotAvailableError as e:
+            console.print(f"[red]Error: {e}[/red]")
+        except MediaFetchError as e:
+            console.print(f"[red]Error fetching playlist: {e}[/red]")
+
+    elif cmd == "import-channel":
+        # Import from channel URL
+        fetcher = MediaFetcher()
+
+        if not fetcher.yt_dlp_available:
+            console.print("[red]Error: yt-dlp is required for channel import[/red]")
+            console.print("[dim]Install with: pip install yt-dlp[/dim]")
+            return
+
+        url = args.url
+        tags = args.tags.split(',') if hasattr(args, 'tags') and args.tags else []
+        limit = getattr(args, 'limit', None)
+
+        console.print(f"[blue]Importing channel: {url}[/blue]")
+
+        try:
+            items = fetcher.fetch_channel(url, limit=limit)
+
+            imported_count = 0
+            for item in items:
+                if item.original_url:
+                    try:
+                        info = detector.detect(item.original_url)
+                        bookmark_id = db.add(
+                            url=item.original_url,
+                            title=item.title or "Untitled",
+                            description=item.description,
+                            tags=tags,
+                            skip_duplicates=True
+                        )
+                        if bookmark_id and info:
+                            db.update(bookmark_id,
+                                     media_type=info.media_type,
+                                     media_source=info.source,
+                                     media_id=info.media_id,
+                                     author_name=item.author_name,
+                                     author_url=item.author_url,
+                                     thumbnail_url=item.thumbnail_url,
+                                     published_at=item.published_at)
+                            imported_count += 1
+                            console.print(f"[green]✓[/green] {item.title[:50]}")
+                    except Exception as e:
+                        console.print(f"[red]✗[/red] {item.title[:50] if item.title else 'Unknown'}: {e}")
+
+            console.print(f"\n[green]✓ Imported {imported_count}/{len(items)} items from channel[/green]")
+
+        except YtDlpNotAvailableError as e:
+            console.print(f"[red]Error: {e}[/red]")
+        except MediaFetchError as e:
+            console.print(f"[red]Error fetching channel: {e}[/red]")
+
+    elif cmd == "import-podcast":
+        # Import from podcast RSS feed
+        fetcher = MediaFetcher()
+
+        feed_url = args.feed_url
+        tags = args.tags.split(',') if hasattr(args, 'tags') and args.tags else []
+        limit = getattr(args, 'limit', None)
+
+        console.print(f"[blue]Importing podcast feed: {feed_url}[/blue]")
+
+        try:
+            episodes = fetcher.fetch_podcast_rss(feed_url, limit=limit)
+
+            imported_count = 0
+            for episode in episodes:
+                if episode.original_url:
+                    try:
+                        bookmark_id = db.add(
+                            url=episode.original_url,
+                            title=episode.title or "Untitled Episode",
+                            description=episode.description,
+                            tags=tags + ['podcast'],
+                            skip_duplicates=True
+                        )
+                        if bookmark_id:
+                            db.update(bookmark_id,
+                                     media_type='audio',
+                                     media_source='podcast',
+                                     author_name=episode.author_name,
+                                     thumbnail_url=episode.thumbnail_url,
+                                     published_at=episode.published_at)
+                            imported_count += 1
+                            console.print(f"[green]✓[/green] {episode.title[:50]}")
+                    except Exception as e:
+                        console.print(f"[red]✗[/red] {episode.title[:50] if episode.title else 'Unknown'}: {e}")
+
+            console.print(f"\n[green]✓ Imported {imported_count}/{len(episodes)} podcast episodes[/green]")
+
+        except MediaFetchError as e:
+            console.print(f"[red]Error fetching podcast: {e}[/red]")
+
+    elif cmd == "stats":
+        # Show media statistics
+        all_bookmarks = db.list()
+        media_bookmarks = [b for b in all_bookmarks if b.media_type is not None]
+
+        # Gather statistics
+        by_type = {}
+        by_source = {}
+
+        for b in media_bookmarks:
+            by_type[b.media_type] = by_type.get(b.media_type, 0) + 1
+            if b.media_source:
+                by_source[b.media_source] = by_source.get(b.media_source, 0) + 1
+
+        stats = {
+            'total_media': len(media_bookmarks),
+            'total_bookmarks': len(all_bookmarks),
+            'media_percentage': round(len(media_bookmarks) / len(all_bookmarks) * 100, 1) if all_bookmarks else 0,
+            'by_type': by_type,
+            'by_source': by_source,
+        }
+
+        if args.output == "json":
+            print(json.dumps(stats, indent=2))
+        else:
+            console.print(f"\n[bold]Media Statistics[/bold]")
+            console.print(f"  Total media bookmarks: [green]{stats['total_media']}[/green] ({stats['media_percentage']}%)\n")
+
+            if by_type:
+                console.print("[bold]By Type:[/bold]")
+                for media_type, count in sorted(by_type.items(), key=lambda x: x[1], reverse=True):
+                    console.print(f"  {media_type}: {count}")
+
+            if by_source:
+                console.print("\n[bold]By Source:[/bold]")
+                for source, count in sorted(by_source.items(), key=lambda x: x[1], reverse=True):
+                    console.print(f"  {source}: {count}")
 
 
 def cmd_stats(args):
@@ -2109,6 +2477,10 @@ Configuration:
     bm_add.add_argument("--description", help="Description")
     bm_add.add_argument("--tags", help="Comma-separated tags")
     bm_add.add_argument("--star", action="store_true", help="Star this bookmark")
+    bm_add.add_argument("--no-media-detect", action="store_true",
+                        help="Skip media detection for this URL")
+    bm_add.add_argument("--fetch-metadata", action="store_true",
+                        help="Fetch media metadata (requires yt-dlp for YouTube, etc.)")
     bm_add.set_defaults(func=cmd_add)
 
     # bookmark list
@@ -2317,6 +2689,63 @@ Configuration:
     content_autotag.set_defaults(func=cmd_auto_tag)
 
     # =================
+    # MEDIA GROUP
+    # =================
+    media_parser = subparsers.add_parser("media", help="Media detection and management")
+    media_subparsers = media_parser.add_subparsers(dest="media_command", required=True)
+
+    # media detect
+    media_detect = media_subparsers.add_parser("detect", help="Detect media URLs in bookmarks")
+    media_detect.add_argument("--all", action="store_true", help="Scan all bookmarks (default)")
+    media_detect.add_argument("--id", type=int, help="Detect for specific bookmark ID")
+    media_detect.add_argument("--undetected", action="store_true",
+                             help="Only bookmarks without media_type")
+    media_detect.set_defaults(func=cmd_media)
+
+    # media refresh
+    media_refresh = media_subparsers.add_parser("refresh", help="Refresh media metadata")
+    media_refresh.add_argument("--all", action="store_true", help="Refresh all media bookmarks")
+    media_refresh.add_argument("--source", help="Only refresh specific source (youtube, spotify, etc)")
+    media_refresh.add_argument("--id", type=int, help="Refresh specific bookmark ID")
+    media_refresh.set_defaults(func=cmd_media)
+
+    # media list
+    media_list = media_subparsers.add_parser("list", help="List media bookmarks")
+    media_list.add_argument("--type", choices=["video", "audio", "document", "image", "code"],
+                           help="Filter by media type")
+    media_list.add_argument("--source", help="Filter by source (youtube, spotify, arxiv, etc)")
+    media_list.add_argument("--limit", type=int, default=50, help="Max results (default: 50)")
+    media_list.set_defaults(func=cmd_media)
+
+    # media import-playlist
+    media_import_playlist = media_subparsers.add_parser("import-playlist",
+                                                        help="Import from playlist URL")
+    media_import_playlist.add_argument("url", help="Playlist URL (YouTube, Spotify)")
+    media_import_playlist.add_argument("--tags", help="Tags to apply (comma-separated)")
+    media_import_playlist.add_argument("--limit", type=int, help="Max items to import")
+    media_import_playlist.set_defaults(func=cmd_media)
+
+    # media import-channel
+    media_import_channel = media_subparsers.add_parser("import-channel",
+                                                       help="Import from channel/profile")
+    media_import_channel.add_argument("url", help="Channel URL")
+    media_import_channel.add_argument("--tags", help="Tags to apply (comma-separated)")
+    media_import_channel.add_argument("--limit", type=int, help="Max items to import")
+    media_import_channel.set_defaults(func=cmd_media)
+
+    # media import-podcast
+    media_import_podcast = media_subparsers.add_parser("import-podcast",
+                                                       help="Import from podcast RSS feed")
+    media_import_podcast.add_argument("feed_url", help="Podcast RSS feed URL")
+    media_import_podcast.add_argument("--tags", help="Tags to apply (comma-separated)")
+    media_import_podcast.add_argument("--limit", type=int, help="Max episodes to import")
+    media_import_podcast.set_defaults(func=cmd_media)
+
+    # media stats
+    media_stats = media_subparsers.add_parser("stats", help="Show media statistics")
+    media_stats.set_defaults(func=cmd_media)
+
+    # =================
     # IMPORT GROUP
     # =================
     import_parser = subparsers.add_parser("import", help="Import bookmarks")
@@ -2330,8 +2759,8 @@ Configuration:
     export_parser = subparsers.add_parser("export", help="Export bookmarks")
     export_parser.add_argument("file", help="Output file")
     export_parser.add_argument("--format", required=True,
-                              choices=["json", "csv", "html", "markdown"],
-                              help="Export format")
+                              choices=["json", "csv", "html", "html-app", "markdown", "m3u"],
+                              help="Export format (html-app for interactive viewer)")
     export_parser.add_argument("--query", help="SQL query to filter bookmarks")
     export_parser.add_argument("--starred", action="store_true", help="Filter to starred bookmarks")
     export_parser.add_argument("--pinned", action="store_true", help="Filter to pinned bookmarks")
