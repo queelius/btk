@@ -5,6 +5,89 @@ All notable changes to BTK (Bookmark Toolkit) are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-01-03
+
+### Added - Major New Feature
+
+**Typed Query DSL** - A powerful, composable query system for btk.
+
+This release introduces a new query language that operates across all entities in the btk database (bookmarks, tags, stats, edges).
+
+#### New Module: `btk/query/`
+
+- **Expression AST** (`expr.py`): Rich predicate language supporting:
+  - Comparisons: `>= 10`, `< 5`, `!= 0`
+  - Temporal: `within 30 days`, `before 2024-01-01`, `after 2023-06-01`
+  - Collections: `any [ai/*, ml/*]`, `all [python, web]`, `none [deprecated]`
+  - String operations: `contains "search"`, `starts_with "http"`, `ends_with ".pdf"`
+  - Existence: `exists`, `missing`
+  - Compound: `all_of(...)`, `any_of(...)`, `not_(...)`
+
+- **Query AST** (`ast.py`): Typed query representation with:
+  - Multi-entity support: `BOOKMARK`, `TAG`, `STATS`, `EDGES`
+  - Fluent `QueryBuilder` API for programmatic queries
+  - Predicates, sorting, grouping, and aggregation
+
+- **Result Types** (`results.py`): Entity-specific result containers:
+  - `BookmarkResult`, `TagResult`, `StatsResult`, `EdgeResult`
+  - Generic `QueryResult[T]` with iteration, map, filter, serialization
+
+- **YAML Parser** (`parser.py`): Parse YAML query definitions:
+  - `QueryRegistry` with 12 built-in queries
+  - Built-in: `all`, `recent`, `starred`, `pinned`, `archived`, `unread`, `popular`, `broken`, `untagged`, `videos`, `pdfs`, `preserved`
+
+- **Executor** (`executor.py`): Query execution engine:
+  - Dual execution: SQL for simple predicates, in-memory for complex
+  - Handles query composition (union, intersect, pipeline)
+
+#### CLI: `btk query` Command Group
+
+- `btk query list` - List all registered queries
+- `btk query show <name>` - Show query details and structure
+- `btk query run --name <name>` - Run a named query
+- `btk query run --inline '{filter: {stars: true}}'` - Run inline YAML query
+- `btk query export <name> <file> --format json|csv|html` - Export results
+
+#### Example Usage
+
+```yaml
+# btk-queries.yaml
+ai_papers:
+  description: "AI research papers"
+  filter:
+    tags: any [ai/*, ml/*]
+    url: contains arxiv
+  sort: added desc
+  limit: 100
+
+recent_videos:
+  description: "Recent video bookmarks"
+  filter:
+    media_type: video
+    added: within 30 days
+  sort: added desc
+```
+
+```bash
+# List queries
+btk query list
+
+# Run a query
+btk query run --name starred --limit 10
+
+# Inline query
+btk query run --inline '{filter: {url: "contains github"}, limit: 5}'
+
+# Export to JSON
+btk query export recent output.json --format json
+```
+
+### Technical Details
+
+- 73 new tests for the query module
+- SQLAlchemy integration with proper session management
+- Eager loading to prevent DetachedInstanceError
+
 ## [0.7.4] - 2025-12-02
 
 ### Added - Major New Features

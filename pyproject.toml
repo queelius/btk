@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bookmark-tk"
-version = "0.7.5"
+version = "0.8.0"
 description = "Bookmark Toolkit. Helps manage, analyze, and visualize bookmarks"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -27,8 +27,9 @@ dependencies = [
 [project.scripts]
 btk = "btk.cli:main"  # CLI entry point
 
-[tool.setuptools]
-packages = ["btk"]  # Ensure it finds your package
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["btk", "btk.*"]
 
 [tool.black]
 line-length = 120

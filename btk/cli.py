@@ -797,6 +797,169 @@ def cmd_auto_tag(args):
         sys.exit(1)
 
 
+def cmd_preserve(args):
+    """Preserve media content (thumbnails, transcripts, PDF text) for Long Echo."""
+    from btk.preservation import (
+        PreservationManager, preserve_bookmark, preserve_bookmarks_batch
+    )
+
+    db = get_db(args.db)
+    manager = PreservationManager()
+
+    if args.id:
+        # Preserve specific bookmark
+        bookmark = db.get(id=int(args.id))
+        if not bookmark:
+            console.print(f"[red]Bookmark not found: {args.id}[/red]")
+            sys.exit(1)
+
+        if args.dry_run:
+            preserver = manager.get_preserver_for_url(bookmark.url)
+            if preserver:
+                console.print(f"[cyan]Would preserve:[/cyan] {bookmark.title}")
+                console.print(f"  URL: {bookmark.url}")
+                console.print(f"  Preserver: {preserver.metadata.name}")
+            else:
+                console.print(f"[yellow]No preserver available for:[/yellow] {bookmark.url}")
+            return
+
+        console.print(f"[cyan]Preserving:[/cyan] {bookmark.title}")
+        result = preserve_bookmark(db, bookmark.id, manager)
+
+        if result and result.success:
+            console.print(f"[green]✓ Preserved successfully[/green]")
+            if result.transcript_text:
+                console.print(f"  Transcript: {len(result.transcript_text)} chars")
+            if result.thumbnail_data:
+                console.print(f"  Thumbnail: {len(result.thumbnail_data)} bytes")
+            if result.extracted_text:
+                console.print(f"  Extracted text: {result.word_count} words")
+        elif result:
+            console.print(f"[red]✗ Failed: {result.error_message}[/red]")
+        else:
+            console.print(f"[yellow]No preserver available for this URL[/yellow]")
+
+    elif args.all:
+        # Preserve all preservable bookmarks
+        media_types = [args.type] if args.type else None
+
+        # Get bookmarks - extract needed data within session
+        from btk.models import Bookmark
+        with db.session(expire_on_commit=False) as session:
+            query = session.query(Bookmark)
+            if media_types:
+                type_map = {'video': 'video', 'pdf': 'document', 'image': 'image'}
+                db_type = type_map.get(args.type, args.type)
+                query = query.filter(Bookmark.media_type == db_type)
+            bookmarks = query.all()
+            # Extract what we need before leaving session
+            bookmark_data = [
+                {'id': b.id, 'url': b.url, 'title': b.title}
+                for b in bookmarks
+            ]
+
+        preservable = [b for b in bookmark_data if manager.can_preserve(b['url'])]
+        if args.limit:
+            preservable = preservable[:args.limit]
+
+        if args.dry_run:
+            console.print(f"\n[cyan]Would preserve {len(preservable)} bookmarks:[/cyan]\n")
+            by_type = {}
+            for b in preservable[:20]:
+                preserver = manager.get_preserver_for_url(b['url'])
+                ptype = preserver.metadata.name if preserver else 'unknown'
+                by_type[ptype] = by_type.get(ptype, 0) + 1
+                console.print(f"  • {b['title'][:60]}... ({ptype})")
+
+            if len(preservable) > 20:
+                console.print(f"  ... and {len(preservable) - 20} more")
+
+            console.print(f"\n[cyan]By preserver type:[/cyan]")
+            for ptype, count in sorted(by_type.items()):
+                console.print(f"  {ptype}: {count}")
+            return
+
+        # Preserve with progress
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            MofNCompleteColumn(),
+            TimeRemainingColumn(),
+            console=console,
+        ) as progress:
+            task = progress.add_task("Preserving...", total=len(preservable))
+            success_count = 0
+            fail_count = 0
+
+            for bm_data in preservable:
+                progress.update(task, description=f"Preserving: {bm_data['title'][:40]}...")
+                try:
+                    result = preserve_bookmark(db, bm_data['id'], manager)
+                    if result and result.success:
+                        success_count += 1
+                    else:
+                        fail_count += 1
+                except Exception as e:
+                    fail_count += 1
+                    console.print(f"[red]Error preserving {bm_data['id']}: {e}[/red]")
+                progress.advance(task)
+
+        console.print(f"\n[green]✓ Preserved {success_count} bookmarks[/green]")
+        if fail_count > 0:
+            console.print(f"[yellow]✗ Failed: {fail_count}[/yellow]")
+
+    else:
+        console.print("[red]Error: Must specify --id or --all[/red]")
+        sys.exit(1)
+
+
+def cmd_preserve_status(args):
+    """Show preservation statistics."""
+    from btk.preservation import PreservationManager
+    from btk.models import Bookmark, ContentCache
+
+    db = get_db(args.db)
+    manager = PreservationManager()
+
+    with db.session() as session:
+        # Total counts
+        total_bookmarks = session.query(Bookmark).count()
+        with_content = session.query(ContentCache).count()
+
+        # Count preservable URLs
+        bookmarks = session.query(Bookmark).all()
+        preservable_count = sum(1 for b in bookmarks if manager.can_preserve(b.url))
+
+        # Count by type
+        by_type = {}
+        for b in bookmarks:
+            if manager.can_preserve(b.url):
+                preserver = manager.get_preserver_for_url(b.url)
+                if preserver:
+                    ptype = preserver.metadata.name
+                    by_type[ptype] = by_type.get(ptype, 0) + 1
+
+        # Count with transcripts (have markdown content that includes "Transcript")
+        with_transcript = session.query(ContentCache).filter(
+            ContentCache.markdown_content.like('%## Transcript%')
+        ).count()
+
+    console.print("\n[bold cyan]Preservation Status[/bold cyan]\n")
+    console.print(f"Total bookmarks:     {total_bookmarks:,}")
+    console.print(f"With cached content: {with_content:,} ({100*with_content/total_bookmarks:.1f}%)")
+    console.print(f"Preservable URLs:    {preservable_count:,} ({100*preservable_count/total_bookmarks:.1f}%)")
+    console.print(f"With transcripts:    {with_transcript:,}")
+
+    console.print("\n[cyan]Preservable by type:[/cyan]")
+    for ptype, count in sorted(by_type.items(), key=lambda x: -x[1]):
+        console.print(f"  {ptype}: {count:,}")
+
+    console.print("\n[cyan]Available preservers:[/cyan]")
+    for p in manager.list_preservers():
+        console.print(f"  • {p['name']}: {p['description']}")
+
+
 def cmd_delete(args):
     """Delete a bookmark."""
     db = get_db(args.db)
@@ -1510,6 +1673,244 @@ def cmd_db_schema(args):
             console.print()  # Add spacing between tables
 
 
+def cmd_sql(args):
+    """Execute raw SQL queries against the database."""
+    import sqlite3
+    from btk.config import get_config
+
+    config = get_config()
+    db_path = args.db or config.database
+
+    # Read query from args or stdin
+    if args.query:
+        query = args.query
+    elif not sys.stdin.isatty():
+        query = sys.stdin.read().strip()
+    else:
+        console.print("[red]Error: No query provided. Use -e 'query' or pipe SQL via stdin.[/red]")
+        sys.exit(1)
+
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute(query)
+
+        # Check if this is a SELECT query (returns results)
+        if cursor.description:
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+
+            if args.output == "json":
+                data = [dict(row) for row in rows]
+                print(json.dumps(data, indent=2, default=str))
+            elif args.output == "csv":
+                writer = csv.writer(sys.stdout)
+                writer.writerow(columns)
+                for row in rows:
+                    writer.writerow(list(row))
+            elif args.output == "plain":
+                for row in rows:
+                    print("\t".join(str(v) if v is not None else "" for v in row))
+            else:  # table (default)
+                table = Table()
+                for col in columns:
+                    table.add_column(col, style="cyan")
+
+                for row in rows:
+                    table.add_row(*[str(v) if v is not None else "" for v in row])
+
+                console.print(table)
+                if not args.quiet:
+                    console.print(f"\n[dim]{len(rows)} rows[/dim]")
+        else:
+            # Non-SELECT query (INSERT, UPDATE, DELETE, etc.)
+            conn.commit()
+            if not args.quiet:
+                console.print(f"[green]Query executed. Rows affected: {cursor.rowcount}[/green]")
+
+        conn.close()
+
+    except sqlite3.Error as e:
+        console.print(f"[red]SQL Error: {e}[/red]")
+        sys.exit(1)
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        sys.exit(1)
+
+
+# Examples organized by command group
+CLI_EXAMPLES = {
+    "bookmark": """
+  btk bookmark add https://example.com --title "Example" --tags "web,demo"
+  btk bookmark add https://arxiv.org/abs/2301.00001 --tags "ai,papers"
+  btk bookmark list --limit 10 --sort visit_count
+  btk bookmark list --starred --output json
+  btk bookmark search "python tutorial"
+  btk bookmark get 123 --details
+  btk bookmark update 123 --title "New Title" --add-tags "important"
+  btk bookmark delete 1 2 3
+  btk bookmark visit 123                    # Open in browser and increment visit count
+  btk bookmark star 123 456                 # Star multiple bookmarks
+  btk bookmark unstar 123                   # Remove star
+""",
+    "tag": """
+  btk tag list                              # List all tags with counts
+  btk tag tree                              # Show hierarchical tag tree
+  btk tag add python 123 456                # Add tag to multiple bookmarks
+  btk tag remove python 123                 # Remove tag from bookmark
+  btk tag rename "old-name" "new-name"      # Rename a tag
+  btk tag merge source-tag target-tag       # Merge tags
+  btk tag copy important --starred          # Copy tag to starred bookmarks
+  btk tag delete unused-tag                 # Delete a tag
+""",
+    "queue": """
+  btk queue list                            # Show reading queue
+  btk queue add 123 456                     # Add bookmarks to queue
+  btk queue remove 123                      # Remove from queue
+  btk queue next                            # Get next item to read
+  btk queue clear                           # Clear the queue
+""",
+    "content": """
+  btk content fetch 123                     # Fetch and cache page content
+  btk content fetch --all --limit 100       # Bulk fetch content
+  btk content view 123                      # View cached content (markdown)
+  btk content view 123 --html               # View as HTML
+  btk content refresh --id 123              # Re-fetch content
+  btk content stats                         # Show content cache stats
+
+  # Long Echo preservation (thumbnails, transcripts, PDF text)
+  btk content preserve --id 123             # Preserve specific bookmark
+  btk content preserve --all --type video   # Preserve all YouTube videos
+  btk content preserve --all --limit 50     # Preserve first 50 preservable
+  btk content preserve --all --dry-run      # Preview what would be preserved
+  btk content preserve-status               # Show preservation statistics
+""",
+    "import": """
+  # File imports
+  btk import html bookmarks.html            # Import Netscape HTML
+  btk import json data.json                 # Import JSON
+  btk import csv bookmarks.csv              # Import CSV
+  btk import markdown links.md              # Import Markdown
+  btk import text urls.txt                  # Import plain URLs
+  btk import html bookmarks.html --dry-run  # Preview import
+  btk import json data.json -t work -t ref  # Add custom tags
+
+  # Service imports (see 'btk examples youtube' for more)
+  btk import youtube auth                   # Set up YouTube OAuth
+  btk import youtube library                # Import liked videos
+  btk import youtube playlist PLxxxxxx      # Import a playlist
+""",
+    "export": """
+  btk export json data.json                 # Export to JSON
+  btk export html bookmarks.html            # Export Netscape HTML
+  btk export csv bookmarks.csv              # Export CSV
+  btk export markdown links.md              # Export Markdown
+  btk export html-app output/               # Export interactive HTML app
+  btk export json - --starred               # Export starred to stdout
+  btk export json data.json --tag python    # Export by tag
+""",
+    "db": """
+  btk db info                               # Database overview
+  btk db stats                              # Detailed statistics
+  btk db schema                             # Show database schema
+  btk db vacuum                             # Optimize database
+  btk db health                             # Check bookmark health
+  btk db dedupe --strategy merge --preview  # Find duplicates
+""",
+    "view": """
+  btk view list                             # List all views
+  btk view show videos                      # Show view definition
+  btk view eval videos --limit 10           # Evaluate view
+  btk view create myview --filter "starred" # Create a view
+""",
+    "sql": """
+  btk sql -e "SELECT COUNT(*) FROM bookmarks"
+  btk sql -e "SELECT title, url FROM bookmarks WHERE stars = 1" -o csv
+  btk sql -e "SELECT name, COUNT(*) as cnt FROM tags t JOIN bookmark_tags bt ON t.id = bt.tag_id GROUP BY name ORDER BY cnt DESC LIMIT 10"
+  echo "SELECT * FROM bookmarks LIMIT 5" | btk sql
+""",
+    "shell": """
+  btk shell                                 # Start interactive shell
+
+  # Inside the shell:
+  cd /tags/programming/python               # Navigate to tag
+  ls                                        # List bookmarks
+  cat 123                                   # View bookmark details
+  star 123                                  # Star a bookmark
+  open 123                                  # Open in browser
+""",
+    "graph": """
+  btk graph co-tags                         # Show tag co-occurrence
+  btk graph domains                         # Domain analysis
+  btk graph timeline                        # Activity over time
+""",
+    "browser": """
+  btk browser import chrome                 # Import from Chrome
+  btk browser import firefox                # Import from Firefox
+  btk browser detect                        # Detect browser profiles
+""",
+    "pipelines": """
+  # Unix-style composable pipelines
+  btk bookmark list --output urls | xargs -I {} curl -I {}
+  btk bookmark search "python" --output json | jq '.[] | .url'
+  btk bookmark list --starred --output urls | wc -l
+  btk sql -e "SELECT url FROM bookmarks WHERE stars=1" -o plain | sort
+""",
+    "youtube": """
+  # Authentication (required for user-specific imports)
+  btk import youtube auth                   # Set up OAuth (opens browser)
+  btk import youtube auth -c ~/creds.json   # Use custom credentials file
+
+  # User library imports (require OAuth)
+  btk import youtube library                # Import liked videos
+  btk import youtube library --limit 50     # Import last 50 liked videos
+  btk import youtube subscriptions          # Import subscribed channels
+  btk import youtube subscriptions -n 20    # Limit to 20 subscriptions
+  btk import youtube playlists --list       # List your playlists
+  btk import youtube playlists              # Import playlists as bookmarks
+  btk import youtube playlists --import-all # Import all videos from all playlists
+
+  # Public content (API key or OAuth)
+  btk import youtube playlist PLxxxxxx      # Import playlist by ID
+  btk import youtube playlist "https://youtube.com/playlist?list=PLxxxxxx"
+  btk import youtube channel UCxxxxxx       # Import channel videos by ID
+  btk import youtube channel @username      # Import by handle
+  btk import youtube video dQw4w9WgXcQ      # Import single video
+  btk import youtube video "https://youtu.be/xxx"
+
+  # Options
+  btk import youtube library --dry-run      # Preview without importing
+  btk import youtube channel @3b1b -n 10    # Limit videos
+  btk import youtube playlist PLxxx -t math # Add custom tags
+""",
+}
+
+
+def cmd_examples(args):
+    """Show examples for BTK commands."""
+    from rich.panel import Panel
+    from rich.markdown import Markdown
+
+    topic = args.topic
+
+    if topic == "all" or topic is None:
+        # Show all examples
+        console.print(Panel("[bold]BTK Examples[/bold]", style="blue"))
+        console.print()
+        for group, examples in CLI_EXAMPLES.items():
+            console.print(f"[bold cyan]# {group}[/bold cyan]")
+            console.print(examples.strip())
+            console.print()
+    elif topic in CLI_EXAMPLES:
+        console.print(f"[bold cyan]# {topic} examples[/bold cyan]")
+        console.print(CLI_EXAMPLES[topic].strip())
+    else:
+        console.print(f"[yellow]No examples for '{topic}'. Available topics:[/yellow]")
+        console.print(", ".join(sorted(CLI_EXAMPLES.keys())))
+
+
 def cmd_fts_build(args):
     """Build or rebuild the FTS search index."""
     from btk.fts import get_fts_index
@@ -1555,6 +1956,245 @@ def cmd_fts_stats(args):
         else:
             console.print("[yellow]FTS Index Status: Not built[/yellow]")
             console.print("  Run 'btk db build-index' to create the search index")
+
+
+# =============================================================================
+# YOUTUBE IMPORT COMMANDS
+# =============================================================================
+
+def _get_youtube_importer(args, require_oauth: bool = False):
+    """Get YouTube importer with appropriate authentication."""
+    try:
+        from btk.importers.youtube import YouTubeImporter, HAS_YOUTUBE_API
+    except ImportError as e:
+        console.print(f"[red]Error: {e}[/red]")
+        console.print("Install with: pip install google-api-python-client google-auth-oauthlib")
+        sys.exit(1)
+
+    if not HAS_YOUTUBE_API:
+        console.print("[red]YouTube API libraries not installed.[/red]")
+        console.print("Install with: pip install google-api-python-client google-auth-oauthlib")
+        sys.exit(1)
+
+    try:
+        importer = YouTubeImporter()
+        if require_oauth:
+            credentials_file = getattr(args, 'credentials', None)
+            if credentials_file:
+                from pathlib import Path
+                credentials_file = Path(credentials_file)
+            importer.authenticate(credentials_file=credentials_file)
+        return importer
+    except Exception as e:
+        console.print(f"[red]Failed to initialize YouTube importer: {e}[/red]")
+        sys.exit(1)
+
+
+def _import_youtube_results(args, results, db, description: str):
+    """Common import logic for YouTube results."""
+    imported = 0
+    skipped = 0
+    extra_tags = args.tags or []
+
+    for result in results:
+        # Add extra tags
+        if extra_tags:
+            result.tags = list(set(result.tags + extra_tags))
+
+        if args.dry_run:
+            console.print(f"[dim]Would import:[/dim] {result.title[:60]}")
+            console.print(f"  URL: {result.url}")
+            console.print(f"  Tags: {', '.join(result.tags)}")
+            imported += 1
+        else:
+            # Check if already exists
+            existing = db.search(url=result.url)
+            if existing:
+                skipped += 1
+                if not args.quiet:
+                    console.print(f"[yellow]Skipped (exists):[/yellow] {result.title[:50]}")
+                continue
+
+            # Import
+            try:
+                bookmark_data = result.to_bookmark_dict()
+                db.add(**bookmark_data)
+                imported += 1
+                if not args.quiet:
+                    console.print(f"[green]Imported:[/green] {result.title[:50]}")
+            except Exception as e:
+                console.print(f"[red]Failed to import {result.title[:30]}: {e}[/red]")
+
+    # Summary
+    if args.dry_run:
+        console.print(f"\n[cyan]Dry run: Would import {imported} {description}[/cyan]")
+    else:
+        console.print(f"\n[green]Imported {imported} {description}[/green]")
+        if skipped:
+            console.print(f"[yellow]Skipped {skipped} (already exist)[/yellow]")
+
+
+def cmd_youtube_auth(args):
+    """Authenticate with YouTube OAuth."""
+    from pathlib import Path
+
+    try:
+        from btk.importers.youtube import YouTubeImporter, DEFAULT_CREDENTIALS_PATH
+    except ImportError:
+        console.print("[red]YouTube API libraries not installed.[/red]")
+        console.print("Install with: pip install google-api-python-client google-auth-oauthlib")
+        sys.exit(1)
+
+    credentials_file = Path(args.credentials) if args.credentials else DEFAULT_CREDENTIALS_PATH
+
+    if not credentials_file.exists():
+        console.print(f"[red]Credentials file not found: {credentials_file}[/red]")
+        console.print("\n[bold]Setup Instructions:[/bold]")
+        console.print("1. Go to https://console.cloud.google.com/apis/credentials")
+        console.print("2. Create a project (or select existing)")
+        console.print("3. Enable the YouTube Data API v3")
+        console.print("4. Create OAuth 2.0 Client ID (Desktop app)")
+        console.print(f"5. Download JSON and save to: {credentials_file}")
+        sys.exit(1)
+
+    console.print("Authenticating with YouTube...")
+    console.print("(A browser window will open for OAuth authorization)")
+
+    try:
+        importer = YouTubeImporter()
+        if importer.authenticate(credentials_file=credentials_file):
+            console.print("[green]✓ Authentication successful![/green]")
+            console.print("You can now use: btk youtube library, btk youtube subscriptions, etc.")
+        else:
+            console.print("[red]Authentication failed[/red]")
+            sys.exit(1)
+    except Exception as e:
+        console.print(f"[red]Authentication error: {e}[/red]")
+        sys.exit(1)
+
+
+def cmd_youtube_library(args):
+    """Import user's liked videos."""
+    importer = _get_youtube_importer(args, require_oauth=True)
+    db = get_db(args.db)
+
+    console.print("[bold]Importing liked videos...[/bold]")
+    results = importer.import_library(limit=args.limit)
+    _import_youtube_results(args, results, db, "videos")
+
+
+def cmd_youtube_subscriptions(args):
+    """Import user's subscriptions as channel bookmarks."""
+    importer = _get_youtube_importer(args, require_oauth=True)
+    db = get_db(args.db)
+
+    console.print("[bold]Importing subscriptions...[/bold]")
+    results = importer.import_subscriptions(limit=args.limit)
+    _import_youtube_results(args, results, db, "subscriptions")
+
+
+def cmd_youtube_playlists(args):
+    """List or import user's playlists."""
+    importer = _get_youtube_importer(args, require_oauth=True)
+    db = get_db(args.db)
+
+    if getattr(args, 'list', False):
+        # Just list playlists
+        console.print("[bold]Your playlists:[/bold]\n")
+        for result in importer.import_playlists(limit=args.limit):
+            video_count = result.extra_data.get('video_count', '?')
+            console.print(f"  [cyan]{result.media_id}[/cyan]  {result.title} ({video_count} videos)")
+        return
+
+    if getattr(args, 'import_all', False):
+        # Import videos from all playlists
+        console.print("[bold]Importing videos from all playlists...[/bold]")
+        total_imported = 0
+        for playlist in importer.import_playlists(limit=args.limit):
+            console.print(f"\n[bold]{playlist.title}[/bold]")
+            results = importer.import_playlist_with_videos(playlist.media_id, limit=None)
+            _import_youtube_results(args, results, db, "videos")
+        return
+
+    # Default: import playlists as bookmarks
+    console.print("[bold]Importing playlists as bookmarks...[/bold]")
+    results = importer.import_playlists(limit=args.limit)
+    _import_youtube_results(args, results, db, "playlists")
+
+
+def cmd_youtube_playlist(args):
+    """Import a specific playlist's videos."""
+    importer = _get_youtube_importer(args, require_oauth=False)
+    db = get_db(args.db)
+
+    console.print(f"[bold]Importing playlist: {args.playlist_id}[/bold]")
+    results = importer.import_playlist(args.playlist_id, limit=args.limit)
+    _import_youtube_results(args, results, db, "videos")
+
+
+def cmd_youtube_channel(args):
+    """Import videos from a channel."""
+    importer = _get_youtube_importer(args, require_oauth=False)
+    db = get_db(args.db)
+
+    console.print(f"[bold]Importing channel: {args.channel_id}[/bold]")
+    results = importer.import_channel(args.channel_id, limit=args.limit)
+    _import_youtube_results(args, results, db, "videos")
+
+
+def cmd_youtube_video(args):
+    """Import a single video."""
+    importer = _get_youtube_importer(args, require_oauth=False)
+    db = get_db(args.db)
+
+    console.print(f"[bold]Importing video: {args.video_id}[/bold]")
+    result = importer.import_video(args.video_id)
+
+    # Add extra tags
+    extra_tags = args.tags or []
+    if extra_tags:
+        result.tags = list(set(result.tags + extra_tags))
+
+    if args.dry_run:
+        console.print(f"[dim]Would import:[/dim] {result.title}")
+        console.print(f"  URL: {result.url}")
+        console.print(f"  Author: {result.author_name}")
+        console.print(f"  Tags: {', '.join(result.tags)}")
+    else:
+        existing = db.get(url=result.url)
+        if existing:
+            console.print(f"[yellow]Video already exists in database[/yellow]")
+        else:
+            bookmark_data = result.to_bookmark_dict()
+            db.add(**bookmark_data)
+            console.print(f"[green]Imported:[/green] {result.title}")
+
+
+def cmd_youtube_user(args):
+    """Import another user's public content."""
+    importer = _get_youtube_importer(args, require_oauth=False)
+    db = get_db(args.db)
+
+    user_id = args.user_id
+    import_videos = args.videos
+    import_playlists = args.playlists
+
+    # Default to both if neither specified
+    if not import_videos and not import_playlists:
+        import_videos = True
+        import_playlists = True
+
+    console.print(f"[bold]Importing from user: {user_id}[/bold]")
+
+    if import_videos:
+        console.print("\n[cyan]Channel Videos:[/cyan]")
+        results = importer.import_channel(user_id, limit=args.limit)
+        _import_youtube_results(args, results, db, "videos")
+
+    if import_playlists:
+        console.print("\n[cyan]Public Playlists:[/cyan]")
+        results = importer.import_user_playlists(user_id, limit=args.limit)
+        _import_youtube_results(args, results, db, "playlists")
 
 
 def cmd_cleanup(args):
@@ -1705,8 +2345,60 @@ def cmd_export(args):
                 # No filters, export all (respecting archived default)
                 bookmarks = db.list(exclude_archived=filters.get('archived') == False)
 
+    # Build views data for html-app format
+    views_data = None
+    if args.format == 'html-app':
+        try:
+            from btk.views import ViewRegistry, ViewContext
+            from pathlib import Path as ViewPath
+
+            registry = ViewRegistry()
+
+            # Try to load views from default locations
+            config = get_config()
+            default_paths = [
+                ViewPath("btk-views.yaml"),
+                ViewPath("btk-views.yml"),
+                ViewPath(config.database).parent / "btk-views.yaml",
+                ViewPath.home() / ".config" / "btk" / "views.yaml",
+            ]
+            for path in default_paths:
+                if path.exists():
+                    try:
+                        registry.load_file(path)
+                    except Exception:
+                        pass
+
+            # Build views data: evaluate each view to get bookmark IDs
+            views_data = {}
+            for name in registry.list():
+                try:
+                    meta = registry.get_metadata(name)
+                    view = registry.get(name)
+                    context = ViewContext(registry=registry)
+                    result = view.evaluate(db, context)
+                    bookmark_ids = [ob.original.id for ob in result.bookmarks]
+                    views_data[name] = {
+                        'description': meta.get('description', ''),
+                        'bookmark_ids': bookmark_ids,
+                        'builtin': meta.get('builtin', False)
+                    }
+                except Exception:
+                    pass  # Skip views that fail to evaluate
+        except ImportError:
+            pass  # Views module not available
+
     try:
-        export_file(bookmarks, args.file, args.format)
+        # preservation-html and json-full need db access for cached content
+        if args.format in ('preservation-html', 'json-full'):
+            # Ensure we have db access (might not if using stdin)
+            try:
+                db
+            except NameError:
+                db = get_db(args.db)
+            export_file(bookmarks, args.file, args.format, views=views_data, db=db)
+        else:
+            export_file(bookmarks, args.file, args.format, views=views_data)
         if not args.quiet:
             console.print(f"[green]Exported {len(bookmarks)} bookmarks to {args.file}[/green]")
     except Exception as e:
@@ -2298,6 +2990,583 @@ def cmd_serve(args):
     run_server(db_path=db_path, port=port, host=host)
 
 
+def cmd_query_dsl(args):
+    """Query operations using the new typed query DSL."""
+    from btk.query import (
+        QueryRegistry, get_registry, reset_registry,
+        execute_query, parse_query, ExecutionContext,
+        BookmarkResult, TagResult, StatsResult, EdgeResult
+    )
+    from pathlib import Path
+    import yaml
+
+    db = get_db(args.db)
+
+    # Get or create registry
+    registry = get_registry()
+
+    # Load queries from file if specified
+    queries_file = getattr(args, 'queries_file', None)
+    if queries_file:
+        try:
+            registry.load_file(queries_file)
+            console.print(f"[dim]Loaded queries from {queries_file}[/dim]")
+        except Exception as e:
+            console.print(f"[red]Error loading queries file: {e}[/red]")
+            return
+    else:
+        # Try to load from default locations
+        config = get_config()
+        default_paths = [
+            Path("btk-queries.yaml"),
+            Path("btk-queries.yml"),
+            Path(config.database).parent / "btk-queries.yaml",
+            Path.home() / ".config" / "btk" / "queries.yaml",
+        ]
+        for path in default_paths:
+            if path.exists():
+                try:
+                    registry.load_file(path)
+                except Exception:
+                    pass
+
+    if args.query_command == "list":
+        # List all registered queries
+        queries = registry.all()
+
+        if args.output == "json":
+            info = {name: {"description": q.description} for name, q in queries.items()}
+            print(json.dumps(info, indent=2))
+        else:
+            from rich.table import Table
+
+            table = Table(title="Registered Queries")
+            table.add_column("Name", style="cyan")
+            table.add_column("Description", style="white")
+            table.add_column("Entity", style="yellow")
+
+            for name, query in sorted(queries.items()):
+                table.add_row(
+                    name,
+                    (query.description or "")[:50],
+                    query.entity.value if query.entity else "bookmarks"
+                )
+
+            console.print(table)
+            console.print(f"\n[dim]Total: {len(queries)} queries[/dim]")
+
+    elif args.query_command == "run":
+        # Run a query by name or from inline definition
+        name = getattr(args, 'name', None)
+        inline = getattr(args, 'inline', None)
+
+        if inline:
+            # Parse inline YAML query
+            try:
+                definition = yaml.safe_load(inline)
+                query = parse_query(definition, name="<inline>")
+            except Exception as e:
+                console.print(f"[red]Error parsing inline query: {e}[/red]")
+                return
+        elif name:
+            # Get query from registry
+            if not registry.has(name):
+                console.print(f"[red]Query not found: {name}[/red]")
+                console.print("[dim]Use 'btk query list' to see available queries[/dim]")
+                return
+            query = registry.get(name)
+        else:
+            console.print("[red]Either --name or --inline is required[/red]")
+            return
+
+        # Apply CLI overrides
+        if hasattr(args, 'limit') and args.limit:
+            query.limit = args.limit
+        if hasattr(args, 'offset') and args.offset:
+            query.offset = args.offset
+
+        # Create execution context
+        context = ExecutionContext(registry=registry)
+
+        # Execute query
+        try:
+            result = execute_query(db, query, context)
+        except Exception as e:
+            console.print(f"[red]Error executing query: {e}[/red]")
+            import traceback
+            if args.output == "json":
+                print(json.dumps({"error": str(e)}))
+            traceback.print_exc()
+            return
+
+        # Output results based on type
+        _output_query_result(result, args.output, console)
+
+    elif args.query_command == "export":
+        # Export query results to file
+        name = args.name
+        output_file = args.output_file
+        export_format = getattr(args, 'format', 'json')
+
+        if not registry.has(name):
+            console.print(f"[red]Query not found: {name}[/red]")
+            return
+
+        query = registry.get(name)
+
+        # Execute query
+        context = ExecutionContext(registry=registry)
+        try:
+            result = execute_query(db, query, context)
+        except Exception as e:
+            console.print(f"[red]Error executing query: {e}[/red]")
+            return
+
+        # Export based on format
+        output_path = Path(output_file)
+
+        if export_format == "json":
+            data = result.to_dict()
+            with open(output_path, 'w') as f:
+                json.dump(data, f, indent=2, default=str)
+
+        elif export_format == "csv":
+            import csv as csv_module
+            with open(output_path, 'w', newline='') as f:
+                if isinstance(result, BookmarkResult):
+                    writer = csv_module.DictWriter(f, fieldnames=['id', 'url', 'title', 'tags', 'stars', 'added'])
+                    writer.writeheader()
+                    for item in result:
+                        writer.writerow({
+                            'id': item.id,
+                            'url': item.url,
+                            'title': item.title,
+                            'tags': ','.join(item.tags),
+                            'stars': item.bookmark.stars,
+                            'added': item.bookmark.added.isoformat() if item.bookmark.added else ''
+                        })
+                elif isinstance(result, StatsResult):
+                    if result.items:
+                        fieldnames = result.columns
+                        writer = csv_module.DictWriter(f, fieldnames=fieldnames)
+                        writer.writeheader()
+                        for row in result:
+                            writer.writerow(row.to_dict())
+
+        elif export_format in ("html", "html-app"):
+            from btk.exporters import export_bookmarks
+
+            if isinstance(result, BookmarkResult):
+                bookmarks = [item.bookmark for item in result]
+                title = getattr(args, 'title', None) or f"Query: {name}"
+                export_bookmarks(
+                    bookmarks,
+                    str(output_path),
+                    format=export_format,
+                    title=title
+                )
+            else:
+                console.print(f"[yellow]HTML export only supported for bookmark queries[/yellow]")
+                return
+
+        console.print(f"[green]Exported {len(result)} results to {output_file}[/green]")
+
+    elif args.query_command == "show":
+        # Show query details
+        name = args.name
+        if not registry.has(name):
+            console.print(f"[red]Query not found: {name}[/red]")
+            return
+
+        query = registry.get(name)
+
+        if args.output == "json":
+            # Serialize query structure
+            data = {
+                "name": name,
+                "entity": query.entity.value if query.entity else "bookmarks",
+                "description": query.description,
+                "predicates": [
+                    {"field": str(p.field), "expr": repr(p.expr)}
+                    for p in query.predicates
+                ],
+                "sort": [
+                    {"field": s.field, "direction": s.direction}
+                    for s in query.sort
+                ],
+                "limit": query.limit,
+                "offset": query.offset,
+            }
+            print(json.dumps(data, indent=2))
+        else:
+            from rich.panel import Panel
+            from rich.table import Table as RichTable
+
+            details = RichTable(show_header=False, box=None)
+            details.add_column("Field", style="cyan bold")
+            details.add_column("Value", style="white")
+
+            details.add_row("Name", name)
+            details.add_row("Description", query.description or "(none)")
+            details.add_row("Entity", query.entity.value if query.entity else "bookmarks")
+            if query.predicates:
+                pred_str = "\n".join(f"  {p.field}: {p.expr}" for p in query.predicates)
+                details.add_row("Filters", pred_str)
+            if query.sort:
+                sort_str = ", ".join(f"{s.field} {s.direction}" for s in query.sort)
+                details.add_row("Sort", sort_str)
+            if query.limit:
+                details.add_row("Limit", str(query.limit))
+
+            panel = Panel(details, title=f"Query: {name}", border_style="blue")
+            console.print(panel)
+
+
+def _output_query_result(result, output_format, console):
+    """Output query result in the specified format."""
+    from btk.query import BookmarkResult, TagResult, StatsResult, EdgeResult
+
+    if output_format == "json":
+        print(json.dumps(result.to_dict(), indent=2, default=str))
+
+    elif output_format == "csv":
+        import csv as csv_module
+        import sys
+
+        if isinstance(result, BookmarkResult):
+            writer = csv_module.writer(sys.stdout)
+            writer.writerow(['id', 'url', 'title', 'tags', 'stars'])
+            for item in result:
+                writer.writerow([
+                    item.id,
+                    item.url,
+                    item.title,
+                    ','.join(item.tags),
+                    item.bookmark.stars
+                ])
+        elif isinstance(result, TagResult):
+            writer = csv_module.writer(sys.stdout)
+            writer.writerow(['name', 'usage_count'])
+            for item in result:
+                writer.writerow([item.name, item.usage_count])
+        elif isinstance(result, StatsResult):
+            if result.items:
+                writer = csv_module.DictWriter(sys.stdout, fieldnames=result.columns)
+                writer.writeheader()
+                for row in result:
+                    writer.writerow(row.to_dict())
+
+    elif output_format == "urls":
+        if isinstance(result, BookmarkResult):
+            for item in result:
+                print(item.url)
+        else:
+            console.print("[yellow]URL output only for bookmark queries[/yellow]")
+
+    else:  # table format
+        from rich.table import Table
+
+        if isinstance(result, BookmarkResult):
+            table = Table(title=f"Query Results ({len(result)} bookmarks)")
+            table.add_column("ID", style="cyan")
+            table.add_column("Title", style="green")
+            table.add_column("URL", style="blue")
+            table.add_column("Tags", style="yellow")
+
+            for item in result:
+                table.add_row(
+                    str(item.id),
+                    (item.title or "")[:40],
+                    item.url[:50],
+                    ", ".join(item.tags[:3])
+                )
+            console.print(table)
+
+        elif isinstance(result, TagResult):
+            table = Table(title=f"Tag Results ({len(result)} tags)")
+            table.add_column("Name", style="cyan")
+            table.add_column("Usage", style="green")
+            table.add_column("Level", style="yellow")
+
+            for item in result:
+                table.add_row(
+                    item.name,
+                    str(item.usage_count),
+                    str(item.hierarchy_level)
+                )
+            console.print(table)
+
+        elif isinstance(result, StatsResult):
+            if result.items:
+                table = Table(title=f"Stats Results ({len(result)} rows)")
+                for col in result.columns:
+                    table.add_column(col, style="cyan")
+
+                for row in result:
+                    table.add_row(*[str(row[col]) for col in result.columns])
+                console.print(table)
+            else:
+                console.print("[dim]No stats results[/dim]")
+
+        elif isinstance(result, EdgeResult):
+            table = Table(title=f"Edge Results ({len(result)} edges)")
+            table.add_column("Source", style="cyan")
+            table.add_column("Target", style="green")
+            table.add_column("Weight", style="yellow")
+
+            for edge in result:
+                table.add_row(
+                    str(edge.source),
+                    str(edge.target),
+                    str(edge.weight)
+                )
+            console.print(table)
+
+        console.print(f"\n[dim]Total: {len(result)} results[/dim]")
+
+
+def cmd_views(args):
+    """View management operations."""
+    from btk.views import ViewRegistry, ViewContext
+    from pathlib import Path
+
+    db = get_db(args.db)
+
+    # Initialize registry
+    registry = ViewRegistry()
+
+    # Load views from file if specified
+    views_file = getattr(args, 'views_file', None)
+    if views_file:
+        try:
+            registry.load_file(views_file)
+        except Exception as e:
+            console.print(f"[red]Error loading views file: {e}[/red]")
+            return
+    else:
+        # Try to load from default locations
+        config = get_config()
+        default_paths = [
+            Path("btk-views.yaml"),
+            Path("btk-views.yml"),
+            Path(config.database).parent / "btk-views.yaml",
+            Path.home() / ".config" / "btk" / "views.yaml",
+        ]
+        for path in default_paths:
+            if path.exists():
+                try:
+                    registry.load_file(path)
+                except Exception:
+                    pass
+
+    if args.view_command == "list":
+        # List all views
+        include_builtin = not getattr(args, 'no_builtin', False)
+        views = registry.list(include_builtin=include_builtin)
+
+        if args.output == "json":
+            info = registry.info()
+            print(json.dumps(info, indent=2))
+        else:
+            from rich.table import Table
+
+            table = Table(title="Views")
+            table.add_column("Name", style="cyan")
+            table.add_column("Description", style="white")
+            table.add_column("Type", style="yellow")
+            table.add_column("Params", style="magenta")
+
+            for name in views:
+                meta = registry.get_metadata(name)
+                view_type = "built-in" if meta.get("builtin") else "custom"
+                has_params = "yes" if meta.get("params") else ""
+                table.add_row(
+                    name,
+                    meta.get("description", "")[:50],
+                    view_type,
+                    has_params
+                )
+
+            console.print(table)
+            console.print(f"\n[dim]Total: {len(views)} views[/dim]")
+
+    elif args.view_command == "show":
+        # Show view details
+        name = args.name
+        if not registry.has(name):
+            console.print(f"[red]View not found: {name}[/red]")
+            return
+
+        meta = registry.get_metadata(name)
+        view = registry.get(name)
+
+        if args.output == "json":
+            data = {
+                "name": name,
+                "metadata": meta,
+                "repr": repr(view)
+            }
+            print(json.dumps(data, indent=2))
+        else:
+            from rich.panel import Panel
+            from rich.table import Table as RichTable
+
+            details = RichTable(show_header=False, box=None)
+            details.add_column("Field", style="cyan bold")
+            details.add_column("Value", style="white")
+
+            details.add_row("Name", name)
+            details.add_row("Description", meta.get("description", "(none)"))
+            details.add_row("Type", "built-in" if meta.get("builtin") else "custom")
+            if meta.get("params"):
+                params_str = ", ".join(f"{k}={v}" for k, v in meta["params"].items())
+                details.add_row("Parameters", params_str)
+            details.add_row("View", repr(view))
+
+            panel = Panel(details, title=f"View: {name}", border_style="blue")
+            console.print(panel)
+
+    elif args.view_command == "eval":
+        # Evaluate a view and show results
+        name = args.name
+        if not registry.has(name):
+            console.print(f"[red]View not found: {name}[/red]")
+            return
+
+        # Parse parameters
+        params = {}
+        if hasattr(args, 'param') and args.param:
+            for p in args.param:
+                if '=' in p:
+                    k, v = p.split('=', 1)
+                    # Try to parse as JSON for complex values
+                    try:
+                        params[k] = json.loads(v)
+                    except json.JSONDecodeError:
+                        params[k] = v
+
+        # Evaluate view
+        context = ViewContext(params=params, registry=registry)
+        try:
+            view = registry.get(name, **params)
+            result = view.evaluate(db, context)
+        except Exception as e:
+            console.print(f"[red]Error evaluating view: {e}[/red]")
+            return
+
+        # Convert to bookmarks for output
+        bookmarks = []
+        for ob in result.bookmarks:
+            bookmarks.append(ob.original)
+
+        limit = getattr(args, 'limit', None)
+        if limit:
+            bookmarks = bookmarks[:limit]
+
+        console.print(f"[dim]View '{name}' returned {len(result.bookmarks)} bookmarks[/dim]\n")
+        output_bookmarks(bookmarks, args.output)
+
+    elif args.view_command == "export":
+        # Export view results to file
+        name = args.name
+        if not registry.has(name):
+            console.print(f"[red]View not found: {name}[/red]")
+            return
+
+        # Parse parameters
+        params = {}
+        if hasattr(args, 'param') and args.param:
+            for p in args.param:
+                if '=' in p:
+                    k, v = p.split('=', 1)
+                    try:
+                        params[k] = json.loads(v)
+                    except json.JSONDecodeError:
+                        params[k] = v
+
+        # Evaluate view
+        context = ViewContext(params=params, registry=registry)
+        try:
+            view = registry.get(name, **params)
+            result = view.evaluate(db, context)
+        except Exception as e:
+            console.print(f"[red]Error evaluating view: {e}[/red]")
+            return
+
+        # Convert to regular bookmarks
+        bookmarks = [ob.original for ob in result.bookmarks]
+
+        # Export
+        output_path = args.output_file
+        export_format = getattr(args, 'format', 'html')
+
+        from btk.exporters import export_file
+
+        # For single view export, include this view's metadata
+        view_meta = registry.get_metadata(name)
+        views_data = {
+            name: {
+                'description': view_meta.get('description', ''),
+                'bookmark_ids': [b.id for b in bookmarks],
+                'builtin': view_meta.get('builtin', False)
+            }
+        } if export_format == 'html-app' else None
+
+        try:
+            export_file(bookmarks, output_path, export_format, views=views_data)
+            console.print(f"[green]✓ Exported {len(bookmarks)} bookmarks to {output_path}[/green]")
+        except Exception as e:
+            console.print(f"[red]Error exporting: {e}[/red]")
+
+    elif args.view_command == "create":
+        # Create a simple view from CLI args (not YAML)
+        from btk.views import SelectView, OrderView, LimitView, PipelineView
+        from btk.views.predicates import TagsPredicate, FieldPredicate, SearchPredicate
+        from btk.views.primitives import AllView, OrderSpec
+
+        stages = [AllView()]
+
+        # Tags filter
+        if hasattr(args, 'tags') and args.tags:
+            tags = args.tags.split(',')
+            stages.append(SelectView(TagsPredicate(tags=tags, mode='any')))
+
+        # Search filter
+        if hasattr(args, 'search') and args.search:
+            stages.append(SelectView(SearchPredicate(query=args.search)))
+
+        # Field filters
+        if hasattr(args, 'starred') and args.starred:
+            stages.append(SelectView(FieldPredicate('stars', 'gt', 0)))
+
+        if hasattr(args, 'pinned') and args.pinned:
+            stages.append(SelectView(FieldPredicate('pinned', 'eq', True)))
+
+        # Order
+        order = getattr(args, 'order', 'added desc')
+        if order:
+            stages.append(OrderView.from_string(order))
+
+        # Limit
+        limit = getattr(args, 'limit', None)
+        if limit:
+            stages.append(LimitView(int(limit)))
+
+        # Build pipeline
+        if len(stages) == 1:
+            view = stages[0]
+        else:
+            view = PipelineView(stages)
+
+        # Evaluate
+        context = ViewContext(registry=registry)
+        result = view.evaluate(db, context)
+
+        bookmarks = [ob.original for ob in result.bookmarks]
+        console.print(f"[dim]Query returned {len(bookmarks)} bookmarks[/dim]\n")
+        output_bookmarks(bookmarks, args.output)
+
+
 def cmd_plugin(args):
     """Plugin management operations."""
     from btk.plugins import create_default_registry, PluginRegistry
@@ -2412,45 +3681,15 @@ def main():
         description="BTK - Bookmark Toolkit: A clean, composable bookmark manager",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Examples:
-  # Bookmark operations
-  btk bookmark add https://example.com --title "Example" --tags "web,demo"
-  btk bookmark list --limit 10 --sort visit_count
-  btk bookmark search "python"
-  btk bookmark get 123
-  btk bookmark update 123 --title "New Title" --add-tags "important"
-  btk bookmark delete 1 2 3
-
-  # Tag operations
-  btk tag list
-  btk tag add python 123
-  btk tag rename "old-name" "new-name"
-  btk tag copy important --starred
-
-  # Content operations
-  btk content refresh --id 123
-  btk content view 123 --html
-
-  # Import/Export
-  btk import html bookmarks.html
-  btk export json data.json --starred
-
-  # Database management
-  btk db info
-  btk db schema
-  btk db stats
-
-  # Interactive shell
-  btk shell
-
-  # Composable Unix-style pipelines
-  btk bookmark list --output urls | xargs -I {} curl -I {}
-  btk bookmark search "python" --output json | jq '.[] | .url'
+Quick Start:
+  btk bookmark add https://example.com --tags "web"
+  btk bookmark list --limit 10
+  btk shell                           # Interactive mode
+  btk examples                        # See all examples
 
 Configuration:
-  Default database: ./btk.db or from config
-  Config file: ~/.config/btk/config.toml
-  Environment: BTK_DATABASE, BTK_OUTPUT_FORMAT
+  Database: ./btk.db (or BTK_DATABASE env, or --db flag)
+  Config: ~/.config/btk/config.toml
         """
     )
 
@@ -2688,6 +3927,28 @@ Configuration:
                                 help="Apply suggested tags (default is preview only)")
     content_autotag.set_defaults(func=cmd_auto_tag)
 
+    # content preserve - Long Echo preservation
+    content_preserve = content_subparsers.add_parser(
+        "preserve",
+        help="Preserve media content (thumbnails, transcripts, PDF text) for Long Echo"
+    )
+    content_preserve.add_argument("--id", type=int, help="Preserve specific bookmark ID")
+    content_preserve.add_argument("--all", action="store_true",
+                                 help="Preserve all preservable bookmarks")
+    content_preserve.add_argument("--type", choices=["video", "pdf", "image"],
+                                 help="Only preserve specific media type")
+    content_preserve.add_argument("--limit", type=int, help="Maximum bookmarks to preserve")
+    content_preserve.add_argument("--dry-run", action="store_true",
+                                 help="Show what would be preserved without doing it")
+    content_preserve.set_defaults(func=cmd_preserve)
+
+    # content preserve-status - Show preservation statistics
+    content_preserve_status = content_subparsers.add_parser(
+        "preserve-status",
+        help="Show preservation statistics"
+    )
+    content_preserve_status.set_defaults(func=cmd_preserve_status)
+
     # =================
     # MEDIA GROUP
     # =================
@@ -2749,9 +4010,81 @@ Configuration:
     # IMPORT GROUP
     # =================
     import_parser = subparsers.add_parser("import", help="Import bookmarks")
-    import_parser.add_argument("file", help="File to import")
-    import_parser.add_argument("--format", help="Force format (auto-detected by default)")
-    import_parser.set_defaults(func=cmd_import)
+    import_subparsers = import_parser.add_subparsers(dest="import_source", required=True)
+
+    # File imports
+    for fmt in ['html', 'json', 'csv', 'markdown', 'text']:
+        fmt_parser = import_subparsers.add_parser(fmt, help=f"Import from {fmt.upper()} file")
+        fmt_parser.add_argument("file", help="File to import")
+        fmt_parser.add_argument("--dry-run", action="store_true", help="Preview without importing")
+        fmt_parser.add_argument("--tag", "-t", action="append", dest="tags", help="Additional tags")
+        fmt_parser.set_defaults(func=cmd_import, format=fmt)
+
+    # YouTube imports
+    yt_parser = import_subparsers.add_parser("youtube", help="Import from YouTube")
+    yt_subparsers = yt_parser.add_subparsers(dest="youtube_command", required=True)
+
+    # youtube auth
+    yt_auth = yt_subparsers.add_parser("auth", help="Authenticate with YouTube (OAuth)")
+    yt_auth.add_argument("--credentials", "-c", help="Path to OAuth credentials JSON")
+    yt_auth.set_defaults(func=cmd_youtube_auth)
+
+    # youtube library
+    yt_library = yt_subparsers.add_parser("library", help="Import liked videos")
+    yt_library.add_argument("--limit", "-n", type=int, help="Maximum videos to import")
+    yt_library.add_argument("--dry-run", action="store_true", help="Preview without importing")
+    yt_library.add_argument("--tag", "-t", action="append", dest="tags", help="Additional tags")
+    yt_library.set_defaults(func=cmd_youtube_library)
+
+    # youtube subscriptions
+    yt_subs = yt_subparsers.add_parser("subscriptions", help="Import subscribed channels")
+    yt_subs.add_argument("--limit", "-n", type=int, help="Maximum subscriptions to import")
+    yt_subs.add_argument("--dry-run", action="store_true", help="Preview without importing")
+    yt_subs.add_argument("--tag", "-t", action="append", dest="tags", help="Additional tags")
+    yt_subs.set_defaults(func=cmd_youtube_subscriptions)
+
+    # youtube playlists
+    yt_playlists = yt_subparsers.add_parser("playlists", help="List/import your playlists")
+    yt_playlists.add_argument("--list", "-l", action="store_true", help="List playlists only")
+    yt_playlists.add_argument("--import-all", action="store_true", help="Import all playlist videos")
+    yt_playlists.add_argument("--limit", "-n", type=int, help="Maximum playlists to process")
+    yt_playlists.add_argument("--dry-run", action="store_true", help="Preview without importing")
+    yt_playlists.set_defaults(func=cmd_youtube_playlists)
+
+    # youtube playlist
+    yt_playlist = yt_subparsers.add_parser("playlist", help="Import a specific playlist")
+    yt_playlist.add_argument("playlist_id", help="Playlist ID or URL")
+    yt_playlist.add_argument("--limit", "-n", type=int, help="Maximum videos to import")
+    yt_playlist.add_argument("--dry-run", action="store_true", help="Preview without importing")
+    yt_playlist.add_argument("--tag", "-t", action="append", dest="tags", help="Additional tags")
+    yt_playlist.set_defaults(func=cmd_youtube_playlist)
+
+    # youtube channel
+    yt_channel = yt_subparsers.add_parser("channel", help="Import videos from a channel")
+    yt_channel.add_argument("channel_id", help="Channel ID, handle (@name), or URL")
+    yt_channel.add_argument("--limit", "-n", type=int, help="Maximum videos to import")
+    yt_channel.add_argument("--dry-run", action="store_true", help="Preview without importing")
+    yt_channel.add_argument("--tag", "-t", action="append", dest="tags", help="Additional tags")
+    yt_channel.set_defaults(func=cmd_youtube_channel)
+
+    # youtube video
+    yt_video = yt_subparsers.add_parser("video", help="Import a single video")
+    yt_video.add_argument("video_id", help="Video ID or URL")
+    yt_video.add_argument("--dry-run", action="store_true", help="Preview without importing")
+    yt_video.add_argument("--tag", "-t", action="append", dest="tags", help="Additional tags")
+    yt_video.set_defaults(func=cmd_youtube_video)
+
+    # youtube user (other user's public content)
+    yt_user = yt_subparsers.add_parser("user", help="Import another user's public content")
+    yt_user.add_argument("user_id", help="Channel ID, handle (@name), or URL")
+    yt_user.add_argument("--videos", action="store_true", help="Import channel videos")
+    yt_user.add_argument("--playlists", action="store_true", help="Import public playlists")
+    yt_user.add_argument("--limit", "-n", type=int, help="Maximum items to import")
+    yt_user.add_argument("--dry-run", action="store_true", help="Preview without importing")
+    yt_user.add_argument("--tag", "-t", action="append", dest="tags", help="Additional tags")
+    yt_user.set_defaults(func=cmd_youtube_user)
+
+    import_parser.set_defaults(func=lambda args: import_parser.print_help())
 
     # =================
     # EXPORT GROUP
@@ -2759,8 +4092,8 @@ Configuration:
     export_parser = subparsers.add_parser("export", help="Export bookmarks")
     export_parser.add_argument("file", help="Output file")
     export_parser.add_argument("--format", required=True,
-                              choices=["json", "csv", "html", "html-app", "markdown", "m3u"],
-                              help="Export format (html-app for interactive viewer)")
+                              choices=["json", "json-full", "csv", "html", "html-app", "markdown", "m3u", "preservation-html"],
+                              help="Export format (json-full for comprehensive export, html-app for interactive viewer, preservation-html for archived content)")
     export_parser.add_argument("--query", help="SQL query to filter bookmarks")
     export_parser.add_argument("--starred", action="store_true", help="Filter to starred bookmarks")
     export_parser.add_argument("--pinned", action="store_true", help="Filter to pinned bookmarks")
@@ -2916,6 +4249,114 @@ Configuration:
     serve_parser.add_argument("--host", "-H", default="127.0.0.1",
                               help="Host to bind to (default: 127.0.0.1)")
     serve_parser.set_defaults(func=cmd_serve)
+
+    # =================
+    # SQL COMMAND
+    # =================
+    sql_parser = subparsers.add_parser("sql", help="Execute raw SQL queries")
+    sql_parser.add_argument("-e", "--query", help="SQL query to execute")
+    sql_parser.add_argument("-o", "--output", choices=["table", "json", "csv", "plain"],
+                           default="table", help="Output format (default: table)")
+    sql_parser.set_defaults(func=cmd_sql)
+
+    # =================
+    # EXAMPLES COMMAND
+    # =================
+    examples_parser = subparsers.add_parser("examples", help="Show usage examples")
+    examples_parser.add_argument("topic", nargs="?", default="all",
+                                 choices=list(CLI_EXAMPLES.keys()) + ["all"],
+                                 help="Topic to show examples for (default: all)")
+    examples_parser.set_defaults(func=cmd_examples)
+
+    # =================
+    # QUERY GROUP (New typed query DSL)
+    # =================
+    query_parser = subparsers.add_parser("query", help="Execute typed queries (new DSL)")
+    query_parser.add_argument("--queries-file", "-f", help="Path to queries YAML file")
+    query_subparsers = query_parser.add_subparsers(dest="query_command", required=True)
+
+    # query list
+    query_list = query_subparsers.add_parser("list", help="List registered queries")
+    query_list.set_defaults(func=cmd_query_dsl)
+
+    # query show
+    query_show = query_subparsers.add_parser("show", help="Show query details")
+    query_show.add_argument("name", help="Query name")
+    query_show.set_defaults(func=cmd_query_dsl)
+
+    # query run
+    query_run = query_subparsers.add_parser("run", help="Run a query")
+    query_run.add_argument("--name", "-n", help="Query name from registry")
+    query_run.add_argument("--inline", "-i",
+                           help="Inline YAML query definition (e.g., '{filter: {stars: true}}')")
+    query_run.add_argument("--limit", "-l", type=int, help="Limit results")
+    query_run.add_argument("--offset", type=int, help="Skip first N results")
+    query_run.set_defaults(func=cmd_query_dsl)
+
+    # query export
+    query_export = query_subparsers.add_parser("export", help="Export query results")
+    query_export.add_argument("name", help="Query name")
+    query_export.add_argument("output_file", help="Output file path")
+    query_export.add_argument("--format", choices=["json", "csv", "html", "html-app"],
+                              default="json", help="Export format")
+    query_export.add_argument("--title", "-t", help="Export title (for HTML)")
+    query_export.set_defaults(func=cmd_query_dsl)
+
+    query_parser.set_defaults(func=cmd_query_dsl)
+
+    # =================
+    # VIEW GROUP
+    # =================
+    view_parser = subparsers.add_parser("view", help="View management (composable bookmark queries)")
+    view_parser.add_argument("--views-file", "-f", help="Path to views YAML file")
+    view_subparsers = view_parser.add_subparsers(dest="view_command", required=True)
+
+    # view list
+    view_list = view_subparsers.add_parser("list", help="List available views")
+    view_list.add_argument("--no-builtin", action="store_true",
+                           help="Exclude built-in views")
+    view_list.set_defaults(func=cmd_views)
+
+    # view show
+    view_show = view_subparsers.add_parser("show", help="Show view details")
+    view_show.add_argument("name", help="View name")
+    view_show.set_defaults(func=cmd_views)
+
+    # view eval
+    view_eval = view_subparsers.add_parser("eval", help="Evaluate a view and show results")
+    view_eval.add_argument("name", help="View name")
+    view_eval.add_argument("--param", "-p", action="append",
+                           help="View parameter (key=value)")
+    view_eval.add_argument("--limit", "-l", type=int,
+                           help="Limit number of results")
+    view_eval.set_defaults(func=cmd_views)
+
+    # view export
+    view_export = view_subparsers.add_parser("export", help="Export view results to file")
+    view_export.add_argument("name", help="View name")
+    view_export.add_argument("output_file", help="Output file path")
+    view_export.add_argument("--format", choices=["html", "html-app", "json", "csv", "markdown"],
+                             default="html", help="Export format (default: html)")
+    view_export.add_argument("--param", "-p", action="append",
+                             help="View parameter (key=value)")
+    view_export.add_argument("--title", "-t", help="Export title")
+    view_export.add_argument("--hierarchical", action="store_true",
+                             help="Export with hierarchical tag structure")
+    view_export.set_defaults(func=cmd_views)
+
+    # view create (ad-hoc view from CLI)
+    view_create = view_subparsers.add_parser("create",
+                                              help="Create and evaluate an ad-hoc view")
+    view_create.add_argument("--tags", help="Filter by tags (comma-separated)")
+    view_create.add_argument("--search", "-s", help="Full-text search query")
+    view_create.add_argument("--starred", action="store_true", help="Only starred bookmarks")
+    view_create.add_argument("--pinned", action="store_true", help="Only pinned bookmarks")
+    view_create.add_argument("--order", default="added desc",
+                              help="Sort order (default: added desc)")
+    view_create.add_argument("--limit", "-l", type=int, help="Limit results")
+    view_create.set_defaults(func=cmd_views)
+
+    view_parser.set_defaults(func=cmd_views)
 
     # =================
     # PLUGIN GROUP

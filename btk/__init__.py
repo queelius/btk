@@ -18,7 +18,7 @@ Example Usage:
     >>> db.search("python")
 """
 
-__version__ = "0.7.5"
+__version__ = "0.8.0"
 __author__ = "BTK Contributors"
 
 # Core database API
