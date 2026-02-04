@@ -11,7 +11,7 @@ import time
 import hashlib
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional
 from collections import OrderedDict
 import pickle
 
@@ -26,7 +26,7 @@ class ContentCache:
     Content is stored as structured data that can be used for various operations.
     """
     
-    def __init__(self, cache_dir: str = None, max_memory_items: int = 100, 
+    def __init__(self, cache_dir: Optional[str] = None, max_memory_items: int = 100, 
                  max_disk_items: int = 10000, ttl_days: int = 30):
         """
         Initialize the content cache.
@@ -283,7 +283,7 @@ class ContentCache:
             'hit_rate': self.stats['hits'] / max(1, self.stats['hits'] + self.stats['misses'])
         }
     
-    def export_as_markdown(self, url: str, output_file: str = None) -> Optional[str]:
+    def export_as_markdown(self, url: str, output_file: Optional[str] = None) -> Optional[str]:
         """
         Export cached content as Markdown.
         

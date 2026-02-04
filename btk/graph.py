@@ -7,7 +7,7 @@ Computes similarity edges based on:
 3. Direct links (bookmark1 links to bookmark2)
 4. Indirect links (multi-hop paths, optional/expensive)
 """
-from typing import List, Dict, Set, Tuple, Optional
+from typing import Optional, List, Dict, Set, Tuple
 from dataclasses import dataclass
 from urllib.parse import urlparse
 import re
@@ -51,7 +51,7 @@ class BookmarkGraph:
         self.link_index: Dict[int, Set[str]] = {}  # {bookmark_id: set(linked_urls)}
         self.url_to_id: Dict[str, int] = {}  # {url: bookmark_id}
 
-    def build(self, config: GraphConfig = None, progress_callback=None) -> Dict:
+    def build(self, config: Optional[GraphConfig] = None, progress_callback=None) -> Dict:
         """
         Build the bookmark graph.
 
@@ -125,7 +125,6 @@ class BookmarkGraph:
         """Build URL and link indices from bookmarks."""
         from btk.models import ContentCache
         from sqlalchemy import select
-        from sqlalchemy.orm import selectinload
 
         # URL to ID mapping
         for b in bookmarks:
@@ -332,11 +331,9 @@ class BookmarkGraph:
 
         return neighbors[:limit]
 
-    def save(self, db_path: str = None):
+    def save(self, db_path: Optional[str] = None):
         """Save graph to database."""
-        from btk.models import Base
-        from sqlalchemy import Column, Integer, Float, JSON, PrimaryKeyConstraint
-        from sqlalchemy import create_engine, text
+        from sqlalchemy import text
 
         # Use the existing engine from the database
         engine = self.db.engine
@@ -378,14 +375,14 @@ class BookmarkGraph:
                 })
             conn.commit()
 
-    def load(self, db_path: str = None):
+    def load(self, db_path: Optional[str] = None):
         """
         Load graph from database.
 
         Raises:
             ValueError: If graph table doesn't exist (need to build first)
         """
-        from sqlalchemy import create_engine, text, inspect
+        from sqlalchemy import text, inspect
 
         # Use the existing engine from the database
         engine = self.db.engine
@@ -576,9 +573,9 @@ class BookmarkGraph:
 
         # Generate SVG
         svg_parts = []
-        svg_parts.append(f'<?xml version="1.0" encoding="UTF-8"?>')
+        svg_parts.append('<?xml version="1.0" encoding="UTF-8"?>')
         svg_parts.append(f'<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">')
-        svg_parts.append(f'<rect width="100%" height="100%" fill="#1a1a1a"/>')
+        svg_parts.append('<rect width="100%" height="100%" fill="#1a1a1a"/>')
 
         # Draw edges
         svg_parts.append('<g id="edges">')

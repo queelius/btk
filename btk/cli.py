@@ -12,10 +12,9 @@ import csv
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 from rich.console import Console
 from rich.table import Table
-from rich import print as rprint
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from btk.config import init_config, get_config
@@ -229,160 +228,6 @@ def build_filters(args):
     return filters
 
 
-def cmd_list(args):
-    """List bookmarks."""
-    db = get_db(args.db)
-
-    # By default, exclude archived bookmarks
-    exclude_archived = not (hasattr(args, 'include_archived') and args.include_archived)
-
-    bookmarks = db.list(
-        limit=args.limit if not hasattr(args, 'by_date') or not args.by_date else None,
-        offset=args.offset,
-        order_by=args.sort,
-        exclude_archived=exclude_archived
-    )
-
-    # Handle --by-date grouping
-    if hasattr(args, 'by_date') and args.by_date:
-        output_bookmarks_by_date(bookmarks, args.by_date, args.date_granularity, args.output)
-    else:
-        output_bookmarks(bookmarks, args.output)
-
-
-def output_bookmarks_by_date(bookmarks: List[Bookmark], field: str, granularity: str, format: str):
-    """Output bookmarks grouped by date."""
-    from collections import defaultdict
-
-    # Map field name to attribute
-    attr_name = 'added' if field == 'added' else 'last_visited'
-
-    # Group bookmarks by date
-    grouped = defaultdict(list)
-    month_names = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-    for b in bookmarks:
-        date_val = getattr(b, attr_name)
-        if not date_val:
-            continue
-
-        # Generate key based on granularity
-        if granularity == 'year':
-            key = str(date_val.year)
-        elif granularity == 'month':
-            key = f"{date_val.year}-{date_val.month:02d}"
-        else:  # day
-            key = f"{date_val.year}-{date_val.month:02d}-{date_val.day:02d}"
-
-        grouped[key].append(b)
-
-    # Sort keys in reverse chronological order
-    sorted_keys = sorted(grouped.keys(), reverse=True)
-
-    if format == "json":
-        data = {
-            'field': field,
-            'granularity': granularity,
-            'groups': {
-                key: [{
-                    "id": b.id,
-                    "url": b.url,
-                    "title": b.title,
-                    "tags": [t.name for t in b.tags],
-                    "stars": b.stars,
-                    "visits": b.visit_count,
-                    "added": b.added.isoformat() if b.added else None,
-                } for b in grouped[key]]
-                for key in sorted_keys
-            }
-        }
-        print(json.dumps(data, indent=2))
-    else:
-        # Display grouped output
-        field_label = "Date Added" if field == 'added' else "Last Visited"
-        console.print(f"\n[bold cyan]Bookmarks by {field_label} ({granularity}):[/bold cyan]\n")
-
-        for key in sorted_keys:
-            # Format the key for display
-            parts = key.split('-')
-            if len(parts) == 1:
-                label = parts[0]
-            elif len(parts) == 2:
-                label = f"{month_names[int(parts[1])]} {parts[0]}"
-            else:
-                label = f"{month_names[int(parts[1])]} {int(parts[2])}, {parts[0]}"
-
-            console.print(f"[bold yellow]{label}[/bold yellow] ({len(grouped[key])} bookmarks)")
-
-            for b in grouped[key][:10]:  # Show first 10 per group
-                star = "★" if b.stars else " "
-                console.print(f"  {star} [{b.id}] {b.title[:50]}")
-
-            if len(grouped[key]) > 10:
-                console.print(f"  [dim]... and {len(grouped[key]) - 10} more[/dim]")
-            console.print()
-
-
-def cmd_search(args):
-    """Search bookmarks."""
-    db = get_db(args.db)
-
-    # Use FTS if requested
-    if hasattr(args, 'fts') and args.fts:
-        from btk.fts import get_fts_index
-        from btk.config import get_config
-
-        config = get_config()
-        fts = get_fts_index(config.database)
-
-        results = fts.search(
-            args.query,
-            limit=args.limit or 50,
-            in_content=args.in_content if hasattr(args, 'in_content') else True
-        )
-
-        if not results:
-            console.print("[yellow]No results found[/yellow]")
-            return
-
-        if args.output == "json":
-            data = [r.to_dict() for r in results]
-            print(json.dumps(data, indent=2))
-        else:
-            table = Table(title=f"Search Results for '{args.query}'")
-            table.add_column("ID", style="cyan")
-            table.add_column("Title", style="green")
-            table.add_column("URL", style="blue")
-            table.add_column("Relevance", style="yellow")
-
-            for result in results:
-                table.add_row(
-                    str(result.bookmark_id),
-                    result.title[:40] if result.title else "N/A",
-                    result.url[:40] if result.url else "N/A",
-                    f"{result.rank:.2f}"
-                )
-
-            console.print(table)
-
-            if results and results[0].snippet:
-                console.print("\n[bold]Best match snippet:[/bold]")
-                console.print(f"  {results[0].snippet}")
-    else:
-        # Standard search
-        filters = build_filters(args)
-        bookmarks = db.search(
-            args.query if hasattr(args, 'query') else None,
-            in_content=args.in_content if hasattr(args, 'in_content') else False,
-            **filters
-        )
-
-        if args.limit:
-            bookmarks = bookmarks[:args.limit]
-
-        output_bookmarks(bookmarks, args.output)
-
-
 def cmd_get(args):
     """Get a specific bookmark."""
     db = get_db(args.db)
@@ -471,9 +316,9 @@ def cmd_refresh(args):
             console.print(f"  Status: {result['status_code']}")
             console.print(f"  Content: {result['content_length']:,} bytes → {result['compressed_size']:,} bytes ({result['compression_ratio']:.1f}% compression)")
             if result.get("content_changed"):
-                console.print(f"  [yellow]Content changed[/yellow]")
+                console.print("  [yellow]Content changed[/yellow]")
             if result.get("title_updated"):
-                console.print(f"  [yellow]Title updated[/yellow]")
+                console.print("  [yellow]Title updated[/yellow]")
         else:
             console.print(f"[red]✗ Failed to refresh: {result['error']}[/red]")
             if result.get("status_code"):
@@ -612,7 +457,7 @@ def cmd_view(args):
             ).scalar_one_or_none()
 
         if not cache:
-            console.print(f"[yellow]No cached content available[/yellow]")
+            console.print("[yellow]No cached content available[/yellow]")
             sys.exit(1)
 
         if args.html:
@@ -660,11 +505,9 @@ def cmd_view(args):
 def cmd_auto_tag(args):
     """Auto-generate tags for bookmarks using NLP."""
     db = get_db(args.db)
+    import os
     from btk.models import ContentCache
     from sqlalchemy import select
-    import sys
-    import os
-
     # Import the NLP tagger
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'plugins', 'auto_tag_nlp'))
     from nlp_tagger import NLPTagSuggester
@@ -710,7 +553,7 @@ def cmd_auto_tag(args):
                 db.update(bookmark.id, tags=existing_tags + new_tags)
                 console.print(f"\n[green]✓ Added {len(new_tags)} new tags[/green]")
             else:
-                console.print(f"\n[yellow]No new tags to add[/yellow]")
+                console.print("\n[yellow]No new tags to add[/yellow]")
 
     elif args.all:
         # Auto-tag all bookmarks (single-threaded for stability)
@@ -721,7 +564,7 @@ def cmd_auto_tag(args):
             TextColumn("[progress.description]{task.description}"),
             console=console
         ) as progress:
-            task = progress.add_task(f"Auto-tagging bookmarks...", total=len(bookmarks))
+            task = progress.add_task("Auto-tagging bookmarks...", total=len(bookmarks))
 
             tagged_count = 0
             processed_count = 0
@@ -790,7 +633,7 @@ def cmd_auto_tag(args):
         if args.apply:
             console.print(f"\n[green]✓ Tagged {tagged_count} bookmarks[/green]")
         else:
-            console.print(f"\n[yellow]Preview mode - use --apply to save tags[/yellow]")
+            console.print("\n[yellow]Preview mode - use --apply to save tags[/yellow]")
 
     else:
         console.print("[red]Error: Must specify --id or --all[/red]")
@@ -800,7 +643,7 @@ def cmd_auto_tag(args):
 def cmd_preserve(args):
     """Preserve media content (thumbnails, transcripts, PDF text) for Long Echo."""
     from btk.preservation import (
-        PreservationManager, preserve_bookmark, preserve_bookmarks_batch
+        PreservationManager, preserve_bookmark
     )
 
     db = get_db(args.db)
@@ -827,7 +670,7 @@ def cmd_preserve(args):
         result = preserve_bookmark(db, bookmark.id, manager)
 
         if result and result.success:
-            console.print(f"[green]✓ Preserved successfully[/green]")
+            console.print("[green]✓ Preserved successfully[/green]")
             if result.transcript_text:
                 console.print(f"  Transcript: {len(result.transcript_text)} chars")
             if result.thumbnail_data:
@@ -837,7 +680,7 @@ def cmd_preserve(args):
         elif result:
             console.print(f"[red]✗ Failed: {result.error_message}[/red]")
         else:
-            console.print(f"[yellow]No preserver available for this URL[/yellow]")
+            console.print("[yellow]No preserver available for this URL[/yellow]")
 
     elif args.all:
         # Preserve all preservable bookmarks
@@ -874,7 +717,7 @@ def cmd_preserve(args):
             if len(preservable) > 20:
                 console.print(f"  ... and {len(preservable) - 20} more")
 
-            console.print(f"\n[cyan]By preserver type:[/cyan]")
+            console.print("\n[cyan]By preserver type:[/cyan]")
             for ptype, count in sorted(by_type.items()):
                 console.print(f"  {ptype}: {count}")
             return
@@ -980,21 +823,381 @@ def cmd_delete(args):
         print(deleted_count)
 
 
-def cmd_query(args):
-    """Execute SQL-like query."""
+def cmd_query_flags(args):
+    """
+    Composable flag-based bookmark query.
+
+    Combines filters with AND logic. Use --no-* flags for negation.
+    """
+    from datetime import datetime, timedelta, timezone
+    from sqlalchemy import and_, or_
+    from btk.models import Bookmark, Tag
+
     db = get_db(args.db)
 
-    try:
-        bookmarks = db.query(sql=args.sql)
+    # Start with all bookmarks (or from a view if specified)
+    filters = []
+
+    # Handle view base if specified
+    if args.view:
+        from btk.views import ViewRegistry, ViewContext
+        from pathlib import Path
+
+        # Create registry and load built-in views
+        registry = ViewRegistry()
+
+        # Try to load custom views from default locations
+        config = get_config()
+        default_paths = [
+            Path("btk-views.yaml"),
+            Path("btk-views.yml"),
+            Path(config.database).parent / "btk-views.yaml",
+            Path.home() / ".config" / "btk" / "views.yaml",
+        ]
+        for path in default_paths:
+            if path.exists():
+                try:
+                    registry.load_file(path)
+                except Exception:
+                    pass
+
+        if not registry.has(args.view):
+            console.print(f"[red]View not found: {args.view}[/red]")
+            console.print("[dim]Use 'btk view list' to see available views[/dim]")
+            sys.exit(1)
+        view = registry.get(args.view)
+        ctx = ViewContext(registry=registry)
+        result = view.evaluate(db, ctx)
+        base_ids = [b.id for b in result.bookmarks]
+        if not base_ids:
+            # View returned empty, output accordingly
+            output_bookmarks([], args.output)
+            return
+        filters.append(Bookmark.id.in_(base_ids))
+
+    # Starred filter
+    if args.starred:
+        filters.append(Bookmark.stars == True)
+    elif args.no_starred:
+        filters.append(Bookmark.stars == False)
+
+    # Recent filter (added in last 7 days)
+    if args.recent:
+        cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+        filters.append(Bookmark.added >= cutoff)
+    elif args.no_recent:
+        cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+        filters.append(Bookmark.added < cutoff)
+
+    # Unread filter (never visited)
+    if args.unread:
+        filters.append(Bookmark.visit_count == 0)
+    elif args.no_unread:
+        filters.append(Bookmark.visit_count > 0)
+
+    # Archived filter
+    if args.archived:
+        filters.append(Bookmark.archived == True)
+    elif args.no_archived:
+        filters.append(Bookmark.archived == False)
+
+    # Pinned filter
+    if args.pinned:
+        filters.append(Bookmark.pinned == True)
+    elif args.no_pinned:
+        filters.append(Bookmark.pinned == False)
+
+    # Tagged filter (comma-separated tags, matches ANY)
+    if args.tagged:
+        tag_names = [t.strip() for t in args.tagged.split(',')]
+        filters.append(Bookmark.tags.any(Tag.name.in_(tag_names)))
+    elif args.no_tagged:
+        tag_names = [t.strip() for t in args.no_tagged.split(',')]
+        filters.append(~Bookmark.tags.any(Tag.name.in_(tag_names)))
+
+    # Domain filter
+    if args.domain:
+        # Match bookmarks where URL contains the domain
+        domain = args.domain.lower()
+        filters.append(Bookmark.url.ilike(f'%{domain}%'))
+    elif args.no_domain:
+        domain = args.no_domain.lower()
+        filters.append(~Bookmark.url.ilike(f'%{domain}%'))
+
+    # Full-text search
+    search_term = args.search
+    if search_term:
+        search_pattern = f'%{search_term}%'
+        filters.append(or_(
+            Bookmark.title.ilike(search_pattern),
+            Bookmark.url.ilike(search_pattern),
+            Bookmark.description.ilike(search_pattern)
+        ))
+
+    # Build query
+    with db.session(expire_on_commit=False) as session:
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+
+        query = select(Bookmark).options(selectinload(Bookmark.tags))
+
+        # Apply all filters with AND
+        if filters:
+            query = query.where(and_(*filters))
+
+        # Exclude archived by default unless explicitly requested
+        if not args.archived and not args.no_archived:
+            query = query.where(Bookmark.archived == False)
+
+        # Order by
+        order_field = args.order or 'added'
+        order_map = {
+            'added': Bookmark.added.desc(),
+            'title': Bookmark.title.asc(),
+            'visits': Bookmark.visit_count.desc(),
+            'visited': Bookmark.last_visited.desc(),
+            'stars': Bookmark.stars.desc(),
+        }
+        if order_field in order_map:
+            query = query.order_by(order_map[order_field])
+
+        # Apply limit and offset
+        if args.offset:
+            query = query.offset(args.offset)
+        limit = args.limit if args.limit else 20  # Default limit
+        query = query.limit(limit)
+
+        # Execute query
+        bookmarks = list(session.scalars(query).all())
+
+        # Force load tags before session closes
+        for b in bookmarks:
+            _ = [t.name for t in b.tags]
+
+        # Output results within session context
         output_bookmarks(bookmarks, args.output)
+
+
+def cmd_add_shortcut(args):
+    """Add a bookmark (shortcut for 'btk bookmark add')."""
+    db = get_db(args.db)
+
+    tags = [t.strip() for t in args.tags.split(',')] if args.tags else []
+
+    try:
+        bookmark = db.add(
+            url=args.url,
+            title=args.title,
+            description=args.description,
+            tags=tags,
+            stars=args.star
+        )
+        if bookmark:
+            console.print(f"[green]✓[/green] Added bookmark: {bookmark.id} - {bookmark.title[:50]}")
+            if tags:
+                console.print(f"  Tags: {', '.join(tags)}")
+        else:
+            console.print("[yellow]Bookmark already exists (duplicate URL)[/yellow]")
     except Exception as e:
-        console.print(f"[red]Query error: {e}[/red]")
+        console.print(f"[red]Error: {e}[/red]")
         sys.exit(1)
+
+
+def _resolve_bookmark(db, identifier):
+    """Look up a bookmark by numeric ID or unique_id string."""
+    try:
+        return db.get(id=int(identifier))
+    except ValueError:
+        return db.get(unique_id=identifier)
+
+
+def cmd_open_shortcut(args):
+    """Open a bookmark in browser (shortcut)."""
+    import webbrowser
+    from datetime import datetime, timezone
+
+    db = get_db(args.db)
+    bookmark = _resolve_bookmark(db, args.id)
+
+    if not bookmark:
+        console.print(f"[red]Bookmark not found: {args.id}[/red]")
+        sys.exit(1)
+
+    # Open in browser
+    webbrowser.open(bookmark.url)
+    console.print(f"[green]Opened:[/green] {bookmark.title[:60]}")
+
+    # Update visit count and last_visited
+    db.update(
+        bookmark.id,
+        visit_count=bookmark.visit_count + 1,
+        last_visited=datetime.now(timezone.utc)
+    )
+
+
+def cmd_star_shortcut(args):
+    """Star a bookmark (shortcut)."""
+    db = get_db(args.db)
+    bookmark = _resolve_bookmark(db, args.id)
+
+    if not bookmark:
+        console.print(f"[red]Bookmark not found: {args.id}[/red]")
+        sys.exit(1)
+
+    if bookmark.stars:
+        console.print(f"[yellow]Already starred:[/yellow] {bookmark.title[:50]}")
+    else:
+        db.update(bookmark.id, stars=True)
+        console.print(f"[green]★ Starred:[/green] {bookmark.title[:50]}")
+
+
+def cmd_unstar_shortcut(args):
+    """Unstar a bookmark (shortcut)."""
+    db = get_db(args.db)
+    bookmark = _resolve_bookmark(db, args.id)
+
+    if not bookmark:
+        console.print(f"[red]Bookmark not found: {args.id}[/red]")
+        sys.exit(1)
+
+    if not bookmark.stars:
+        console.print(f"[yellow]Not starred:[/yellow] {bookmark.title[:50]}")
+    else:
+        db.update(bookmark.id, stars=False)
+        console.print(f"[dim]☆ Unstarred:[/dim] {bookmark.title[:50]}")
+
+
+def cmd_tag_shortcut(args):
+    """Add tags to a bookmark (shortcut)."""
+    db = get_db(args.db)
+    bookmark = _resolve_bookmark(db, args.id)
+
+    if not bookmark:
+        console.print(f"[red]Bookmark not found: {args.id}[/red]")
+        sys.exit(1)
+
+    new_tags = [t.strip() for t in args.tags.split(',')]
+    existing_tags = [t.name for t in bookmark.tags]
+    merged_tags = list(set(existing_tags + new_tags))
+
+    db.update(bookmark.id, tags=merged_tags)
+    console.print(f"[green]Tagged:[/green] {bookmark.title[:50]}")
+    console.print(f"  Tags: {', '.join(merged_tags)}")
+
+
+def cmd_untag_shortcut(args):
+    """Remove tags from a bookmark (shortcut)."""
+    db = get_db(args.db)
+    bookmark = _resolve_bookmark(db, args.id)
+
+    if not bookmark:
+        console.print(f"[red]Bookmark not found: {args.id}[/red]")
+        sys.exit(1)
+
+    tags_to_remove = set(t.strip() for t in args.tags.split(','))
+    existing_tags = [t.name for t in bookmark.tags]
+    remaining_tags = [t for t in existing_tags if t not in tags_to_remove]
+
+    db.update(bookmark.id, tags=remaining_tags)
+    console.print(f"[green]Untagged:[/green] {bookmark.title[:50]}")
+    if remaining_tags:
+        console.print(f"  Remaining tags: {', '.join(remaining_tags)}")
+
+
+def cmd_rm_shortcut(args):
+    """Delete a bookmark (shortcut for 'btk bookmark delete')."""
+    db = get_db(args.db)
+    bookmark = _resolve_bookmark(db, args.id)
+
+    if not bookmark:
+        console.print(f"[red]Bookmark not found: {args.id}[/red]")
+        sys.exit(1)
+
+    title = bookmark.title
+    if db.delete(bookmark.id):
+        console.print(f"[green]✓[/green] Deleted: {title[:50]}")
+    else:
+        console.print("[red]Failed to delete bookmark[/red]")
+        sys.exit(1)
+
+
+def cmd_activity(args):
+    """Show activity log from events table."""
+    from btk.models import Event
+    from sqlalchemy import select
+
+    db = get_db(args.db)
+    limit = args.limit if args.limit else 20
+
+    with db.session() as session:
+        query = select(Event).order_by(Event.timestamp.desc()).limit(limit)
+        events = list(session.scalars(query).all())
+
+        if not events:
+            console.print("[yellow]No activity found[/yellow]")
+            return
+
+        if args.output == 'json':
+            import json
+            data = [{
+                'id': e.id,
+                'event_type': e.event_type,
+                'entity_type': e.entity_type,
+                'entity_id': e.entity_id,
+                'entity_url': e.entity_url,
+                'timestamp': e.timestamp.isoformat(),
+                'data': e.event_data
+            } for e in events]
+            print(json.dumps(data, indent=2))
+        else:
+            from rich.table import Table
+            table = Table(title="Recent Activity")
+            table.add_column("Time", style="dim")
+            table.add_column("Event", style="cyan")
+            table.add_column("Entity")
+            table.add_column("Details", style="dim")
+
+            for e in events:
+                time_str = e.timestamp.strftime("%Y-%m-%d %H:%M")
+                entity_str = f"{e.entity_type}#{e.entity_id}" if e.entity_id else e.entity_type
+                details = ""
+                if e.entity_url:
+                    details = e.entity_url[:40] + "..." if len(e.entity_url) > 40 else e.entity_url
+                table.add_row(time_str, e.event_type, entity_str, details)
+
+            console.print(table)
+
+
+def cmd_stats(args):
+    """Show quick database statistics."""
+    db = get_db(args.db)
+    stats = db.stats()
+
+    if args.output == 'json':
+        import json
+        print(json.dumps(stats, indent=2, default=str))
+    else:
+        from rich.table import Table
+        table = Table(title="Database Statistics")
+        table.add_column("Metric", style="cyan")
+        table.add_column("Value", style="white")
+
+        table.add_row("Total Bookmarks", str(stats.get('total_bookmarks', 0)))
+        table.add_row("Total Tags", str(stats.get('total_tags', 0)))
+        table.add_row("Starred", str(stats.get('starred_count', 0)))
+        table.add_row("Total Visits", str(stats.get('total_visits', 0)))
+        if 'database_size' in stats:
+            size_mb = stats['database_size'] / 1024 / 1024
+            table.add_row("Database Size", f"{size_mb:.1f} MB")
+        if 'database_path' in stats:
+            table.add_row("Database", stats['database_path'])
+
+        console.print(table)
 
 
 def cmd_health(args):
     """Check health of bookmark URLs."""
-    from btk.health_checker import run_health_check, summarize_results, HealthStatus
+    from btk.health_checker import run_health_check, summarize_results
 
     db = get_db(args.db)
 
@@ -1115,7 +1318,7 @@ def cmd_health(args):
         if not args.dry_run:
             console.print(f"\n[green]✓ Updated {updated_count} bookmarks in database[/green]")
         else:
-            console.print(f"\n[yellow]Dry run - no changes made to database[/yellow]")
+            console.print("\n[yellow]Dry run - no changes made to database[/yellow]")
 
 
 def cmd_queue(args):
@@ -1198,7 +1401,7 @@ def cmd_queue(args):
             if args.percent >= 100:
                 console.print("[blue]Item marked as complete and removed from queue[/blue]")
         else:
-            console.print(f"[red]✗ Failed to update progress[/red]")
+            console.print("[red]✗ Failed to update progress[/red]")
 
     elif cmd == "priority":
         try:
@@ -1210,7 +1413,7 @@ def cmd_queue(args):
         if bookmark_id and set_priority(db, bookmark_id, args.level):
             console.print(f"[green]✓ Set priority to {args.level}[/green]")
         else:
-            console.print(f"[red]✗ Failed to set priority[/red]")
+            console.print("[red]✗ Failed to set priority[/red]")
 
     elif cmd == "next":
         item = get_next_to_read(db)
@@ -1218,7 +1421,7 @@ def cmd_queue(args):
             if args.output == "json":
                 print(json.dumps(item.to_dict(), indent=2))
             else:
-                console.print(f"[bold green]Next to read:[/bold green]")
+                console.print("[bold green]Next to read:[/bold green]")
                 console.print(f"  [{item.bookmark.id}] {item.bookmark.title}")
                 console.print(f"  URL: {item.bookmark.url}")
                 console.print(f"  Progress: {item.progress}% | Priority: {item.priority}")
@@ -1282,7 +1485,7 @@ def cmd_queue(args):
 
 def cmd_media(args):
     """Media detection and management operations."""
-    from btk.media_detector import MediaDetector, MediaInfo
+    from btk.media_detector import MediaDetector
     from btk.media_fetcher import MediaFetcher, YtDlpNotAvailableError, MediaFetchError
 
     db = get_db(args.db)
@@ -1585,7 +1788,7 @@ def cmd_media(args):
         if args.output == "json":
             print(json.dumps(stats, indent=2))
         else:
-            console.print(f"\n[bold]Media Statistics[/bold]")
+            console.print("\n[bold]Media Statistics[/bold]")
             console.print(f"  Total media bookmarks: [green]{stats['total_media']}[/green] ({stats['media_percentage']}%)\n")
 
             if by_type:
@@ -1597,26 +1800,6 @@ def cmd_media(args):
                 console.print("\n[bold]By Source:[/bold]")
                 for source, count in sorted(by_source.items(), key=lambda x: x[1], reverse=True):
                     console.print(f"  {source}: {count}")
-
-
-def cmd_stats(args):
-    """Show database statistics."""
-    db = get_db(args.db)
-    stats = db.stats()
-
-    if args.output == "json":
-        print(json.dumps(stats, indent=2))
-    else:
-        table = Table(title="Database Statistics")
-        table.add_column("Metric", style="cyan")
-        table.add_column("Value", style="green")
-
-        for key, value in stats.items():
-            if key == "database_size":
-                value = f"{value / 1024:.1f} KB"
-            table.add_row(key.replace("_", " ").title(), str(value))
-
-        console.print(table)
 
 
 def cmd_db_info(args):
@@ -1740,45 +1923,199 @@ def cmd_sql(args):
         sys.exit(1)
 
 
+# =============================================================================
+# Claude Code Skill
+# =============================================================================
+
+BTK_SKILL = '''---
+name: btk
+description: Use this skill when working with btk (Bookmark Toolkit) - a CLI for managing bookmarks with SQLite storage, hierarchical tags, and a typed query DSL. Invoke for bookmark operations, queries, imports/exports, or btk shell navigation.
+---
+
+# BTK - Bookmark Toolkit
+
+A CLI tool for managing bookmarks with SQLite storage, hierarchical tags, and a typed query DSL.
+
+## Quick Reference
+
+```bash
+# Common operations
+btk bookmark add https://example.com --tags "web,tool"
+btk bookmark list --limit 10
+btk bookmark search "python"
+btk query run --name starred --limit 10
+btk shell  # Interactive mode
+```
+
+## Command Groups
+
+| Command | Purpose |
+|---------|---------|
+| `btk bookmark` | CRUD operations on bookmarks |
+| `btk tag` | Tag management (list, add, remove, rename, copy, stats) |
+| `btk query` | Typed query DSL for complex searches |
+| `btk import` | Import from HTML, JSON, CSV, YouTube, browser |
+| `btk export` | Export to HTML, JSON, CSV, html-app |
+| `btk shell` | Interactive filesystem-like navigation |
+| `btk serve` | REST API server with web UI |
+| `btk sql` | Execute raw SQL queries with `-o json/csv/table/plain` |
+
+## Query DSL (`btk query`)
+
+The query command uses a typed expression language:
+
+### Filter Expressions
+```yaml
+# Exact match
+stars: true
+visit_count: 0
+
+# Comparisons
+visit_count: ">= 5"
+stars: "!= 0"
+
+# Temporal
+added: "within 30 days"
+added: "before 2024-01-01"
+
+# Collections (with glob support)
+tags: "any [ai/*, ml/*]"
+tags: "all [python, web]"
+domain: [github.com, gitlab.com]
+
+# String matching
+url: "contains github"
+url: "ends_with .pdf"
+title: "starts_with How"
+```
+
+### Query Examples
+```bash
+# Run a named query
+btk query run --name starred --limit 10
+
+# Inline YAML query
+btk query run --inline '{filter: {url: "contains arxiv"}, sort: "added desc", limit: 5}'
+
+# List available queries
+btk query list
+
+# Export results
+btk query export recent output.json --format json
+```
+
+### Built-in Queries
+`all`, `recent`, `starred`, `pinned`, `archived`, `unread`, `popular`, `broken`, `untagged`, `videos`, `pdfs`, `preserved`
+
+## Output Formats
+
+`btk sql` supports `-o` output format:
+- `table` (default): Rich formatted table
+- `json`: JSON for parsing/piping
+- `csv`: CSV format
+- `plain`: Raw values, one per line
+
+```bash
+btk sql -e "SELECT * FROM bookmarks LIMIT 10" -o json | jq '.[] | .url'
+btk sql -e "SELECT url FROM bookmarks WHERE stars=1" -o plain
+```
+
+## Shell Mode
+
+`btk shell` provides filesystem-like navigation:
+
+```
+/                          # Root
+/tags/programming/python/  # Browse by hierarchical tag
+/starred/                  # Starred bookmarks
+/recent/today/added/       # Time-based navigation
+/untagged/                 # Smart collection
+/domains/github.com/       # Browse by domain
+```
+
+Commands: `ls`, `cd`, `cat <id>`, `open <id>`, `tag <id> <tags>`, `star <id>`
+
+## Database
+
+SQLite at `btk.db` (override with `--db`).
+
+Key tables:
+- `bookmarks`: id, url, title, description, added, stars, visit_count, pinned, archived
+- `tags`: id, name, description, color
+- `bookmark_tags`: bookmark_id, tag_id (many-to-many)
+- `content_cache`: Cached page content, transcripts, thumbnails
+
+### SQL Examples
+```bash
+btk sql -e "SELECT COUNT(*) FROM bookmarks"
+btk sql -e "SELECT name, COUNT(*) as c FROM tags t JOIN bookmark_tags bt ON t.id=bt.tag_id GROUP BY name ORDER BY c DESC LIMIT 10"
+```
+
+## Import/Export
+
+```bash
+# Import
+btk import html bookmarks.html
+btk import json data.json
+btk browser import chrome  # From browser
+
+# Export (syntax: btk export FILE --format FORMAT [filters])
+btk export output.json --format json --starred
+btk export site/ --format html-app  # Interactive web app
+btk query export starred out.json --format json
+```
+
+## Tips
+
+1. Use `btk sql -o json` when parsing output programmatically
+2. Query DSL supports globs: `tags: "any [ai/*]"` matches ai/ml, ai/nlp, etc.
+3. Use `btk shell` for interactive exploration
+4. `btk serve` starts a REST API at http://localhost:8000
+5. Tags are hierarchical: `programming/python/web`
+6. Use `btk examples <topic>` to see detailed examples for any command group
+'''
+
+
 # Examples organized by command group
 CLI_EXAMPLES = {
     "bookmark": """
   btk bookmark add https://example.com --title "Example" --tags "web,demo"
-  btk bookmark add https://arxiv.org/abs/2301.00001 --tags "ai,papers"
+  btk bookmark add https://arxiv.org/abs/2301.00001 --tags "ai,papers" --star
   btk bookmark list --limit 10 --sort visit_count
-  btk bookmark list --starred --output json
+  btk bookmark list --starred              # Filter to starred bookmarks
   btk bookmark search "python tutorial"
-  btk bookmark get 123 --details
+  btk bookmark get 123                     # Get bookmark details
   btk bookmark update 123 --title "New Title" --add-tags "important"
+  btk bookmark update 123 --star           # Star a bookmark
+  btk bookmark update 123 --unstar         # Remove star
+  btk bookmark update 123 --archive        # Archive a bookmark
   btk bookmark delete 1 2 3
-  btk bookmark visit 123                    # Open in browser and increment visit count
-  btk bookmark star 123 456                 # Star multiple bookmarks
-  btk bookmark unstar 123                   # Remove star
+  btk bookmark health 123                  # Check URL reachability
 """,
     "tag": """
-  btk tag list                              # List all tags with counts
-  btk tag tree                              # Show hierarchical tag tree
+  btk tag list                              # List all tags
+  btk tag stats                             # Show tag statistics
   btk tag add python 123 456                # Add tag to multiple bookmarks
   btk tag remove python 123                 # Remove tag from bookmark
   btk tag rename "old-name" "new-name"      # Rename a tag
-  btk tag merge source-tag target-tag       # Merge tags
   btk tag copy important --starred          # Copy tag to starred bookmarks
-  btk tag delete unused-tag                 # Delete a tag
 """,
     "queue": """
   btk queue list                            # Show reading queue
   btk queue add 123 456                     # Add bookmarks to queue
   btk queue remove 123                      # Remove from queue
   btk queue next                            # Get next item to read
-  btk queue clear                           # Clear the queue
+  btk queue stats                           # Queue statistics
+  btk queue priority 123 1                  # Set priority (1=highest, 5=lowest)
+  btk queue progress 123 50                 # Update reading progress (50%)
+  btk queue estimate-times                  # Auto-estimate reading times
 """,
     "content": """
-  btk content fetch 123                     # Fetch and cache page content
-  btk content fetch --all --limit 100       # Bulk fetch content
   btk content view 123                      # View cached content (markdown)
   btk content view 123 --html               # View as HTML
-  btk content refresh --id 123              # Re-fetch content
-  btk content stats                         # Show content cache stats
+  btk content refresh --id 123              # Refresh cached content
+  btk content refresh --all                 # Refresh all content
+  btk content auto-tag --id 123             # Auto-generate tags with NLP
 
   # Long Echo preservation (thumbnails, transcripts, PDF text)
   btk content preserve --id 123             # Preserve specific bookmark
@@ -1803,27 +2140,57 @@ CLI_EXAMPLES = {
   btk import youtube playlist PLxxxxxx      # Import a playlist
 """,
     "export": """
-  btk export json data.json                 # Export to JSON
-  btk export html bookmarks.html            # Export Netscape HTML
-  btk export csv bookmarks.csv              # Export CSV
-  btk export markdown links.md              # Export Markdown
-  btk export html-app output/               # Export interactive HTML app
-  btk export json - --starred               # Export starred to stdout
-  btk export json data.json --tag python    # Export by tag
+  btk export data.json --format json        # Export to JSON
+  btk export bookmarks.html --format html   # Export Netscape HTML
+  btk export bookmarks.csv --format csv     # Export CSV
+  btk export links.md --format markdown     # Export Markdown
+  btk export output/ --format html-app      # Export interactive HTML app
+  btk export - --format json --starred      # Export starred to stdout
+  btk export data.json --format json --tags python  # Export by tag
 """,
     "db": """
   btk db info                               # Database overview
   btk db stats                              # Detailed statistics
   btk db schema                             # Show database schema
-  btk db vacuum                             # Optimize database
-  btk db health                             # Check bookmark health
-  btk db dedupe --strategy merge --preview  # Find duplicates
+  btk db build-index                        # Build full-text search index
+  btk db index-stats                        # Show FTS index statistics
+  btk db cleanup                            # Auto-cleanup stale/broken bookmarks
 """,
     "view": """
   btk view list                             # List all views
   btk view show videos                      # Show view definition
   btk view eval videos --limit 10           # Evaluate view
-  btk view create myview --filter "starred" # Create a view
+  btk view export starred out.json --format json  # Export view results
+  btk view create --starred --limit 20      # Ad-hoc view with filters
+  btk view create --tags "ai,ml" --order "added desc"
+""",
+    "query": """
+  # List and inspect queries
+  btk query list                            # List all registered queries
+  btk query show starred                    # Show query definition
+
+  # Run named queries
+  btk query run --name starred --limit 10   # Run a built-in query
+  btk query run --name recent               # Recent bookmarks
+  btk query run --name untagged -o json     # Untagged as JSON
+
+  # Inline YAML queries
+  btk query run --inline '{filter: {stars: true}}'
+  btk query run --inline '{filter: {url: "contains github"}, sort: "added desc"}'
+  btk query run --inline '{filter: {added: "within 30 days"}, limit: 20}'
+  btk query run --inline '{filter: {tags: "any [ai/*, ml/*]"}}'
+
+  # Export query results
+  btk query export starred out.json --format json
+  btk query export recent out.csv --format csv
+
+  # Query DSL expressions:
+  #   stars: true                    # Exact match
+  #   visit_count: ">= 5"            # Comparison
+  #   added: "within 30 days"        # Temporal
+  #   tags: "any [python, web]"      # Collection
+  #   url: "contains arxiv"          # String matching
+  #   tags: missing                  # Existence check
 """,
     "sql": """
   btk sql -e "SELECT COUNT(*) FROM bookmarks"
@@ -1842,21 +2209,21 @@ CLI_EXAMPLES = {
   open 123                                  # Open in browser
 """,
     "graph": """
-  btk graph co-tags                         # Show tag co-occurrence
-  btk graph domains                         # Domain analysis
-  btk graph timeline                        # Activity over time
+  btk graph build                           # Build similarity graph
+  btk graph neighbors 123                   # Find similar bookmarks
+  btk graph stats                           # Show graph statistics
+  btk graph export graph.html               # Export graph visualization
 """,
     "browser": """
+  btk browser list                          # List detected browser profiles
   btk browser import chrome                 # Import from Chrome
   btk browser import firefox                # Import from Firefox
-  btk browser detect                        # Detect browser profiles
 """,
     "pipelines": """
-  # Unix-style composable pipelines
-  btk bookmark list --output urls | xargs -I {} curl -I {}
-  btk bookmark search "python" --output json | jq '.[] | .url'
-  btk bookmark list --starred --output urls | wc -l
-  btk sql -e "SELECT url FROM bookmarks WHERE stars=1" -o plain | sort
+  # Unix-style composable pipelines with SQL output
+  btk sql -e "SELECT url FROM bookmarks" -o plain | xargs -I {} curl -I {}
+  btk sql -e "SELECT url FROM bookmarks WHERE stars=1" -o plain | wc -l
+  btk sql -e "SELECT * FROM bookmarks LIMIT 10" -o json | jq '.[] | .url'
 """,
     "youtube": """
   # Authentication (required for user-specific imports)
@@ -1885,13 +2252,52 @@ CLI_EXAMPLES = {
   btk import youtube channel @3b1b -n 10    # Limit videos
   btk import youtube playlist PLxxx -t math # Add custom tags
 """,
+    "media": """
+  btk media detect                            # Detect media types for all bookmarks
+  btk media detect --undetected               # Only scan bookmarks without media_type
+  btk media detect --id 123                   # Detect for specific bookmark
+  btk media stats                             # Show media type statistics
+  btk media list --type video                 # List video bookmarks
+  btk media list --type document --limit 20   # List documents with limit
+  btk media list --source youtube             # List YouTube videos
+""",
+    "config": """
+  btk config show                             # Show current configuration
+  btk config set database ~/bookmarks.db      # Set database path
+  btk config set default_browser firefox      # Set default browser
+  btk config set page_size 50                 # Change default page size
+  btk config init                             # Initialize config file
+""",
+    "serve": """
+  btk serve                                   # Start server on default port (8000)
+  btk serve --port 8080                       # Start on custom port
+  btk serve --host 0.0.0.0                    # Allow external connections
+
+  # API endpoints (once running):
+  # GET  /api/bookmarks                       # List bookmarks
+  # GET  /api/bookmarks/<id>                  # Get bookmark
+  # GET  /api/tags                            # List tags
+  # GET  /api/search?q=...                    # Full-text search
+""",
+    "claude": """
+  btk claude status                           # Check skill installation status
+  btk claude install                          # Install global skill (~/.claude/skills/btk/)
+  btk claude install --local                  # Install in current project only
+  btk claude show                             # Print skill content
+  btk claude uninstall                        # Remove global skill
+  btk claude uninstall --local                # Remove local skill
+""",
+    "plugin": """
+  btk plugin list                             # List registered plugins
+  btk plugin info <name>                      # Show plugin details
+  btk plugin types                            # List available plugin types
+""",
 }
 
 
 def cmd_examples(args):
     """Show examples for BTK commands."""
     from rich.panel import Panel
-    from rich.markdown import Markdown
 
     topic = args.topic
 
@@ -1909,6 +2315,67 @@ def cmd_examples(args):
     else:
         console.print(f"[yellow]No examples for '{topic}'. Available topics:[/yellow]")
         console.print(", ".join(sorted(CLI_EXAMPLES.keys())))
+
+
+def cmd_claude(args):
+    """Manage Claude Code integration (skill installation)."""
+    from pathlib import Path
+    import shutil
+
+    command = args.claude_command
+
+    # Skills require a directory with SKILL.md inside
+    # Structure: .claude/skills/btk/SKILL.md
+    if getattr(args, 'local', False):
+        skills_base = Path.cwd() / ".claude" / "skills"
+        location = "local"
+    else:
+        skills_base = Path.home() / ".claude" / "skills"
+        location = "global"
+
+    skill_dir = skills_base / "btk"
+    skill_path = skill_dir / "SKILL.md"
+
+    if command == "install":
+        # Create directory if needed
+        skill_dir.mkdir(parents=True, exist_ok=True)
+
+        # Write skill file
+        skill_path.write_text(BTK_SKILL)
+
+        console.print(f"[green]Installed btk skill to {skill_path}[/green]")
+        console.print(f"[dim]Location: {location}[/dim]")
+        console.print()
+        console.print("[dim]Restart Claude Code to load the skill.[/dim]")
+
+    elif command == "show":
+        # Just print the skill content
+        print(BTK_SKILL)
+
+    elif command == "uninstall":
+        if skill_dir.exists():
+            shutil.rmtree(skill_dir)
+            console.print(f"[green]Removed btk skill from {skill_dir}[/green]")
+        else:
+            console.print(f"[yellow]No skill found at {skill_dir}[/yellow]")
+
+    elif command == "status":
+        # Check installation status
+        global_path = Path.home() / ".claude" / "skills" / "btk" / "SKILL.md"
+        local_path = Path.cwd() / ".claude" / "skills" / "btk" / "SKILL.md"
+
+        console.print("[bold]BTK Claude Skill Status[/bold]")
+        console.print()
+
+        if global_path.exists():
+            console.print(f"[green]Global:[/green] {global_path}")
+        else:
+            console.print("[dim]Global:[/dim] not installed")
+
+        if local_path.exists():
+            console.print(f"[green]Local:[/green]  {local_path}")
+        else:
+            console.print("[dim]Local:[/dim]  not installed")
 
 
 def cmd_fts_build(args):
@@ -2163,7 +2630,7 @@ def cmd_youtube_video(args):
     else:
         existing = db.get(url=result.url)
         if existing:
-            console.print(f"[yellow]Video already exists in database[/yellow]")
+            console.print("[yellow]Video already exists in database[/yellow]")
         else:
             bookmark_data = result.to_bookmark_dict()
             db.add(**bookmark_data)
@@ -2297,7 +2764,7 @@ def cmd_export(args):
 
     use_stdin = not sys.stdin.isatty() and not has_query and not has_filters
 
-    if use_stdin and not sys.stdin.isatty():
+    if use_stdin:
         # Read JSON from stdin (piped input)
         try:
             data = json.load(sys.stdin)
@@ -2322,9 +2789,9 @@ def cmd_export(args):
         except json.JSONDecodeError as e:
             console.print(f"[red]Error parsing JSON from stdin: {e}[/red]")
             sys.exit(1)
-        except Exception as e:
+        except Exception:
             # If stdin reading fails, fall back to database mode
-            console.print(f"[yellow]Warning: Failed to read from stdin, using database mode[/yellow]")
+            console.print("[yellow]Warning: Failed to read from stdin, using database mode[/yellow]")
             db = get_db(args.db)
             bookmarks = db.list()
     else:
@@ -2337,7 +2804,6 @@ def cmd_export(args):
             bookmarks = db.query(sql=args.query)
         else:
             # Use filters if any are specified
-            filters = build_filters(args)
             if filters and filters != {'archived': False}:
                 # Has actual filters beyond default archived filter
                 bookmarks = db.search(**filters)
@@ -2390,7 +2856,7 @@ def cmd_export(args):
 
     try:
         # preservation-html and json-full need db access for cached content
-        if args.format in ('preservation-html', 'json-full'):
+        if args.format in ('preservation-html', 'json-full', 'echo'):
             # Ensure we have db access (might not if using stdin)
             try:
                 db
@@ -2412,7 +2878,7 @@ def cmd_tags(args):
 
     with db.session() as session:
         from sqlalchemy import select, func
-        from btk.models import Tag, Bookmark, bookmark_tags
+        from btk.models import Tag, bookmark_tags
 
         # Get tag statistics
         query = (
@@ -2619,12 +3085,12 @@ def cmd_graph(args):
         graph.save()
 
         # Display statistics
-        console.print(f"\n[green]✓ Graph built successfully![/green]")
+        console.print("\n[green]✓ Graph built successfully![/green]")
         console.print(f"  Bookmarks: {stats['total_bookmarks']}")
         console.print(f"  Edges: {stats['total_edges']}")
         console.print(f"  Avg edge weight: {stats['avg_edge_weight']:.2f}")
         console.print(f"  Max edge weight: {stats['max_edge_weight']:.2f}")
-        console.print(f"\n  Components used:")
+        console.print("\n  Components used:")
         console.print(f"    Domain: {stats['components']['domain']} edges")
         console.print(f"    Tags: {stats['components']['tag']} edges")
         console.print(f"    Direct links: {stats['components']['direct_link']} edges")
@@ -2650,7 +3116,7 @@ def cmd_graph(args):
 
         if not neighbors:
             console.print(f"[yellow]No neighbors found for bookmark {args.bookmark_id}[/yellow]")
-            console.print(f"\n[dim]Tip: Try lowering --min-weight or check if the bookmark exists[/dim]")
+            console.print("\n[dim]Tip: Try lowering --min-weight or check if the bookmark exists[/dim]")
             return
 
         # Display results
@@ -2787,10 +3253,10 @@ def cmd_graph(args):
         tag_edges = sum(1 for e in graph.edges.values() if e['components']['tag'] > 0)
         link_edges = sum(1 for e in graph.edges.values() if e['components']['direct_link'] > 0)
 
-        console.print(f"[cyan]Graph Statistics[/cyan]")
+        console.print("[cyan]Graph Statistics[/cyan]")
         console.print(f"  Total edges: {total_edges}")
         console.print(f"  Average weight: {avg_weight:.2f}")
-        console.print(f"\n  Edges by component:")
+        console.print("\n  Edges by component:")
         console.print(f"    Domain similarity: {domain_edges}")
         console.print(f"    Tag overlap: {tag_edges}")
         console.print(f"    Direct links: {link_edges}")
@@ -2831,8 +3297,7 @@ def cmd_browser(args):
     from btk.browser_import import (
         list_browser_profiles,
         import_from_browser,
-        auto_import_all_browsers,
-        find_browser_profiles
+        auto_import_all_browsers
     )
 
     if args.browser_command == "list":
@@ -2955,7 +3420,7 @@ def cmd_browser(args):
                 added += 1
 
         # Summary
-        console.print(f"\n[green]Import complete![/green]")
+        console.print("\n[green]Import complete![/green]")
         console.print(f"  Added: {added}")
         if update_existing:
             console.print(f"  Updated: {updated}")
@@ -2988,341 +3453,6 @@ def cmd_serve(args):
     host = args.host if hasattr(args, 'host') else '127.0.0.1'
 
     run_server(db_path=db_path, port=port, host=host)
-
-
-def cmd_query_dsl(args):
-    """Query operations using the new typed query DSL."""
-    from btk.query import (
-        QueryRegistry, get_registry, reset_registry,
-        execute_query, parse_query, ExecutionContext,
-        BookmarkResult, TagResult, StatsResult, EdgeResult
-    )
-    from pathlib import Path
-    import yaml
-
-    db = get_db(args.db)
-
-    # Get or create registry
-    registry = get_registry()
-
-    # Load queries from file if specified
-    queries_file = getattr(args, 'queries_file', None)
-    if queries_file:
-        try:
-            registry.load_file(queries_file)
-            console.print(f"[dim]Loaded queries from {queries_file}[/dim]")
-        except Exception as e:
-            console.print(f"[red]Error loading queries file: {e}[/red]")
-            return
-    else:
-        # Try to load from default locations
-        config = get_config()
-        default_paths = [
-            Path("btk-queries.yaml"),
-            Path("btk-queries.yml"),
-            Path(config.database).parent / "btk-queries.yaml",
-            Path.home() / ".config" / "btk" / "queries.yaml",
-        ]
-        for path in default_paths:
-            if path.exists():
-                try:
-                    registry.load_file(path)
-                except Exception:
-                    pass
-
-    if args.query_command == "list":
-        # List all registered queries
-        queries = registry.all()
-
-        if args.output == "json":
-            info = {name: {"description": q.description} for name, q in queries.items()}
-            print(json.dumps(info, indent=2))
-        else:
-            from rich.table import Table
-
-            table = Table(title="Registered Queries")
-            table.add_column("Name", style="cyan")
-            table.add_column("Description", style="white")
-            table.add_column("Entity", style="yellow")
-
-            for name, query in sorted(queries.items()):
-                table.add_row(
-                    name,
-                    (query.description or "")[:50],
-                    query.entity.value if query.entity else "bookmarks"
-                )
-
-            console.print(table)
-            console.print(f"\n[dim]Total: {len(queries)} queries[/dim]")
-
-    elif args.query_command == "run":
-        # Run a query by name or from inline definition
-        name = getattr(args, 'name', None)
-        inline = getattr(args, 'inline', None)
-
-        if inline:
-            # Parse inline YAML query
-            try:
-                definition = yaml.safe_load(inline)
-                query = parse_query(definition, name="<inline>")
-            except Exception as e:
-                console.print(f"[red]Error parsing inline query: {e}[/red]")
-                return
-        elif name:
-            # Get query from registry
-            if not registry.has(name):
-                console.print(f"[red]Query not found: {name}[/red]")
-                console.print("[dim]Use 'btk query list' to see available queries[/dim]")
-                return
-            query = registry.get(name)
-        else:
-            console.print("[red]Either --name or --inline is required[/red]")
-            return
-
-        # Apply CLI overrides
-        if hasattr(args, 'limit') and args.limit:
-            query.limit = args.limit
-        if hasattr(args, 'offset') and args.offset:
-            query.offset = args.offset
-
-        # Create execution context
-        context = ExecutionContext(registry=registry)
-
-        # Execute query
-        try:
-            result = execute_query(db, query, context)
-        except Exception as e:
-            console.print(f"[red]Error executing query: {e}[/red]")
-            import traceback
-            if args.output == "json":
-                print(json.dumps({"error": str(e)}))
-            traceback.print_exc()
-            return
-
-        # Output results based on type
-        _output_query_result(result, args.output, console)
-
-    elif args.query_command == "export":
-        # Export query results to file
-        name = args.name
-        output_file = args.output_file
-        export_format = getattr(args, 'format', 'json')
-
-        if not registry.has(name):
-            console.print(f"[red]Query not found: {name}[/red]")
-            return
-
-        query = registry.get(name)
-
-        # Execute query
-        context = ExecutionContext(registry=registry)
-        try:
-            result = execute_query(db, query, context)
-        except Exception as e:
-            console.print(f"[red]Error executing query: {e}[/red]")
-            return
-
-        # Export based on format
-        output_path = Path(output_file)
-
-        if export_format == "json":
-            data = result.to_dict()
-            with open(output_path, 'w') as f:
-                json.dump(data, f, indent=2, default=str)
-
-        elif export_format == "csv":
-            import csv as csv_module
-            with open(output_path, 'w', newline='') as f:
-                if isinstance(result, BookmarkResult):
-                    writer = csv_module.DictWriter(f, fieldnames=['id', 'url', 'title', 'tags', 'stars', 'added'])
-                    writer.writeheader()
-                    for item in result:
-                        writer.writerow({
-                            'id': item.id,
-                            'url': item.url,
-                            'title': item.title,
-                            'tags': ','.join(item.tags),
-                            'stars': item.bookmark.stars,
-                            'added': item.bookmark.added.isoformat() if item.bookmark.added else ''
-                        })
-                elif isinstance(result, StatsResult):
-                    if result.items:
-                        fieldnames = result.columns
-                        writer = csv_module.DictWriter(f, fieldnames=fieldnames)
-                        writer.writeheader()
-                        for row in result:
-                            writer.writerow(row.to_dict())
-
-        elif export_format in ("html", "html-app"):
-            from btk.exporters import export_bookmarks
-
-            if isinstance(result, BookmarkResult):
-                bookmarks = [item.bookmark for item in result]
-                title = getattr(args, 'title', None) or f"Query: {name}"
-                export_bookmarks(
-                    bookmarks,
-                    str(output_path),
-                    format=export_format,
-                    title=title
-                )
-            else:
-                console.print(f"[yellow]HTML export only supported for bookmark queries[/yellow]")
-                return
-
-        console.print(f"[green]Exported {len(result)} results to {output_file}[/green]")
-
-    elif args.query_command == "show":
-        # Show query details
-        name = args.name
-        if not registry.has(name):
-            console.print(f"[red]Query not found: {name}[/red]")
-            return
-
-        query = registry.get(name)
-
-        if args.output == "json":
-            # Serialize query structure
-            data = {
-                "name": name,
-                "entity": query.entity.value if query.entity else "bookmarks",
-                "description": query.description,
-                "predicates": [
-                    {"field": str(p.field), "expr": repr(p.expr)}
-                    for p in query.predicates
-                ],
-                "sort": [
-                    {"field": s.field, "direction": s.direction}
-                    for s in query.sort
-                ],
-                "limit": query.limit,
-                "offset": query.offset,
-            }
-            print(json.dumps(data, indent=2))
-        else:
-            from rich.panel import Panel
-            from rich.table import Table as RichTable
-
-            details = RichTable(show_header=False, box=None)
-            details.add_column("Field", style="cyan bold")
-            details.add_column("Value", style="white")
-
-            details.add_row("Name", name)
-            details.add_row("Description", query.description or "(none)")
-            details.add_row("Entity", query.entity.value if query.entity else "bookmarks")
-            if query.predicates:
-                pred_str = "\n".join(f"  {p.field}: {p.expr}" for p in query.predicates)
-                details.add_row("Filters", pred_str)
-            if query.sort:
-                sort_str = ", ".join(f"{s.field} {s.direction}" for s in query.sort)
-                details.add_row("Sort", sort_str)
-            if query.limit:
-                details.add_row("Limit", str(query.limit))
-
-            panel = Panel(details, title=f"Query: {name}", border_style="blue")
-            console.print(panel)
-
-
-def _output_query_result(result, output_format, console):
-    """Output query result in the specified format."""
-    from btk.query import BookmarkResult, TagResult, StatsResult, EdgeResult
-
-    if output_format == "json":
-        print(json.dumps(result.to_dict(), indent=2, default=str))
-
-    elif output_format == "csv":
-        import csv as csv_module
-        import sys
-
-        if isinstance(result, BookmarkResult):
-            writer = csv_module.writer(sys.stdout)
-            writer.writerow(['id', 'url', 'title', 'tags', 'stars'])
-            for item in result:
-                writer.writerow([
-                    item.id,
-                    item.url,
-                    item.title,
-                    ','.join(item.tags),
-                    item.bookmark.stars
-                ])
-        elif isinstance(result, TagResult):
-            writer = csv_module.writer(sys.stdout)
-            writer.writerow(['name', 'usage_count'])
-            for item in result:
-                writer.writerow([item.name, item.usage_count])
-        elif isinstance(result, StatsResult):
-            if result.items:
-                writer = csv_module.DictWriter(sys.stdout, fieldnames=result.columns)
-                writer.writeheader()
-                for row in result:
-                    writer.writerow(row.to_dict())
-
-    elif output_format == "urls":
-        if isinstance(result, BookmarkResult):
-            for item in result:
-                print(item.url)
-        else:
-            console.print("[yellow]URL output only for bookmark queries[/yellow]")
-
-    else:  # table format
-        from rich.table import Table
-
-        if isinstance(result, BookmarkResult):
-            table = Table(title=f"Query Results ({len(result)} bookmarks)")
-            table.add_column("ID", style="cyan")
-            table.add_column("Title", style="green")
-            table.add_column("URL", style="blue")
-            table.add_column("Tags", style="yellow")
-
-            for item in result:
-                table.add_row(
-                    str(item.id),
-                    (item.title or "")[:40],
-                    item.url[:50],
-                    ", ".join(item.tags[:3])
-                )
-            console.print(table)
-
-        elif isinstance(result, TagResult):
-            table = Table(title=f"Tag Results ({len(result)} tags)")
-            table.add_column("Name", style="cyan")
-            table.add_column("Usage", style="green")
-            table.add_column("Level", style="yellow")
-
-            for item in result:
-                table.add_row(
-                    item.name,
-                    str(item.usage_count),
-                    str(item.hierarchy_level)
-                )
-            console.print(table)
-
-        elif isinstance(result, StatsResult):
-            if result.items:
-                table = Table(title=f"Stats Results ({len(result)} rows)")
-                for col in result.columns:
-                    table.add_column(col, style="cyan")
-
-                for row in result:
-                    table.add_row(*[str(row[col]) for col in result.columns])
-                console.print(table)
-            else:
-                console.print("[dim]No stats results[/dim]")
-
-        elif isinstance(result, EdgeResult):
-            table = Table(title=f"Edge Results ({len(result)} edges)")
-            table.add_column("Source", style="cyan")
-            table.add_column("Target", style="green")
-            table.add_column("Weight", style="yellow")
-
-            for edge in result:
-                table.add_row(
-                    str(edge.source),
-                    str(edge.target),
-                    str(edge.weight)
-                )
-            console.print(table)
-
-        console.print(f"\n[dim]Total: {len(result)} results[/dim]")
 
 
 def cmd_views(args):
@@ -3522,7 +3652,7 @@ def cmd_views(args):
         # Create a simple view from CLI args (not YAML)
         from btk.views import SelectView, OrderView, LimitView, PipelineView
         from btk.views.predicates import TagsPredicate, FieldPredicate, SearchPredicate
-        from btk.views.primitives import AllView, OrderSpec
+        from btk.views.primitives import AllView
 
         stages = [AllView()]
 
@@ -3569,7 +3699,7 @@ def cmd_views(args):
 
 def cmd_plugin(args):
     """Plugin management operations."""
-    from btk.plugins import create_default_registry, PluginRegistry
+    from btk.plugins import create_default_registry
 
     registry = create_default_registry()
 
@@ -3675,15 +3805,57 @@ def cmd_plugin(args):
                 console.print(f"  • [green]{ptype}[/green]: {interface.__doc__ or 'No description'}")
 
 
+# Command categories for help output
+COMMAND_CATEGORIES = {
+    "Bookmark Commands": ["add", "get", "update", "rm", "open", "star", "unstar", "health"],
+    "Query & Browse": ["query", "sql", "shell"],
+    "Management": ["tag", "queue", "content", "media", "view"],
+    "Data": ["import", "export", "browser"],
+    "System": ["db", "config", "serve", "plugin", "claude", "graph"],
+    "Info": ["activity", "stats", "examples"],
+}
+
+
+class CategorizedHelpFormatter(argparse.RawDescriptionHelpFormatter):
+    """Custom formatter that groups subcommands into categories."""
+
+    def _format_action(self, action):
+        if isinstance(action, argparse._SubParsersAction):
+            # Custom formatting for subparsers with categories
+            parts = []
+
+            # Get help text from action choices
+            choice_helps = {}
+            for choice_action in action._choices_actions:
+                choice_helps[choice_action.dest] = choice_action.help or ""
+
+            # Format each category
+            for category, commands in COMMAND_CATEGORIES.items():
+                category_cmds = []
+                for cmd in commands:
+                    if cmd in action.choices:
+                        help_text = choice_helps.get(cmd, "")
+                        category_cmds.append(f"    {cmd:<14} {help_text}")
+
+                if category_cmds:
+                    parts.append(f"\n  {category}:")
+                    parts.extend(category_cmds)
+
+            return "\n".join(parts) + "\n"
+
+        return super()._format_action(action)
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
         description="BTK - Bookmark Toolkit: A clean, composable bookmark manager",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=CategorizedHelpFormatter,
         epilog="""
 Quick Start:
-  btk bookmark add https://example.com --tags "web"
-  btk bookmark list --limit 10
+  btk add https://example.com --tags "web"
+  btk query --limit 10                # List recent bookmarks
+  btk query --starred                 # Show starred bookmarks
   btk shell                           # Interactive mode
   btk examples                        # See all examples
 
@@ -3704,103 +3876,89 @@ Configuration:
     subparsers = parser.add_subparsers(dest="command", required=True, help="Command groups")
 
     # =================
-    # BOOKMARK GROUP
+    # TOP-LEVEL SHORTCUTS
     # =================
-    bookmark_parser = subparsers.add_parser("bookmark", help="Bookmark operations")
-    bookmark_subparsers = bookmark_parser.add_subparsers(dest="bookmark_command", required=True)
 
-    # bookmark add
-    bm_add = bookmark_subparsers.add_parser("add", help="Add a bookmark")
-    bm_add.add_argument("url", help="URL to bookmark")
-    bm_add.add_argument("--title", help="Bookmark title")
-    bm_add.add_argument("--description", help="Description")
-    bm_add.add_argument("--tags", help="Comma-separated tags")
-    bm_add.add_argument("--star", action="store_true", help="Star this bookmark")
-    bm_add.add_argument("--no-media-detect", action="store_true",
-                        help="Skip media detection for this URL")
-    bm_add.add_argument("--fetch-metadata", action="store_true",
-                        help="Fetch media metadata (requires yt-dlp for YouTube, etc.)")
-    bm_add.set_defaults(func=cmd_add)
+    # btk add <url>
+    add_parser = subparsers.add_parser("add", help="Add a bookmark (shortcut)")
+    add_parser.add_argument("url", help="URL to bookmark")
+    add_parser.add_argument("--title", "-t", help="Bookmark title")
+    add_parser.add_argument("--description", "-d", help="Description")
+    add_parser.add_argument("--tags", help="Comma-separated tags")
+    add_parser.add_argument("--star", "-s", action="store_true", help="Star this bookmark")
+    add_parser.set_defaults(func=cmd_add_shortcut)
 
-    # bookmark list
-    bm_list = bookmark_subparsers.add_parser("list", help="List bookmarks")
-    bm_list.add_argument("--limit", type=int, help="Maximum results")
-    bm_list.add_argument("--offset", type=int, default=0, help="Skip N results")
-    bm_list.add_argument("--sort", choices=["added", "title", "visit_count", "stars"],
-                        default="added", help="Sort order")
-    bm_list.add_argument("--include-archived", action="store_true", help="Include archived bookmarks")
-    bm_list.add_argument("--starred", action="store_true", help="Filter to starred bookmarks")
-    bm_list.add_argument("--by-date", choices=["added", "visited"],
-                        help="Group bookmarks by date (added or last visited)")
-    bm_list.add_argument("--date-granularity", choices=["year", "month", "day"],
-                        default="month", help="Date grouping level (default: month)")
-    bm_list.set_defaults(func=cmd_list)
+    # btk open <id>
+    open_parser = subparsers.add_parser("open", help="Open bookmark in browser")
+    open_parser.add_argument("id", help="Bookmark ID or unique_id")
+    open_parser.set_defaults(func=cmd_open_shortcut)
 
-    # bookmark search
-    bm_search = bookmark_subparsers.add_parser("search", help="Search bookmarks")
-    bm_search.add_argument("query", nargs='?', default='', help="Search query (optional)")
-    bm_search.add_argument("--in-content", action="store_true", help="Search within cached content")
-    bm_search.add_argument("--fts", action="store_true",
-                          help="Use FTS5 full-text search (faster, with ranking)")
-    bm_search.add_argument("--limit", type=int, help="Maximum results")
-    bm_search.add_argument("--starred", action="store_true", help="Filter to starred bookmarks")
-    bm_search.add_argument("--archived", action="store_true", help="Filter to archived bookmarks")
-    bm_search.add_argument("--unarchived", action="store_true", help="Filter to non-archived bookmarks")
-    bm_search.add_argument("--include-archived", action="store_true", help="Include archived bookmarks")
-    bm_search.add_argument("--pinned", action="store_true", help="Filter to pinned bookmarks")
-    bm_search.add_argument("--tags", help="Filter by tags (comma-separated)")
-    bm_search.add_argument("--untagged", action="store_true", help="Filter to bookmarks with no tags")
-    bm_search.set_defaults(func=cmd_search)
+    # btk star <id>
+    star_parser = subparsers.add_parser("star", help="Star a bookmark")
+    star_parser.add_argument("id", help="Bookmark ID or unique_id")
+    star_parser.set_defaults(func=cmd_star_shortcut)
 
-    # bookmark get
-    bm_get = bookmark_subparsers.add_parser("get", help="Get a specific bookmark")
-    bm_get.add_argument("id", help="Bookmark ID or unique ID")
-    bm_get.add_argument("--details", action="store_true", help="Show detailed metadata")
-    bm_get.set_defaults(func=cmd_get)
+    # btk unstar <id>
+    unstar_parser = subparsers.add_parser("unstar", help="Unstar a bookmark")
+    unstar_parser.add_argument("id", help="Bookmark ID or unique_id")
+    unstar_parser.set_defaults(func=cmd_unstar_shortcut)
 
-    # bookmark update
-    bm_update = bookmark_subparsers.add_parser("update", help="Update a bookmark")
-    bm_update.add_argument("id", help="Bookmark ID")
-    bm_update.add_argument("--url", help="New URL")
-    bm_update.add_argument("--title", help="New title")
-    bm_update.add_argument("--description", help="New description")
-    bm_update.add_argument("--tags", help="Replace all tags (comma-separated)")
-    bm_update.add_argument("--add-tags", help="Add tags (comma-separated)")
-    bm_update.add_argument("--remove-tags", help="Remove tags (comma-separated)")
-    bm_update.add_argument("--star", action="store_true", dest="starred", default=None, help="Mark as starred")
-    bm_update.add_argument("--unstar", action="store_false", dest="starred", help="Remove starred status")
-    bm_update.add_argument("--archive", action="store_true", dest="archived", default=None, help="Mark as archived")
-    bm_update.add_argument("--unarchive", action="store_false", dest="archived", help="Remove archived status")
-    bm_update.add_argument("--pin", action="store_true", dest="pinned", default=None, help="Mark as pinned")
-    bm_update.add_argument("--unpin", action="store_false", dest="pinned", help="Remove pinned status")
-    bm_update.set_defaults(func=cmd_update)
+    # NOTE: btk tag is a group command (tag add/remove/rename)
+    # For quick tagging, use: btk tag add <id> <tags>
 
-    # bookmark delete
-    bm_delete = bookmark_subparsers.add_parser("delete", help="Delete bookmarks")
-    bm_delete.add_argument("ids", nargs="+", help="Bookmark IDs to delete")
-    bm_delete.set_defaults(func=cmd_delete)
+    # btk rm <id>
+    rm_parser = subparsers.add_parser("rm", help="Delete a bookmark (shortcut)")
+    rm_parser.add_argument("id", help="Bookmark ID or unique_id")
+    rm_parser.set_defaults(func=cmd_rm_shortcut)
 
-    # bookmark query
-    bm_query = bookmark_subparsers.add_parser("query", help="Execute SQL-like query")
-    bm_query.add_argument("sql", help="SQL WHERE clause")
-    bm_query.set_defaults(func=cmd_query)
+    # btk activity
+    activity_parser = subparsers.add_parser("activity", help="Show activity log")
+    activity_parser.add_argument("--limit", "-l", type=int, help="Max events to show (default: 20)")
+    activity_parser.set_defaults(func=cmd_activity)
 
-    # bookmark health
-    bm_health = bookmark_subparsers.add_parser("health", help="Check URL reachability")
-    bm_health.add_argument("--id", nargs="+", help="Check specific bookmark IDs")
-    bm_health.add_argument("--broken", action="store_true",
-                          help="Re-check only previously broken bookmarks")
-    bm_health.add_argument("--unchecked", action="store_true",
-                          help="Check only bookmarks that have never been checked")
-    bm_health.add_argument("--concurrency", type=int, default=10,
-                          help="Maximum concurrent requests (default: 10)")
-    bm_health.add_argument("--timeout", type=float, default=10.0,
-                          help="Request timeout in seconds (default: 10)")
-    bm_health.add_argument("--dry-run", action="store_true",
-                          help="Check URLs without updating database")
-    bm_health.add_argument("--verbose", "-v", action="store_true",
-                          help="Show detailed results including redirects")
-    bm_health.set_defaults(func=cmd_health)
+    # btk stats
+    stats_parser = subparsers.add_parser("stats", help="Show database statistics")
+    stats_parser.set_defaults(func=cmd_stats)
+
+    # btk get <id>
+    get_parser = subparsers.add_parser("get", help="Get bookmark details")
+    get_parser.add_argument("id", help="Bookmark ID or unique_id")
+    get_parser.add_argument("--details", action="store_true", help="Show detailed metadata")
+    get_parser.set_defaults(func=cmd_get)
+
+    # btk update <id>
+    update_parser = subparsers.add_parser("update", help="Update a bookmark")
+    update_parser.add_argument("id", help="Bookmark ID")
+    update_parser.add_argument("--url", help="New URL")
+    update_parser.add_argument("--title", help="New title")
+    update_parser.add_argument("--description", help="New description")
+    update_parser.add_argument("--tags", help="Replace all tags (comma-separated)")
+    update_parser.add_argument("--add-tags", help="Add tags (comma-separated)")
+    update_parser.add_argument("--remove-tags", help="Remove tags (comma-separated)")
+    update_parser.add_argument("--star", action="store_true", dest="starred", default=None, help="Mark as starred")
+    update_parser.add_argument("--unstar", action="store_false", dest="starred", help="Remove starred status")
+    update_parser.add_argument("--archive", action="store_true", dest="archived", default=None, help="Mark as archived")
+    update_parser.add_argument("--unarchive", action="store_false", dest="archived", help="Remove archived status")
+    update_parser.add_argument("--pin", action="store_true", dest="pinned", default=None, help="Mark as pinned")
+    update_parser.add_argument("--unpin", action="store_false", dest="pinned", help="Remove pinned status")
+    update_parser.set_defaults(func=cmd_update)
+
+    # btk health
+    health_parser = subparsers.add_parser("health", help="Check URL reachability")
+    health_parser.add_argument("--id", nargs="+", help="Check specific bookmark IDs")
+    health_parser.add_argument("--broken", action="store_true",
+                               help="Re-check only previously broken bookmarks")
+    health_parser.add_argument("--unchecked", action="store_true",
+                               help="Check only bookmarks that have never been checked")
+    health_parser.add_argument("--concurrency", type=int, default=10,
+                               help="Number of concurrent requests (default: 10)")
+    health_parser.add_argument("--timeout", type=float, default=10.0,
+                               help="Request timeout in seconds (default: 10)")
+    health_parser.add_argument("--dry-run", action="store_true",
+                               help="Show what would be checked without checking")
+    health_parser.add_argument("--verbose", "-v", action="store_true",
+                               help="Show detailed progress")
+    health_parser.set_defaults(func=cmd_health)
 
     # =================
     # TAG GROUP
@@ -4092,8 +4250,8 @@ Configuration:
     export_parser = subparsers.add_parser("export", help="Export bookmarks")
     export_parser.add_argument("file", help="Output file")
     export_parser.add_argument("--format", required=True,
-                              choices=["json", "json-full", "csv", "html", "html-app", "markdown", "m3u", "preservation-html"],
-                              help="Export format (json-full for comprehensive export, html-app for interactive viewer, preservation-html for archived content)")
+                              choices=["json", "json-full", "csv", "html", "html-app", "markdown", "m3u", "preservation-html", "echo"],
+                              help="Export format (json-full for comprehensive export, html-app for interactive viewer, preservation-html for archived content, echo for ECHO-compliant archive)")
     export_parser.add_argument("--query", help="SQL query to filter bookmarks")
     export_parser.add_argument("--starred", action="store_true", help="Filter to starred bookmarks")
     export_parser.add_argument("--pinned", action="store_true", help="Filter to pinned bookmarks")
@@ -4115,10 +4273,6 @@ Configuration:
     # db schema
     db_schema = db_subparsers.add_parser("schema", help="Show database schema")
     db_schema.set_defaults(func=cmd_db_schema)
-
-    # db stats
-    db_stats = db_subparsers.add_parser("stats", help="Show database statistics")
-    db_stats.set_defaults(func=cmd_stats)
 
     # db build-index
     db_build_index = db_subparsers.add_parser("build-index",
@@ -4269,40 +4423,84 @@ Configuration:
     examples_parser.set_defaults(func=cmd_examples)
 
     # =================
-    # QUERY GROUP (New typed query DSL)
+    # CLAUDE COMMAND GROUP
     # =================
-    query_parser = subparsers.add_parser("query", help="Execute typed queries (new DSL)")
-    query_parser.add_argument("--queries-file", "-f", help="Path to queries YAML file")
-    query_subparsers = query_parser.add_subparsers(dest="query_command", required=True)
+    claude_parser = subparsers.add_parser("claude", help="Claude Code integration")
+    claude_subparsers = claude_parser.add_subparsers(dest="claude_command", required=True)
 
-    # query list
-    query_list = query_subparsers.add_parser("list", help="List registered queries")
-    query_list.set_defaults(func=cmd_query_dsl)
+    # claude install
+    claude_install = claude_subparsers.add_parser("install", help="Install btk skill for Claude Code")
+    claude_install.add_argument("--local", action="store_true",
+                                help="Install to current directory instead of global ~/.claude/")
+    claude_install.set_defaults(func=cmd_claude)
 
-    # query show
-    query_show = query_subparsers.add_parser("show", help="Show query details")
-    query_show.add_argument("name", help="Query name")
-    query_show.set_defaults(func=cmd_query_dsl)
+    # claude show
+    claude_show = claude_subparsers.add_parser("show", help="Show the btk skill content")
+    claude_show.set_defaults(func=cmd_claude)
 
-    # query run
-    query_run = query_subparsers.add_parser("run", help="Run a query")
-    query_run.add_argument("--name", "-n", help="Query name from registry")
-    query_run.add_argument("--inline", "-i",
-                           help="Inline YAML query definition (e.g., '{filter: {stars: true}}')")
-    query_run.add_argument("--limit", "-l", type=int, help="Limit results")
-    query_run.add_argument("--offset", type=int, help="Skip first N results")
-    query_run.set_defaults(func=cmd_query_dsl)
+    # claude uninstall
+    claude_uninstall = claude_subparsers.add_parser("uninstall", help="Remove btk skill")
+    claude_uninstall.add_argument("--local", action="store_true",
+                                  help="Remove from current directory instead of global")
+    claude_uninstall.set_defaults(func=cmd_claude)
 
-    # query export
-    query_export = query_subparsers.add_parser("export", help="Export query results")
-    query_export.add_argument("name", help="Query name")
-    query_export.add_argument("output_file", help="Output file path")
-    query_export.add_argument("--format", choices=["json", "csv", "html", "html-app"],
-                              default="json", help="Export format")
-    query_export.add_argument("--title", "-t", help="Export title (for HTML)")
-    query_export.set_defaults(func=cmd_query_dsl)
+    # claude status
+    claude_status = claude_subparsers.add_parser("status", help="Check skill installation status")
+    claude_status.set_defaults(func=cmd_claude)
 
-    query_parser.set_defaults(func=cmd_query_dsl)
+    claude_parser.set_defaults(func=cmd_claude)
+
+    # =================
+    # QUERY COMMAND (Flag-based composable query)
+    # =================
+    query_parser = subparsers.add_parser(
+        "query",
+        help="Composable bookmark query with flags",
+        description="""
+Query bookmarks using composable flags. Filters combine with AND logic.
+Use --no-* prefix for negation.
+
+Examples:
+  btk query                          # Recent bookmarks (default)
+  btk query --starred                # Starred only
+  btk query --starred --recent       # Starred AND recent
+  btk query --tagged python,ai       # Tagged with python OR ai
+  btk query --domain github.com      # From github.com
+  btk query --search "machine learning"  # Full-text search
+  btk query --no-starred --unread    # Not starred AND unread
+  btk query --view arxiv --starred   # Starred bookmarks from arxiv view
+"""
+    )
+
+    # Filters (positive)
+    query_parser.add_argument("--starred", action="store_true", help="Only starred bookmarks")
+    query_parser.add_argument("--recent", action="store_true", help="Added in last 7 days")
+    query_parser.add_argument("--unread", action="store_true", help="Never visited (visit_count=0)")
+    query_parser.add_argument("--archived", action="store_true", help="Only archived bookmarks")
+    query_parser.add_argument("--pinned", action="store_true", help="Only pinned bookmarks")
+    query_parser.add_argument("--tagged", metavar="TAGS", help="Has any of these tags (comma-separated)")
+    query_parser.add_argument("--domain", metavar="DOMAIN", help="From this domain")
+    query_parser.add_argument("--search", "-s", metavar="TERM", help="Full-text search in title/url/description")
+
+    # Filters (negation)
+    query_parser.add_argument("--no-starred", action="store_true", help="Exclude starred")
+    query_parser.add_argument("--no-recent", action="store_true", help="Older than 7 days")
+    query_parser.add_argument("--no-unread", action="store_true", help="Has been visited")
+    query_parser.add_argument("--no-archived", action="store_true", help="Exclude archived (default)")
+    query_parser.add_argument("--no-pinned", action="store_true", help="Exclude pinned")
+    query_parser.add_argument("--no-tagged", metavar="TAGS", help="Exclude these tags (comma-separated)")
+    query_parser.add_argument("--no-domain", metavar="DOMAIN", help="Exclude this domain")
+
+    # View integration
+    query_parser.add_argument("--view", "-v", metavar="NAME", help="Start from a named view")
+
+    # Output control
+    query_parser.add_argument("--limit", "-l", type=int, help="Max results (default: 20)")
+    query_parser.add_argument("--offset", type=int, help="Skip first N results")
+    query_parser.add_argument("--order", choices=["added", "title", "visits", "visited", "stars"],
+                              default="added", help="Sort order (default: added)")
+
+    query_parser.set_defaults(func=cmd_query_flags)
 
     # =================
     # VIEW GROUP

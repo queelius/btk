@@ -11,13 +11,11 @@ Usage:
 """
 
 import json
-import os
-import sys
 import mimetypes
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 from functools import partial
 
 from .db import Database
@@ -31,14 +29,18 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
         self.frontend_dir = frontend_dir
         super().__init__(*args, **kwargs)
 
+    def _send_cors_headers(self):
+        """Send standard CORS response headers."""
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+
     def send_json(self, data: Any, status: int = 200):
         """Send JSON response."""
         response = json.dumps(data, default=str, indent=2)
         self.send_response(status)
         self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self._send_cors_headers()
         self.end_headers()
         self.wfile.write(response.encode())
 
@@ -49,9 +51,7 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
     def do_OPTIONS(self):
         """Handle CORS preflight requests."""
         self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self._send_cors_headers()
         self.end_headers()
 
     def do_GET(self):
@@ -83,6 +83,16 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
             self.handle_export(format_type)
         elif path == '/fts/stats':
             self.handle_fts_stats()
+        elif path == '/views':
+            self.handle_list_views(query)
+        elif path.startswith('/views/') and '/bookmarks' in path:
+            # /views/<name>/bookmarks - evaluate view
+            view_name = path.split('/')[2]
+            self.handle_view_bookmarks(view_name, query)
+        elif path.startswith('/views/'):
+            # /views/<name> - get view details
+            view_name = path.split('/')[-1]
+            self.handle_get_view(view_name)
         else:
             # Serve static files
             self.serve_static(path)
@@ -271,7 +281,6 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
             month: filter to specific month 1-12 (optional, requires year)
             day: filter to specific day 1-31 (optional, requires year+month)
         """
-        from datetime import datetime
         from collections import defaultdict
 
         field = query.get('field', ['added'])[0]
@@ -676,6 +685,169 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
             'success': success,
             'stats': stats
         })
+
+    # =========================================================================
+    # Views API
+    # =========================================================================
+
+    def _get_view_registry(self):
+        """Get or create ViewRegistry with loaded views."""
+        from btk.views import ViewRegistry
+        registry = ViewRegistry()
+
+        # Try to load views from default locations
+        default_paths = [
+            Path("btk-views.yaml"),
+            Path("btk-views.yml"),
+            Path(self.db.path).parent / "btk-views.yaml" if self.db.path else None,
+            Path.home() / ".config" / "btk" / "views.yaml",
+        ]
+
+        for path in default_paths:
+            if path and path.exists():
+                try:
+                    registry.load_file(path)
+                except Exception:
+                    pass
+
+        return registry
+
+    def handle_list_views(self, query: Dict):
+        """List all available views.
+
+        GET /views
+        Query params:
+            include_builtin: Include built-in views (default: true)
+        """
+        try:
+            registry = self._get_view_registry()
+            include_builtin = query.get('include_builtin', ['true'])[0].lower() != 'false'
+
+            views_list = []
+            for name in registry.list(include_builtin=include_builtin):
+                meta = registry.get_metadata(name)
+                views_list.append({
+                    'name': name,
+                    'description': meta.get('description', ''),
+                    'builtin': meta.get('builtin', False),
+                    'has_params': bool(meta.get('params'))
+                })
+
+            self.send_json({
+                'views': views_list,
+                'total': len(views_list),
+                'builtin_count': sum(1 for v in views_list if v['builtin']),
+                'custom_count': sum(1 for v in views_list if not v['builtin'])
+            })
+        except ImportError:
+            self.send_error_json('Views module not available', 500)
+        except Exception as e:
+            self.send_error_json(str(e), 500)
+
+    def handle_get_view(self, view_name: str):
+        """Get details for a specific view.
+
+        GET /views/<name>
+        """
+        try:
+            registry = self._get_view_registry()
+
+            if not registry.has(view_name):
+                self.send_error_json(f'View not found: {view_name}', 404)
+                return
+
+            meta = registry.get_metadata(view_name)
+            view = registry.get(view_name)
+
+            self.send_json({
+                'name': view_name,
+                'description': meta.get('description', ''),
+                'builtin': meta.get('builtin', False),
+                'params': meta.get('params'),
+                'view_repr': repr(view)
+            })
+        except ImportError:
+            self.send_error_json('Views module not available', 500)
+        except Exception as e:
+            self.send_error_json(str(e), 500)
+
+    def handle_view_bookmarks(self, view_name: str, query: Dict):
+        """Evaluate a view and return matching bookmarks.
+
+        GET /views/<name>/bookmarks
+        Query params:
+            limit: Maximum number of bookmarks to return
+            offset: Skip first N bookmarks
+            param_<key>=<value>: View parameters
+        """
+        try:
+            from btk.views import ViewContext
+
+            registry = self._get_view_registry()
+
+            if not registry.has(view_name):
+                self.send_error_json(f'View not found: {view_name}', 404)
+                return
+
+            # Extract view parameters from query
+            params = {}
+            for key, values in query.items():
+                if key.startswith('param_'):
+                    param_name = key[6:]  # Remove 'param_' prefix
+                    params[param_name] = values[0]
+
+            # Evaluate view
+            context = ViewContext(params=params, registry=registry)
+            view = registry.get(view_name, **params)
+            result = view.evaluate(self.db, context)
+
+            # Apply limit/offset
+            bookmarks = [ob.original for ob in result.bookmarks]
+
+            offset = int(query.get('offset', ['0'])[0])
+            limit = query.get('limit', [None])[0]
+            if limit:
+                limit = int(limit)
+
+            total = len(bookmarks)
+            if offset:
+                bookmarks = bookmarks[offset:]
+            if limit:
+                bookmarks = bookmarks[:limit]
+
+            # Serialize bookmarks
+            serialized = []
+            for b in bookmarks:
+                serialized.append({
+                    'id': b.id,
+                    'url': b.url,
+                    'title': b.title,
+                    'description': b.description,
+                    'tags': [t.name for t in b.tags],
+                    'stars': b.stars,
+                    'pinned': b.pinned,
+                    'archived': b.archived,
+                    'visit_count': b.visit_count,
+                    'added': b.added.isoformat() if b.added else None,
+                    'last_visited': b.last_visited.isoformat() if b.last_visited else None,
+                    'reachable': b.reachable,
+                    'media_type': b.media_type,
+                    'author_name': b.author_name,
+                    'thumbnail_url': b.thumbnail_url
+                })
+
+            self.send_json({
+                'view': view_name,
+                'bookmarks': serialized,
+                'total': total,
+                'offset': offset,
+                'limit': limit,
+                'returned': len(serialized)
+            })
+        except ImportError:
+            self.send_error_json('Views module not available', 500)
+        except Exception as e:
+            self.send_error_json(str(e), 500)
 
     # =========================================================================
     # Static File Serving

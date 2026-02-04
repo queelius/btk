@@ -7,16 +7,14 @@ Following best practices with proper indexes, constraints, and relationships.
 from datetime import datetime, timezone
 from typing import Optional, List
 from sqlalchemy import (
-    create_engine, Column, Integer, String, Text, Boolean,
+    Column, Integer, String, Text, Boolean,
     DateTime, ForeignKey, Table, Index, UniqueConstraint,
-    Float, JSON, LargeBinary, func
+    Float, JSON, LargeBinary
 )
 from sqlalchemy.orm import (
-    DeclarativeBase, relationship, Mapped, mapped_column,
-    Session, sessionmaker
+    DeclarativeBase, relationship, Mapped, mapped_column
 )
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.sql import case
 
 
 class Base(DeclarativeBase):
@@ -301,6 +299,9 @@ class ContentCache(Base):
 
     Stores both raw HTML (compressed) and markdown version for offline viewing,
     archival, and full-text search capabilities.
+
+    Long Echo preservation fields store thumbnails, transcripts, and other
+    representations that survive even when the original URL is gone.
     """
     __tablename__ = 'content_cache'
 
@@ -334,6 +335,26 @@ class ContentCache(Base):
     content_type: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     encoding: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
 
+    # ==========================================================================
+    # Long Echo Preservation Fields
+    # ==========================================================================
+
+    # Thumbnail/Screenshot - visual representation of the content
+    thumbnail_data: Mapped[Optional[bytes]] = mapped_column(LargeBinary, nullable=True)
+    thumbnail_mime: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)  # image/jpeg, image/png
+    thumbnail_width: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    thumbnail_height: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+    # Transcript - for videos, podcasts, audio content
+    transcript_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Extracted text - for PDFs and other documents
+    extracted_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Preservation metadata
+    preservation_type: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)  # youtube, pdf, screenshot, etc.
+    preserved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
     # Relationship
     bookmark: Mapped["Bookmark"] = relationship("Bookmark", back_populates="content_cache", uselist=False)
 
@@ -346,6 +367,62 @@ class ContentCache(Base):
 
     def __repr__(self):
         return f"<ContentCache(bookmark_id={self.bookmark_id}, size={self.content_length}, compressed={self.compressed_size})>"
+
+
+class Event(Base):
+    """
+    Event log for tracking all operations in BTK.
+
+    Provides a full audit trail of bookmark activities for:
+    - Activity feeds (recent activity)
+    - Debugging and troubleshooting
+    - Undo capabilities (future)
+    - Analytics and insights
+
+    Event types:
+        bookmark_added, bookmark_updated, bookmark_deleted
+        bookmark_visited, bookmark_starred, bookmark_unstarred
+        bookmark_archived, bookmark_unarchived, bookmark_pinned
+        tag_added, tag_removed, tag_renamed
+        content_fetched, content_preserved
+        health_checked
+        queue_added, queue_removed, queue_completed
+        import_completed, export_completed
+    """
+    __tablename__ = 'events'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    # Event classification
+    event_type: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    entity_type: Mapped[str] = mapped_column(String(32), nullable=False)  # bookmark, tag, collection
+
+    # Entity reference (nullable for deletions where entity no longer exists)
+    entity_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    entity_url: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)  # Preserve URL even after deletion
+
+    # Timestamp
+    timestamp: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        index=True
+    )
+
+    # Flexible data for event-specific details
+    # Examples: {"old_title": "...", "new_title": "..."} for updates
+    #           {"tags": ["ai", "ml"]} for tag_added
+    #           {"count": 50} for import_completed
+    event_data: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
+    # Composite index for efficient entity lookups
+    __table_args__ = (
+        Index('ix_events_entity', 'entity_type', 'entity_id'),
+        Index('ix_events_timestamp_desc', timestamp.desc()),
+    )
+
+    def __repr__(self):
+        return f"<Event(id={self.id}, type='{self.event_type}', entity={self.entity_type}:{self.entity_id})>"
 
 
 # Association table for bookmark collections

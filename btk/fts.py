@@ -9,9 +9,8 @@ FTS5 enables fast, ranked search with support for:
 - Search result ranking by relevance
 """
 import sqlite3
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
-from pathlib import Path
 
 
 @dataclass

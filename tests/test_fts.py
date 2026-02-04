@@ -392,13 +392,13 @@ class TestCLIIntegration:
         )
         assert result.returncode == 0
 
-    def test_search_fts_flag(self):
-        """Test search --fts flag is registered."""
+    def test_query_search_flag(self):
+        """Test query --search flag is registered."""
         import subprocess
         result = subprocess.run(
-            ['python', '-m', 'btk.cli', 'bookmark', 'search', '--help'],
+            ['python', '-m', 'btk.cli', 'query', '--help'],
             capture_output=True,
             text=True
         )
         assert result.returncode == 0
-        assert '--fts' in result.stdout
+        assert '--search' in result.stdout

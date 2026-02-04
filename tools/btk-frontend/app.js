@@ -5,8 +5,10 @@ const API_URL = window.location.origin;
 let allBookmarks = [];
 let filteredBookmarks = [];
 let tags = [];
+let views = [];  // Curated views from server
 let currentFilter = 'all';
 let currentTag = null;
+let currentViewFilter = null;  // Active view filter
 let currentSort = 'added_desc';
 let currentView = 'list';
 let currentPage = 1;
@@ -14,6 +16,9 @@ let searchQuery = '';
 let useFTS = false;  // Full-text search toggle
 let ftsResults = null;  // Cache FTS results
 const PAGE_SIZE = 50;
+
+// Bulk selection state
+let selectedIds = new Set();
 
 // Date view state
 let dateViewData = null;
@@ -74,15 +79,17 @@ function setupEventListeners() {
 // Load all data
 async function loadData() {
     try {
-        const [bookmarksRes, tagsRes, statsRes] = await Promise.all([
+        const [bookmarksRes, tagsRes, statsRes, viewsRes] = await Promise.all([
             fetch(`${API_URL}/bookmarks?limit=10000`),
             fetch(`${API_URL}/tags?format=stats`),
-            fetch(`${API_URL}/stats`)
+            fetch(`${API_URL}/stats`),
+            fetch(`${API_URL}/views`).catch(() => ({ json: () => ({ views: [] }) }))
         ]);
 
         allBookmarks = await bookmarksRes.json();
         const tagStats = await tagsRes.json();
         const stats = await statsRes.json();
+        const viewsData = await viewsRes.json();
 
         // Convert tag stats to array
         tags = Object.entries(tagStats).map(([name, stat]) => ({
@@ -90,9 +97,13 @@ async function loadData() {
             count: stat.bookmark_count
         })).sort((a, b) => b.count - a.count);
 
+        // Store views
+        views = viewsData.views || [];
+
         // Update UI
         document.getElementById('totalCount').textContent = stats.total_bookmarks || allBookmarks.length;
         updateTagList();
+        updateViewsList();
         applyFilters();
 
     } catch (error) {
@@ -120,6 +131,85 @@ function updateTagList() {
     `).join('');
 }
 
+// Update views list in sidebar
+function updateViewsList() {
+    const container = document.getElementById('viewsList');
+    const countEl = document.getElementById('viewsCount');
+
+    if (!container) return;
+
+    if (views.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-sm px-3">No views available</p>';
+        if (countEl) countEl.textContent = '';
+        return;
+    }
+
+    if (countEl) countEl.textContent = `(${views.length})`;
+
+    // Sort: custom views first, then builtin
+    const sortedViews = [...views].sort((a, b) => {
+        if (a.builtin !== b.builtin) return a.builtin ? 1 : -1;
+        return a.name.localeCompare(b.name);
+    });
+
+    container.innerHTML = sortedViews.map(view => `
+        <button onclick="setViewFilter('${escapeHtml(view.name)}')"
+                class="view-item w-full text-left px-3 py-1.5 rounded text-sm hover:bg-gray-100 ${currentViewFilter === view.name ? 'bg-indigo-100 text-indigo-700' : ''}"
+                data-view="${escapeHtml(view.name)}"
+                title="${escapeHtml(view.description || '')}">
+            <div class="flex items-center justify-between">
+                <span class="truncate font-medium">${escapeHtml(view.name)}</span>
+                ${view.builtin ? '<span class="text-xs text-gray-400">built-in</span>' : ''}
+            </div>
+            ${view.description ? `<p class="text-xs text-gray-500 truncate mt-0.5">${escapeHtml(view.description)}</p>` : ''}
+        </button>
+    `).join('');
+}
+
+// Set view filter
+async function setViewFilter(viewName) {
+    if (currentViewFilter === viewName) {
+        // Toggle off
+        currentViewFilter = null;
+        document.getElementById('currentFilter').textContent = 'All Bookmarks';
+        applyFilters();
+        updateViewsList();
+        return;
+    }
+
+    currentViewFilter = viewName;
+    currentTag = null;  // Clear tag filter
+    currentFilter = 'all';  // Reset quick filter
+    currentPage = 1;
+
+    // Update UI
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('bg-indigo-100', 'text-indigo-700'));
+    document.querySelectorAll('.tag-item').forEach(btn => btn.classList.remove('active'));
+
+    try {
+        // Fetch bookmarks for this view
+        const res = await fetch(`${API_URL}/views/${encodeURIComponent(viewName)}/bookmarks?limit=10000`);
+        const data = await res.json();
+
+        if (data.error) {
+            showNotification(data.error, 'error');
+            return;
+        }
+
+        // Update display with view bookmarks
+        filteredBookmarks = data.bookmarks || [];
+        document.getElementById('currentFilter').textContent = `View: ${viewName}`;
+        document.getElementById('resultCount').textContent = `(${filteredBookmarks.length} bookmarks)`;
+
+        updateViewsList();
+        updateDisplay();
+
+    } catch (error) {
+        console.error('Failed to load view:', error);
+        showNotification('Failed to load view', 'error');
+    }
+}
+
 // Apply filters and update display
 async function applyFilters() {
     let results = [...allBookmarks];
@@ -127,6 +217,10 @@ async function applyFilters() {
     // Apply quick filter
     if (currentFilter === 'starred') {
         results = results.filter(b => b.stars);
+    } else if (currentFilter === 'pinned') {
+        results = results.filter(b => b.pinned);
+    } else if (currentFilter === 'archived') {
+        results = results.filter(b => b.archived);
     } else if (currentFilter === 'unread') {
         results = results.filter(b => b.visit_count === 0);
     } else if (currentFilter === 'recent') {
@@ -260,6 +354,8 @@ function updateDisplay() {
 function updateFilterLabel() {
     let label = 'All Bookmarks';
     if (currentFilter === 'starred') label = 'Starred';
+    else if (currentFilter === 'pinned') label = 'Pinned';
+    else if (currentFilter === 'archived') label = 'Archived';
     else if (currentFilter === 'unread') label = 'Unread';
     else if (currentFilter === 'recent') label = 'Recent (7 days)';
     else if (currentFilter === 'bydate') {
@@ -319,14 +415,28 @@ function renderBookmarkCard(bookmark, view) {
     const domain = getDomain(bookmark.url);
     const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
 
+    // Build status icons
+    const statusIcons = [];
+    if (bookmark.pinned) statusIcons.push('<i data-feather="pin" class="inline w-3 h-3 text-blue-500 mr-1" title="Pinned"></i>');
+    if (bookmark.stars) statusIcons.push('<i data-feather="star" class="inline w-3 h-3 text-yellow-500 mr-1" title="Starred"></i>');
+    if (bookmark.archived) statusIcons.push('<i data-feather="archive" class="inline w-3 h-3 text-gray-400 mr-1" title="Archived"></i>');
+    const statusHtml = statusIcons.join('');
+
+    // Card styling based on status
+    const cardBorder = bookmark.pinned ? 'border-blue-300' : (bookmark.archived ? 'border-gray-300 opacity-75' : 'border');
+
+    const isSelected = selectedIds.has(bookmark.id);
+
     if (view === 'grid') {
         return `
-            <div class="bookmark-card bg-white rounded-lg p-4 border transition-all">
+            <div class="bookmark-card bg-white rounded-lg p-4 ${cardBorder} ${isSelected ? 'ring-2 ring-indigo-400' : ''} transition-all">
                 <div class="flex items-start gap-3">
+                    <input type="checkbox" class="bookmark-checkbox mt-1 rounded" data-id="${bookmark.id}"
+                           ${isSelected ? 'checked' : ''} onchange="toggleSelection(${bookmark.id})">
                     <img src="${favicon}" class="w-6 h-6 rounded mt-0.5" onerror="this.style.display='none'">
                     <div class="flex-1 min-w-0">
                         <h4 class="font-medium text-gray-800 truncate">
-                            ${bookmark.stars ? '<i data-feather="star" class="inline w-3 h-3 text-yellow-500 mr-1"></i>' : ''}
+                            ${statusHtml}
                             ${escapeHtml(bookmark.title || bookmark.url)}
                         </h4>
                         <a href="${escapeHtml(bookmark.url)}" target="_blank"
@@ -361,11 +471,15 @@ function renderBookmarkCard(bookmark, view) {
 
     // List view
     return `
-        <div class="bookmark-card bg-white rounded-lg px-4 py-3 border transition-all flex items-center gap-4">
+        <div class="bookmark-card bg-white rounded-lg px-4 py-3 ${cardBorder} ${isSelected ? 'ring-2 ring-indigo-400' : ''} transition-all flex items-center gap-4">
+            <input type="checkbox" class="bookmark-checkbox rounded flex-shrink-0" data-id="${bookmark.id}"
+                   ${isSelected ? 'checked' : ''} onchange="toggleSelection(${bookmark.id})">
             <img src="${favicon}" class="w-5 h-5 rounded flex-shrink-0" onerror="this.style.display='none'">
             <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
-                    ${bookmark.stars ? '<i data-feather="star" class="w-3.5 h-3.5 text-yellow-500 flex-shrink-0"></i>' : ''}
+                    ${bookmark.pinned ? '<i data-feather="pin" class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" title="Pinned"></i>' : ''}
+                    ${bookmark.stars ? '<i data-feather="star" class="w-3.5 h-3.5 text-yellow-500 flex-shrink-0" title="Starred"></i>' : ''}
+                    ${bookmark.archived ? '<i data-feather="archive" class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" title="Archived"></i>' : ''}
                     <a href="${escapeHtml(bookmark.url)}" target="_blank"
                        class="font-medium text-gray-800 hover:text-indigo-600 truncate">
                         ${escapeHtml(bookmark.title || bookmark.url)}
@@ -469,7 +583,11 @@ function goToPage(page) {
 function setFilter(filter) {
     currentFilter = filter;
     currentTag = null;
+    currentViewFilter = null;  // Clear view filter
     currentPage = 1;
+
+    // Update views list to clear selection
+    updateViewsList();
 
     // Handle date view toggle
     if (filter === 'bydate') {
@@ -483,7 +601,9 @@ function setFilter(filter) {
 function setTagFilter(tag) {
     currentTag = tag === currentTag ? null : tag;
     currentFilter = 'all';
+    currentViewFilter = null;  // Clear view filter
     currentPage = 1;
+    updateViewsList();
     applyFilters();
 }
 
@@ -507,7 +627,9 @@ async function addBookmark(formData) {
         title: formData.get('title') || undefined,
         tags: formData.get('tags') ? formData.get('tags').split(',').map(t => t.trim()).filter(t => t) : [],
         description: formData.get('description') || undefined,
-        stars: formData.get('stars') === 'on'
+        stars: formData.get('stars') === 'on',
+        pinned: formData.get('pinned') === 'on',
+        archived: formData.get('archived') === 'on'
     };
 
     try {
@@ -540,6 +662,13 @@ async function editBookmark(id) {
     document.getElementById('editTags').value = (bookmark.tags || []).join(', ');
     document.getElementById('editDescription').value = bookmark.description || '';
     document.getElementById('editStars').checked = bookmark.stars;
+    document.getElementById('editPinned').checked = bookmark.pinned;
+    document.getElementById('editArchived').checked = bookmark.archived;
+
+    // Populate metadata
+    document.getElementById('editMetaId').textContent = bookmark.id;
+    document.getElementById('editMetaVisits').textContent = bookmark.visit_count || 0;
+    document.getElementById('editMetaAdded').textContent = bookmark.added ? new Date(bookmark.added).toLocaleDateString() : '-';
 
     document.getElementById('editModal').classList.remove('hidden');
 }
@@ -551,7 +680,9 @@ async function updateBookmark(formData) {
         title: formData.get('title') || undefined,
         tags: formData.get('tags') ? formData.get('tags').split(',').map(t => t.trim()).filter(t => t) : [],
         description: formData.get('description') || undefined,
-        stars: formData.get('stars') === 'on'
+        stars: formData.get('stars') === 'on',
+        pinned: formData.get('pinned') === 'on',
+        archived: formData.get('archived') === 'on'
     };
 
     try {
@@ -1131,4 +1262,196 @@ function showDateOptions(show) {
         dateOptions.classList.add('hidden');
         dateNavigation = { year: null, month: null, day: null };
     }
+}
+
+// ============================================================================
+// Bulk Selection Operations
+// ============================================================================
+
+function toggleSelection(id) {
+    if (selectedIds.has(id)) {
+        selectedIds.delete(id);
+    } else {
+        selectedIds.add(id);
+    }
+    updateBulkToolbar();
+    updateBookmarksList();
+    feather.replace();
+}
+
+function toggleSelectAll() {
+    const checkbox = document.getElementById('selectAllCheckbox');
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageBookmarks = filteredBookmarks.slice(start, start + PAGE_SIZE);
+
+    if (checkbox.checked) {
+        pageBookmarks.forEach(b => selectedIds.add(b.id));
+    } else {
+        pageBookmarks.forEach(b => selectedIds.delete(b.id));
+    }
+    updateBulkToolbar();
+    updateBookmarksList();
+    feather.replace();
+}
+
+function selectAll() {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageBookmarks = filteredBookmarks.slice(start, start + PAGE_SIZE);
+    pageBookmarks.forEach(b => selectedIds.add(b.id));
+    updateBulkToolbar();
+    updateBookmarksList();
+    feather.replace();
+}
+
+function clearSelection() {
+    selectedIds.clear();
+    document.getElementById('selectAllCheckbox').checked = false;
+    updateBulkToolbar();
+    updateBookmarksList();
+    feather.replace();
+}
+
+function updateBulkToolbar() {
+    const toolbar = document.getElementById('bulkToolbar');
+    const countEl = document.getElementById('selectedCount');
+
+    if (selectedIds.size > 0) {
+        toolbar.classList.remove('hidden');
+        countEl.textContent = selectedIds.size;
+    } else {
+        toolbar.classList.add('hidden');
+    }
+}
+
+async function bulkAddTags() {
+    if (selectedIds.size === 0) return;
+
+    const newTags = prompt('Enter tags to add (comma-separated):');
+    if (!newTags) return;
+
+    const tagsToAdd = newTags.split(',').map(t => t.trim()).filter(t => t);
+    if (tagsToAdd.length === 0) return;
+
+    let successCount = 0;
+    for (const id of selectedIds) {
+        try {
+            const bookmark = allBookmarks.find(b => b.id === id);
+            if (!bookmark) continue;
+
+            const existingTags = bookmark.tags || [];
+            const mergedTags = [...new Set([...existingTags, ...tagsToAdd])];
+
+            const response = await fetch(`${API_URL}/bookmarks/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ tags: mergedTags })
+            });
+
+            if (response.ok) successCount++;
+        } catch (err) {
+            console.error(`Failed to update bookmark ${id}:`, err);
+        }
+    }
+
+    showNotification(`Added tags to ${successCount} bookmarks`, 'success');
+    clearSelection();
+    loadData();
+}
+
+async function bulkToggleStar() {
+    if (selectedIds.size === 0) return;
+
+    let successCount = 0;
+    for (const id of selectedIds) {
+        try {
+            const bookmark = allBookmarks.find(b => b.id === id);
+            if (!bookmark) continue;
+
+            const response = await fetch(`${API_URL}/bookmarks/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ stars: !bookmark.stars })
+            });
+
+            if (response.ok) successCount++;
+        } catch (err) {
+            console.error(`Failed to toggle star for bookmark ${id}:`, err);
+        }
+    }
+
+    showNotification(`Toggled star on ${successCount} bookmarks`, 'success');
+    clearSelection();
+    loadData();
+}
+
+async function bulkTogglePin() {
+    if (selectedIds.size === 0) return;
+
+    let successCount = 0;
+    for (const id of selectedIds) {
+        try {
+            const bookmark = allBookmarks.find(b => b.id === id);
+            if (!bookmark) continue;
+
+            const response = await fetch(`${API_URL}/bookmarks/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ pinned: !bookmark.pinned })
+            });
+
+            if (response.ok) successCount++;
+        } catch (err) {
+            console.error(`Failed to toggle pin for bookmark ${id}:`, err);
+        }
+    }
+
+    showNotification(`Toggled pin on ${successCount} bookmarks`, 'success');
+    clearSelection();
+    loadData();
+}
+
+async function bulkToggleArchive() {
+    if (selectedIds.size === 0) return;
+
+    let successCount = 0;
+    for (const id of selectedIds) {
+        try {
+            const bookmark = allBookmarks.find(b => b.id === id);
+            if (!bookmark) continue;
+
+            const response = await fetch(`${API_URL}/bookmarks/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ archived: !bookmark.archived })
+            });
+
+            if (response.ok) successCount++;
+        } catch (err) {
+            console.error(`Failed to toggle archive for bookmark ${id}:`, err);
+        }
+    }
+
+    showNotification(`Toggled archive on ${successCount} bookmarks`, 'success');
+    clearSelection();
+    loadData();
+}
+
+async function bulkDelete() {
+    if (selectedIds.size === 0) return;
+
+    if (!confirm(`Delete ${selectedIds.size} bookmarks? This cannot be undone.`)) return;
+
+    let successCount = 0;
+    for (const id of selectedIds) {
+        try {
+            const response = await fetch(`${API_URL}/bookmarks/${id}`, { method: 'DELETE' });
+            if (response.ok) successCount++;
+        } catch (err) {
+            console.error(`Failed to delete bookmark ${id}:`, err);
+        }
+    }
+
+    showNotification(`Deleted ${successCount} bookmarks`, 'success');
+    clearSelection();
+    loadData();
 }

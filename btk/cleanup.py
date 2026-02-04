@@ -11,7 +11,7 @@ Cleanup actions:
 - Remove orphaned content cache entries
 """
 from datetime import datetime, timedelta, timezone
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any
 from dataclasses import dataclass
 
 from .models import Bookmark

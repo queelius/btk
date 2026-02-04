@@ -6,15 +6,15 @@ Provides clean, composable import functions for various bookmark formats.
 import json
 import csv
 from pathlib import Path
-from typing import List, Dict, Any
 from datetime import datetime
 import re
 
 from bs4 import BeautifulSoup
 from btk.db import Database
+from typing import Optional
 
 
-def import_file(db: Database, path: Path, format: str = None) -> int:
+def import_file(db: Database, path: Path, format: Optional[str] = None) -> int:
     """
     Import bookmarks from a file.
 

@@ -8,8 +8,7 @@ actual webpage.
 
 import logging
 import re
-from typing import Dict, Any, Optional
-from urllib.parse import urlparse
+from typing import Optional, Dict, Any
 import requests
 from bs4 import BeautifulSoup
 
@@ -232,8 +231,8 @@ class BasicContentExtractor(ContentExtractor):
 class EnhancedTagSuggester(TagSuggester):
     """Enhanced tag suggester that uses extracted content."""
     
-    def suggest_tags(self, url: str, title: str = None, content: str = None,
-                    description: str = None) -> list[str]:
+    def suggest_tags(self, url: str, title: Optional[str] = None, content: Optional[str] = None,
+                    description: Optional[str] = None) -> list[str]:
         """Suggest tags based on extracted content."""
         tags = []
         

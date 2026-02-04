@@ -6,25 +6,29 @@ Provides clean, composable export functions for various bookmark formats.
 import json
 import csv
 import base64
+import shutil
 from pathlib import Path
-from typing import List
+from typing import Optional, List
 from datetime import datetime, timezone
 from collections import Counter
 
 from btk.models import Bookmark
 
 
-def export_file(bookmarks: List[Bookmark], path: Path, format: str) -> None:
+def export_file(bookmarks: List[Bookmark], path: Path, format: str, views: Optional[dict] = None, db=None) -> None:
     """
     Export bookmarks to a file.
 
     Args:
         bookmarks: List of bookmarks to export
         path: Output file path
-        format: Export format (json, csv, html, markdown)
+        format: Export format (json, csv, html, markdown, long-echo)
+        views: Optional dict of view definitions for html-app format
+        db: Optional database instance for long-echo format
     """
     exporters = {
         "json": export_json,
+        "json-full": export_json_full,
         "csv": export_csv,
         "html": export_html,
         "html-app": export_html_app,
@@ -32,6 +36,8 @@ def export_file(bookmarks: List[Bookmark], path: Path, format: str) -> None:
         "text": export_text,
         "m3u": export_m3u,
         "m3u8": export_m3u,  # Alias - m3u8 is UTF-8 m3u
+        "preservation-html": export_preservation_html,
+        "echo": export_echo,
     }
 
     exporter = exporters.get(format)
@@ -42,11 +48,20 @@ def export_file(bookmarks: List[Bookmark], path: Path, format: str) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    exporter(bookmarks, path)
+    # html-app supports views parameter
+    if format == "html-app" and views:
+        exporter(bookmarks, path, views=views)
+    elif format in ("preservation-html", "json-full"):
+        exporter(bookmarks, path, db=db)
+    elif format == "echo":
+        # ECHO export needs db for database copy
+        exporter(bookmarks, path, db=db)
+    else:
+        exporter(bookmarks, path)
 
 
 def export_json(bookmarks: List[Bookmark], path: Path) -> None:
-    """Export bookmarks to JSON."""
+    """Export bookmarks to JSON (lightweight format)."""
     data = []
     for b in bookmarks:
         data.append({
@@ -60,6 +75,122 @@ def export_json(bookmarks: List[Bookmark], path: Path) -> None:
             "added": b.added.isoformat() if b.added else None,
             "last_visited": b.last_visited.isoformat() if b.last_visited else None,
         })
+
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+def export_json_full(bookmarks: List[Bookmark], path: Path, db=None) -> None:
+    """
+    Export bookmarks to comprehensive JSON format.
+
+    Includes all bookmark fields, media metadata, preservation data,
+    and cached content. Suitable for import into longecho or other tools.
+
+    Args:
+        bookmarks: List of bookmarks to export
+        path: Output file path
+        db: Database instance (optional, for accessing cached content)
+    """
+    data = {
+        "version": "1.0",
+        "format": "btk-full",
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "bookmark_count": len(bookmarks),
+        "bookmarks": []
+    }
+
+    # Build cache lookup if db available
+    cache_lookup = {}
+    if db:
+        try:
+            from .models import ContentCache
+            with db.session() as session:
+                for b in bookmarks:
+                    cache = session.query(ContentCache).filter_by(bookmark_id=b.id).first()
+                    if cache:
+                        cache_data = {
+                            "markdown_content": cache.markdown_content,
+                            # html_content is zlib-compressed bytes - include as base64 if present
+                            "html_content_compressed": base64.b64encode(cache.html_content).decode('ascii') if cache.html_content else None,
+                            "content_hash": cache.content_hash,
+                            "fetched_at": cache.fetched_at.isoformat() if cache.fetched_at else None,
+                        }
+                        # Preservation fields
+                        if cache.preservation_type:
+                            cache_data["preservation"] = {
+                                "type": cache.preservation_type,
+                                "preserved_at": cache.preserved_at.isoformat() if cache.preserved_at else None,
+                                "transcript_text": cache.transcript_text,
+                                "extracted_text": cache.extracted_text,
+                                # Thumbnail as base64 if present
+                                "thumbnail": {
+                                    "data": base64.b64encode(cache.thumbnail_data).decode('ascii') if cache.thumbnail_data else None,
+                                    "mime": cache.thumbnail_mime,
+                                    "width": cache.thumbnail_width,
+                                    "height": cache.thumbnail_height,
+                                } if cache.thumbnail_data else None
+                            }
+                        cache_lookup[b.id] = cache_data
+        except Exception:
+            pass  # Continue without cache data
+
+    for b in bookmarks:
+        bookmark_data = {
+            # Core fields
+            "id": b.id,
+            "unique_id": b.unique_id,
+            "url": b.url,
+            "title": b.title,
+            "description": b.description or "",
+
+            # Status flags
+            "stars": b.stars,
+            "archived": b.archived,
+            "pinned": b.pinned,
+            "reachable": b.reachable,
+
+            # Timestamps
+            "added": b.added.isoformat() if b.added else None,
+            "last_visited": b.last_visited.isoformat() if b.last_visited else None,
+            "visit_count": b.visit_count,
+
+            # Media fields
+            "media": {
+                "type": b.media_type,
+                "source": b.media_source,
+                "id": b.media_id,
+                "author_name": b.author_name,
+                "author_url": b.author_url,
+                "thumbnail_url": b.thumbnail_url,
+                "published_at": b.published_at.isoformat() if b.published_at else None,
+            } if b.media_type else None,
+
+            # Tags with full info
+            "tags": [
+                {
+                    "name": t.name,
+                    "description": t.description,
+                    "color": t.color,
+                } for t in b.tags
+            ],
+
+            # Favicon (base64 if present)
+            "favicon": {
+                "data": base64.b64encode(b.favicon_data).decode('ascii') if b.favicon_data else None,
+                "mime": b.favicon_mime_type,
+                "path": b.favicon_path,
+            } if b.favicon_data or b.favicon_path else None,
+
+            # Extra metadata
+            "extra_data": b.extra_data,
+        }
+
+        # Add cached content if available
+        if b.id in cache_lookup:
+            bookmark_data["content_cache"] = cache_lookup[b.id]
+
+        data["bookmarks"].append(bookmark_data)
 
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
@@ -304,7 +435,6 @@ def export_to_string(bookmarks: List[Bookmark], format: str) -> str:
         Exported content as string
     """
     import io
-    from pathlib import Path
 
     if format == 'json':
         # JSON export to string
@@ -890,6 +1020,78 @@ body {
 }
 
 .customize-btn:hover { color: var(--accent-color); }
+
+/* Curated Views */
+.views-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.views-section h3::before {
+    content: '📑';
+    font-size: 14px;
+}
+
+.view-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-left: 3px solid transparent;
+}
+
+.view-item:hover {
+    background: var(--bg-hover);
+    border-left-color: var(--accent-color);
+}
+
+.view-item.active {
+    background: var(--accent-color);
+    color: white;
+    border-left-color: transparent;
+}
+
+.view-item .view-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.view-item .view-name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.view-item .view-count {
+    background: var(--bg-primary);
+    padding: 0.125rem 0.5rem;
+    border-radius: 10px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.view-item.active .view-count {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+.view-item .view-description {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.view-item.active .view-description {
+    color: rgba(255,255,255,0.8);
+}
 
 /* Main content */
 #main-content {
@@ -1924,6 +2126,9 @@ const AppState = {
     activeCollection: 'all',
     collectionOrder: ['all', 'unread', 'starred', 'queue', 'popular', 'media', 'broken', 'untagged', 'pdfs'],
     hiddenCollections: new Set(),
+    // New: Curated views
+    views: {},
+    activeView: null,
     // New: Table sorting
     tableSortColumn: 'added',
     tableSortDirection: 'desc',
@@ -2120,6 +2325,15 @@ function getFilteredBookmarks() {
             results = results.filter(collection.filter);
             if (collection.sort) results.sort(collection.sort);
             if (collection.limit) results = results.slice(0, collection.limit);
+        }
+    }
+
+    // View filter (filters to specific bookmark IDs from curated view)
+    if (AppState.activeView) {
+        const view = AppState.views[AppState.activeView];
+        if (view && view.bookmark_ids) {
+            const viewIds = new Set(view.bookmark_ids);
+            results = results.filter(b => viewIds.has(b.id));
         }
     }
 
@@ -2328,6 +2542,58 @@ function renderCollectionsSidebar() {
     container.innerHTML = html;
 }
 
+// Curated views sidebar renderer
+function renderViewsSidebar() {
+    const section = document.getElementById('views-section');
+    const container = document.getElementById('views-list');
+    if (!section || !container) return;
+
+    const viewNames = Object.keys(AppState.views);
+    if (viewNames.length === 0) {
+        section.hidden = true;
+        return;
+    }
+
+    section.hidden = false;
+    const bookmarkIdSet = new Set(AppState.bookmarks.map(b => b.id));
+
+    const html = viewNames.map(name => {
+        const view = AppState.views[name];
+        const validIds = (view.bookmark_ids || []).filter(id => bookmarkIdSet.has(id));
+        const count = validIds.length;
+        const active = AppState.activeView === name ? 'active' : '';
+        const description = view.description || '';
+
+        return `
+            <div class="view-item ${active}" data-view="${escapeHtml(name)}" title="${escapeHtml(description)}">
+                <div class="view-header">
+                    <span class="view-name">${escapeHtml(name)}</span>
+                    <span class="view-count">${count}</span>
+                </div>
+                ${description ? `<div class="view-description">${escapeHtml(description)}</div>` : ''}
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = html;
+}
+
+// Set active view filter
+function setActiveView(viewName) {
+    if (viewName === AppState.activeView) {
+        // Toggle off
+        AppState.activeView = null;
+    } else {
+        AppState.activeView = viewName;
+        // Clear collection filter when selecting a view
+        AppState.activeCollection = 'all';
+    }
+    renderCollectionsSidebar();
+    renderViewsSidebar();
+    renderBookmarkList();
+    saveState();
+}
+
 // Main render function dispatches to appropriate view
 function renderBookmarkList() {
     const container = document.getElementById('bookmark-list');
@@ -2531,8 +2797,10 @@ function setViewMode(mode) {
 // Collection selection
 function setActiveCollection(id) {
     AppState.activeCollection = id;
+    AppState.activeView = null;  // Clear active view when switching collections
     saveState();
     renderCollectionsSidebar();
+    renderViewsSidebar();
     render();
 }
 
@@ -2839,6 +3107,17 @@ function bindEvents() {
         });
     }
 
+    // Views sidebar click handler
+    const viewsContainer = document.getElementById('views-list');
+    if (viewsContainer) {
+        viewsContainer.addEventListener('click', (e) => {
+            const item = e.target.closest('.view-item');
+            if (item) {
+                setActiveView(item.dataset.view);
+            }
+        });
+    }
+
     // Stats toggle
     const statsToggle = document.getElementById('stats-toggle');
     if (statsToggle) {
@@ -2912,6 +3191,7 @@ function init() {
     AppState.bookmarks = data.bookmarks;
     AppState.tags = data.tags;
     AppState.stats = data.stats || null;
+    AppState.views = data.views || {};
 
     // Build search index
     AppState.searchIndex = new SearchIndex(AppState.bookmarks);
@@ -2931,6 +3211,9 @@ function init() {
     // Apply active collection
     setActiveCollection(AppState.activeCollection, false);
 
+    // Render views sidebar
+    renderViewsSidebar();
+
     // Bind events and render
     bindEvents();
     render();
@@ -2941,12 +3224,18 @@ document.addEventListener('DOMContentLoaded', init);
 '''
 
 
-def export_html_app(bookmarks: List[Bookmark], path: Path) -> None:
+def export_html_app(bookmarks: List[Bookmark], path: Path, views: Optional[dict] = None) -> None:
     """
     Export bookmarks as interactive HTML application.
 
     Creates a single self-contained HTML file with embedded CSS, JavaScript,
     and JSON data that works offline as an interactive bookmark viewer.
+
+    Args:
+        bookmarks: List of bookmarks to export
+        path: Output file path
+        views: Optional dict of view definitions with format:
+               {"view_name": {"description": "...", "bookmark_ids": [1, 2, 3]}}
     """
     # Serialize data
     serialized_bookmarks = [_serialize_bookmark_for_app(b) for b in bookmarks]
@@ -2957,7 +3246,8 @@ def export_html_app(bookmarks: List[Bookmark], path: Path) -> None:
         },
         "bookmarks": serialized_bookmarks,
         "tags": _get_tag_stats(bookmarks),
-        "stats": _get_export_stats(bookmarks)
+        "stats": _get_export_stats(bookmarks),
+        "views": views or {}
     }
 
     json_data = json.dumps(data, ensure_ascii=False)
@@ -3055,6 +3345,13 @@ def export_html_app(bookmarks: List[Bookmark], path: Path) -> None:
                 </div>
             </div>
 
+            <div class="sidebar-section views-section" id="views-section" hidden>
+                <h3>Curated Views</h3>
+                <div id="views-list">
+                    <!-- Rendered by JavaScript -->
+                </div>
+            </div>
+
             <div class="sidebar-section">
                 <h3>Sort By</h3>
                 <select id="sort-select">
@@ -3141,3 +3438,674 @@ def export_html_app(bookmarks: List[Bookmark], path: Path) -> None:
 
     with open(path, "w", encoding="utf-8") as f:
         f.write(html)
+
+
+# =============================================================================
+# Preservation HTML Export Format
+# =============================================================================
+
+_PRESERVATION_HTML_CSS = """
+:root {
+    --bg: #fafafa;
+    --text: #333;
+    --text-secondary: #666;
+    --border: #e0e0e0;
+    --card-bg: #fff;
+    --link: #0066cc;
+    --accent: #4a90d9;
+    --tag-bg: #f0f4f8;
+    --success: #4caf50;
+    --warning: #ff9800;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #1a1a2e;
+        --text: #e0e0e0;
+        --text-secondary: #a0a0a0;
+        --border: #3a3a4a;
+        --card-bg: #252540;
+        --link: #6ab0ff;
+        --accent: #6ab0ff;
+        --tag-bg: #2a2a3e;
+        --success: #66bb6a;
+        --warning: #ffb74d;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    padding: 40px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+}
+
+header h1 {
+    margin: 0 0 10px;
+    font-size: 2.5em;
+    font-weight: 300;
+}
+
+header .subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1em;
+}
+
+header .stats {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+header .stat {
+    text-align: center;
+}
+
+header .stat-value {
+    font-size: 2em;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+header .stat-label {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+}
+
+.bookmark {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.bookmark-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.bookmark-title {
+    font-size: 1.4em;
+    font-weight: 600;
+    margin: 0 0 8px;
+}
+
+.bookmark-title a {
+    color: var(--link);
+    text-decoration: none;
+}
+
+.bookmark-title a:hover {
+    text-decoration: underline;
+}
+
+.bookmark-url {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    word-break: break-all;
+}
+
+.bookmark-meta {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    font-size: 0.85em;
+    color: var(--text-secondary);
+}
+
+.bookmark-meta .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.bookmark-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.tag {
+    background: var(--tag-bg);
+    color: var(--text);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8em;
+}
+
+.bookmark-body {
+    padding: 20px;
+}
+
+.bookmark-description {
+    margin-bottom: 20px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.preservation-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.preservation-section h4 {
+    margin: 0 0 15px;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.thumbnail {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.transcript, .extracted-text {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+    font-size: 0.9em;
+    line-height: 1.8;
+    white-space: pre-wrap;
+}
+
+.preservation-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--success);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 500;
+}
+
+.content-cached {
+    margin-top: 20px;
+}
+
+.cached-markdown {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 15px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+footer {
+    text-align: center;
+    padding: 40px 20px;
+    margin-top: 40px;
+    border-top: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.noscript-note {
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    .container { padding: 10px; }
+    header { padding: 20px 10px; }
+    header h1 { font-size: 1.8em; }
+    .bookmark-header, .bookmark-body { padding: 15px; }
+}
+"""
+
+def export_preservation_html(bookmarks: List[Bookmark], path: Path, db=None) -> None:
+    """
+    Export bookmarks as self-contained HTML with embedded preservation data.
+
+    Creates a single HTML file with embedded thumbnails, transcripts,
+    and extracted text. Works offline and without JavaScript.
+
+    This is a simple preservation export format, not the full Long Echo
+    archive system (see github.com/queelius/longecho for that).
+
+    Args:
+        bookmarks: List of bookmarks to export
+        path: Output file path
+        db: Database instance (optional, for accessing preservation data)
+    """
+    from datetime import datetime, timezone
+
+    # Build HTML content
+    html_parts = []
+
+    # Calculate stats
+    preserved_count = 0
+    with_thumbnail = 0
+    with_transcript = 0
+    with_extracted = 0
+
+    # Build bookmark cards
+    bookmark_cards = []
+    for b in bookmarks:
+        preservation_data = None
+
+        # Try to get preservation data if db is available
+        if db:
+            try:
+                from .models import ContentCache
+                with db.session() as session:
+                    cache = session.query(ContentCache).filter_by(bookmark_id=b.id).first()
+                    if cache and cache.preservation_type:
+                        preserved_count += 1
+                        preservation_data = {
+                            'type': cache.preservation_type,
+                            'thumbnail_data': cache.thumbnail_data,
+                            'thumbnail_mime': cache.thumbnail_mime,
+                            'transcript_text': cache.transcript_text,
+                            'extracted_text': cache.extracted_text,
+                            'preserved_at': cache.preserved_at,
+                            'markdown_content': cache.markdown_content,
+                        }
+                        if cache.thumbnail_data:
+                            with_thumbnail += 1
+                        if cache.transcript_text:
+                            with_transcript += 1
+                        if cache.extracted_text:
+                            with_extracted += 1
+            except Exception:
+                pass
+
+        # Build card HTML
+        card = _build_long_echo_card(b, preservation_data)
+        bookmark_cards.append(card)
+
+    # Generate full HTML
+    export_date = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+    html = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmark Archive</title>
+    <meta name="description" content="Self-contained bookmark archive with preserved content">
+    <style>{_PRESERVATION_HTML_CSS}</style>
+</head>
+<body>
+    <noscript>
+        <div class="noscript-note">
+            This archive works without JavaScript. All content is embedded directly in the HTML.
+        </div>
+    </noscript>
+
+    <header>
+        <h1>Bookmark Archive</h1>
+        <p class="subtitle">Preserved bookmarks with embedded content</p>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">{len(bookmarks)}</div>
+                <div class="stat-label">Bookmarks</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{preserved_count}</div>
+                <div class="stat-label">Preserved</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{with_thumbnail}</div>
+                <div class="stat-label">Thumbnails</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{with_transcript + with_extracted}</div>
+                <div class="stat-label">Text Extracts</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        {"".join(bookmark_cards)}
+    </div>
+
+    <footer>
+        <p>Exported: {export_date}</p>
+        <p>Generated by <a href="https://github.com/queelius/btk">BTK - Bookmark Toolkit</a></p>
+    </footer>
+</body>
+</html>'''
+
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(html)
+
+
+def _build_long_echo_card(bookmark: Bookmark, preservation: Optional[dict] = None) -> str:
+    """Build HTML card for a single bookmark."""
+
+    # Tags
+    tags_html = ""
+    if bookmark.tags:
+        tag_spans = [f'<span class="tag">{t.name}</span>' for t in bookmark.tags]
+        tags_html = f'<div class="bookmark-tags">{" ".join(tag_spans)}</div>'
+
+    # Meta info
+    added_str = bookmark.added.strftime("%Y-%m-%d") if bookmark.added else "Unknown"
+    stars = "★" if bookmark.stars else ""
+
+    meta_items = [f'<span class="meta-item">Added: {added_str}</span>']
+    if bookmark.visit_count:
+        meta_items.append(f'<span class="meta-item">Visits: {bookmark.visit_count}</span>')
+    if stars:
+        meta_items.append(f'<span class="meta-item">{stars} Starred</span>')
+
+    # Description
+    desc_html = ""
+    if bookmark.description:
+        desc_html = f'<div class="bookmark-description">{_escape_html(bookmark.description)}</div>'
+
+    # Preservation content
+    preservation_html = ""
+    if preservation:
+        parts = []
+
+        # Preservation badge
+        ptype = preservation.get('type', 'unknown')
+        preserved_at = preservation.get('preserved_at')
+        preserved_date = preserved_at.strftime("%Y-%m-%d") if preserved_at else ""
+        parts.append(f'<span class="preservation-badge">Preserved ({ptype}) {preserved_date}</span>')
+
+        # Thumbnail
+        if preservation.get('thumbnail_data'):
+            mime = preservation.get('thumbnail_mime', 'image/jpeg')
+            b64 = base64.b64encode(preservation['thumbnail_data']).decode('ascii')
+            parts.append(f'<img class="thumbnail" src="data:{mime};base64,{b64}" alt="Thumbnail">')
+
+        # Transcript
+        if preservation.get('transcript_text'):
+            text = _escape_html(preservation['transcript_text'])
+            # Truncate very long transcripts for display
+            if len(text) > 5000:
+                text = text[:5000] + "... [truncated]"
+            parts.append(f'''
+                <div class="preservation-section">
+                    <h4>Transcript</h4>
+                    <div class="transcript">{text}</div>
+                </div>
+            ''')
+
+        # Extracted text (PDF, etc.)
+        if preservation.get('extracted_text'):
+            text = _escape_html(preservation['extracted_text'])
+            if len(text) > 5000:
+                text = text[:5000] + "... [truncated]"
+            parts.append(f'''
+                <div class="preservation-section">
+                    <h4>Extracted Content</h4>
+                    <div class="extracted-text">{text}</div>
+                </div>
+            ''')
+
+        # Cached markdown content (from regular content caching)
+        if preservation.get('markdown_content') and not preservation.get('transcript_text') and not preservation.get('extracted_text'):
+            # Only show if we don't have transcript/extracted text
+            text = _escape_html(preservation['markdown_content'])
+            if len(text) > 3000:
+                text = text[:3000] + "... [truncated]"
+            parts.append(f'''
+                <div class="content-cached">
+                    <h4>Cached Content</h4>
+                    <div class="cached-markdown">{text}</div>
+                </div>
+            ''')
+
+        if parts:
+            preservation_html = f'<div class="bookmark-body">{"".join(parts)}</div>'
+
+    return f'''
+    <article class="bookmark">
+        <div class="bookmark-header">
+            <h2 class="bookmark-title">
+                <a href="{_escape_html(bookmark.url)}" target="_blank" rel="noopener">{_escape_html(bookmark.title)}</a>
+            </h2>
+            <div class="bookmark-url">{_escape_html(bookmark.url)}</div>
+            <div class="bookmark-meta">{" ".join(meta_items)}</div>
+            {tags_html}
+            {desc_html}
+        </div>
+        {preservation_html}
+    </article>
+    '''
+
+
+def _escape_html(text: str) -> str:
+    """Escape HTML special characters."""
+    if not text:
+        return ""
+    return (text
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#39;")
+    )
+
+
+def export_echo(bookmarks: List[Bookmark], path: Path, db=None) -> None:
+    """
+    Export bookmarks to ECHO-compliant directory structure.
+
+    Creates:
+    - README.md explaining the archive
+    - bookmarks.db (SQLite database copy, if db provided)
+    - bookmarks.jsonl (one bookmark per line)
+    - by-tag/ directory with markdown files organized by tag hierarchy
+
+    Args:
+        bookmarks: List of bookmarks to export
+        path: Output directory path
+        db: Database instance (for copying the SQLite database)
+    """
+    output_dir = Path(path)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy database if available
+    db_included = False
+    if db and hasattr(db, 'path') and db.path and Path(db.path).exists():
+        shutil.copy2(db.path, output_dir / "bookmarks.db")
+        db_included = True
+
+    # Export JSONL
+    jsonl_path = output_dir / "bookmarks.jsonl"
+    with open(jsonl_path, "w", encoding="utf-8") as f:
+        for b in bookmarks:
+            record = {
+                "id": b.id,
+                "unique_id": b.unique_id,
+                "url": b.url,
+                "title": b.title,
+                "description": b.description or "",
+                "tags": [t.name for t in b.tags],
+                "stars": b.stars,
+                "archived": b.archived,
+                "visit_count": b.visit_count,
+                "added": b.added.isoformat() if b.added else None,
+                "last_visited": b.last_visited.isoformat() if b.last_visited else None,
+            }
+            # Add media fields if present
+            if b.media_type:
+                record["media"] = {
+                    "type": b.media_type,
+                    "source": b.media_source,
+                    "id": b.media_id,
+                    "author": b.author_name,
+                }
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    # Export by-tag markdown files
+    by_tag_dir = output_dir / "by-tag"
+    by_tag_dir.mkdir(exist_ok=True)
+
+    # Build tag hierarchy
+    tag_bookmarks = {}
+    for b in bookmarks:
+        if b.tags:
+            for tag in b.tags:
+                if tag.name not in tag_bookmarks:
+                    tag_bookmarks[tag.name] = []
+                tag_bookmarks[tag.name].append(b)
+
+    # Create markdown files for each tag
+    for tag_name, tag_items in sorted(tag_bookmarks.items()):
+        # Create directory structure for hierarchical tags
+        parts = tag_name.split("/")
+        if len(parts) > 1:
+            tag_dir = by_tag_dir / "/".join(parts[:-1])
+            tag_dir.mkdir(parents=True, exist_ok=True)
+            md_path = tag_dir / f"{parts[-1]}.md"
+        else:
+            md_path = by_tag_dir / f"{tag_name}.md"
+
+        lines = [f"# {tag_name}", "", f"Bookmarks tagged with `{tag_name}`", ""]
+
+        for b in sorted(tag_items, key=lambda x: x.added or datetime.min.replace(tzinfo=timezone.utc), reverse=True):
+            added_str = b.added.strftime("%Y-%m-%d") if b.added else ""
+            stars = " ⭐" if b.stars else ""
+            lines.append(f"## [{b.title}]({b.url}){stars}")
+            lines.append("")
+            if added_str:
+                lines.append(f"Added: {added_str}")
+            if b.description:
+                lines.append("")
+                lines.append(b.description)
+            lines.append("")
+
+        with open(md_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
+
+    # Generate README
+    readme_content = _generate_echo_readme(
+        total_bookmarks=len(bookmarks),
+        total_tags=len(tag_bookmarks),
+        db_included=db_included
+    )
+    (output_dir / "README.md").write_text(readme_content, encoding="utf-8")
+
+
+def _generate_echo_readme(total_bookmarks: int, total_tags: int, db_included: bool) -> str:
+    """Generate ECHO-compliant README for bookmark archive."""
+    db_section = ""
+    if db_included:
+        db_section = """
+### SQLite Database
+
+The `bookmarks.db` file is a copy of the source database.
+
+Key tables:
+- `bookmarks`: id, url, title, description, added, stars, visit_count, ...
+- `tags`: id, name, description, color
+- `bookmark_tags`: bookmark_id, tag_id (many-to-many)
+
+Query examples:
+```sql
+-- List starred bookmarks
+sqlite3 bookmarks.db "SELECT title, url FROM bookmarks WHERE stars = 1"
+
+-- List bookmarks by tag
+sqlite3 bookmarks.db "SELECT b.title, b.url FROM bookmarks b
+  JOIN bookmark_tags bt ON b.id = bt.bookmark_id
+  JOIN tags t ON bt.tag_id = t.id
+  WHERE t.name = 'programming'"
+```
+"""
+
+    return f"""# Bookmark Archive
+
+Personal bookmark collection.
+
+Exported: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}
+Total bookmarks: {total_bookmarks}
+Total tags: {total_tags}
+
+## Format
+
+This is an ECHO-compliant archive. All data is in durable, open formats.
+
+### Directory Structure
+
+```
+├── README.md            # This file
+├── bookmarks.jsonl      # One bookmark per line
+{"├── bookmarks.db        # SQLite database" if db_included else ""}
+└── by-tag/              # Markdown files by tag
+    ├── programming/
+    │   └── python.md
+    └── ...
+```
+
+### bookmarks.jsonl
+
+Each line is a JSON object:
+
+```json
+{{"id": 1, "url": "https://...", "title": "...", "tags": ["tag1", "tag2"], ...}}
+```
+
+Fields:
+- `id`: Internal ID
+- `unique_id`: 8-char hash for external references
+- `url`: Bookmark URL
+- `title`: Page title
+- `description`: User description
+- `tags`: Array of tag names
+- `stars`: Boolean (starred/favorite)
+- `visit_count`: Number of visits
+- `added`: ISO timestamp when added
+- `media`: Optional media info (type, source, author)
+{db_section}
+### by-tag/ Directory
+
+Markdown files organized by tag hierarchy. Each file lists bookmarks
+with that tag, sorted by date.
+
+## Exploring
+
+1. **Browse tags**: Look in `by-tag/` directory
+2. **Search**: `grep -r "search term" by-tag/`
+3. **Parse**: Process `bookmarks.jsonl` with any JSON tool
+4. **Query**: Use SQLite browser on `bookmarks.db` (if included)
+
+## About ECHO
+
+ECHO is a philosophy for durable personal data archives.
+Learn more: https://github.com/alextowell/longecho
+
+---
+
+*Generated by btk (Bookmark Toolkit)*
+"""

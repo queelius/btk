@@ -2,8 +2,7 @@
 Tag utilities for hierarchical tag management.
 """
 from collections import defaultdict
-from typing import List, Dict, Set, Tuple, Optional
-import re
+from typing import List, Dict, Set, Tuple
 
 
 def parse_tag_hierarchy(tags: List[str], separator: str = '/') -> Dict[str, Set[str]]:

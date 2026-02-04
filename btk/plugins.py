@@ -13,11 +13,10 @@ Key features:
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional, Set, Callable, Type
+from typing import List, Dict, Any, Optional, Set, Callable
 from dataclasses import dataclass, field
 import logging
 from enum import Enum
-import inspect
 
 logger = logging.getLogger(__name__)
 
@@ -90,8 +89,8 @@ class TagSuggester(Plugin):
     """Interface for tag suggestion implementations."""
     
     @abstractmethod
-    def suggest_tags(self, url: str, title: str = None, content: str = None, 
-                    description: str = None) -> List[str]:
+    def suggest_tags(self, url: str, title: Optional[str] = None, content: Optional[str] = None, 
+                    description: Optional[str] = None) -> List[str]:
         """Suggest tags for a bookmark based on its content."""
         pass
 
@@ -126,11 +125,81 @@ class SearchEnhancer(Plugin):
 
 class BookmarkEnricher(Plugin):
     """Interface for bookmark enrichment."""
-    
+
     @abstractmethod
     def enrich(self, bookmark: Dict[str, Any]) -> Dict[str, Any]:
         """Enrich a bookmark with additional metadata."""
         pass
+
+
+@dataclass
+class PreservationResult:
+    """Result of a media preservation operation."""
+    success: bool
+    url: str
+    preservation_type: str  # 'youtube', 'pdf', 'image', etc.
+
+    # Preserved content (any of these may be populated)
+    thumbnail_data: Optional[bytes] = None
+    thumbnail_mime: Optional[str] = None
+    transcript_text: Optional[str] = None
+    extracted_text: Optional[str] = None
+
+    # Metadata
+    duration_seconds: Optional[int] = None
+    word_count: Optional[int] = None
+    error_message: Optional[str] = None
+
+    # Extra data for specific preservers
+    extra: Dict[str, Any] = field(default_factory=dict)
+
+
+class MediaPreserver(Plugin):
+    """
+    Interface for media-specific preservation.
+
+    Media preservers fetch and store useful representations of media content
+    (thumbnails, transcripts, PDF text, etc.) for Long Echo preservation.
+
+    Implementations should be domain-specific:
+    - YouTubePreserver: thumbnails + transcripts
+    - PDFPreserver: extracted text
+    - ImagePreserver: download and compress images
+    - PodcastPreserver: episode metadata + show notes
+    """
+
+    @property
+    @abstractmethod
+    def supported_domains(self) -> List[str]:
+        """List of domains this preserver handles (e.g., ['youtube.com', 'youtu.be'])."""
+        pass
+
+    @abstractmethod
+    def can_preserve(self, url: str) -> bool:
+        """Check if this preserver can handle the given URL."""
+        pass
+
+    @abstractmethod
+    def preserve(self, url: str, **kwargs) -> PreservationResult:
+        """
+        Fetch and return preservation data for the URL.
+
+        Args:
+            url: The URL to preserve
+            **kwargs: Preserver-specific options
+
+        Returns:
+            PreservationResult with preserved content
+        """
+        pass
+
+    def get_priority_for_url(self, url: str) -> int:
+        """
+        Return priority for handling this URL.
+        Higher priority preservers are tried first.
+        Default implementation uses metadata priority.
+        """
+        return self.metadata.priority if self.can_preserve(url) else 0
 
 
 # ============================================================================
@@ -165,6 +234,7 @@ class PluginRegistry:
         'similarity_finder': SimilarityFinder,
         'search_enhancer': SearchEnhancer,
         'bookmark_enricher': BookmarkEnricher,
+        'media_preserver': MediaPreserver,
     }
     
     def __init__(self, validate_strict: bool = True):
@@ -182,7 +252,7 @@ class PluginRegistry:
         self._hooks: Dict[str, List[Callable]] = {}
         self.validate_strict = validate_strict
     
-    def register(self, plugin: Plugin, plugin_type: str = None) -> None:
+    def register(self, plugin: Plugin, plugin_type: Optional[str] = None) -> None:
         """
         Register a plugin instance.
         
@@ -313,7 +383,7 @@ class PluginRegistry:
         
         return plugins
     
-    def get_plugin(self, plugin_type: str, name: str = None) -> Optional[Plugin]:
+    def get_plugin(self, plugin_type: str, name: Optional[str] = None) -> Optional[Plugin]:
         """Get a specific plugin or the highest priority one."""
         plugins = self.get_plugins(plugin_type)
         
@@ -334,7 +404,7 @@ class PluginRegistry:
     
     def list_features(self) -> List[str]:
         """List all available features."""
-        return sorted(list(self._features))
+        return sorted(self._features)
     
     def set_plugin_enabled(self, plugin_type: str, name: str, enabled: bool) -> bool:
         """Enable or disable a plugin."""
@@ -375,7 +445,7 @@ class PluginRegistry:
                     raise
         return results
     
-    def get_plugin_info(self, plugin_type: str = None) -> Dict[str, Any]:
+    def get_plugin_info(self, plugin_type: Optional[str] = None) -> Dict[str, Any]:
         """Get information about registered plugins."""
         info = {}
         

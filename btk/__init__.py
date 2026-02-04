@@ -18,7 +18,7 @@ Example Usage:
     >>> db.search("python")
 """
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 __author__ = "BTK Contributors"
 
 # Core database API
@@ -28,7 +28,7 @@ from btk.db import Database, get_db
 from btk.config import BtkConfig, get_config, init_config
 
 # Models
-from btk.models import Bookmark, Tag, BookmarkHealth, Collection
+from btk.models import Bookmark, Tag, BookmarkHealth, Collection, Event
 
 # Import/Export
 from btk.importers import import_file
@@ -57,6 +57,7 @@ __all__ = [
     "Tag",
     "BookmarkHealth",
     "Collection",
+    "Event",
     # Import/Export
     "import_file",
     "export_file",

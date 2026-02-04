@@ -6,16 +6,12 @@ architecture, without directory-based assumptions or JSON compatibility layers.
 """
 import logging
 import hashlib
-import io
 import os
-from datetime import datetime, timezone
-from pathlib import Path
 from typing import List, Optional, Tuple
 from urllib.parse import urlparse
 import requests
 
-from btk.db import Database, get_db as get_global_db
-from btk.models import Bookmark, Tag
+from btk.models import Bookmark
 
 # Configure logging
 logger = logging.getLogger(__name__)

@@ -42,11 +42,10 @@ import cmd
 import sys
 import os
 import subprocess
-from typing import Optional, List, Dict, Any
+from typing import List
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
-from rich.syntax import Syntax
 from rich.panel import Panel
 from rich import box
 from datetime import datetime, timezone
@@ -188,7 +187,7 @@ class BookmarkShell(cmd.Cmd):
 
     intro = '''
 ╔════════════════════════════════════════════════════════════════╗
-║                     BTK Shell v0.8.0                            ║
+║                     BTK Shell v0.9.0                            ║
 ║          Browse your bookmarks like a filesystem                ║
 ╚════════════════════════════════════════════════════════════════╝
 
@@ -1272,7 +1271,7 @@ Type 'tutorial' for a quick tour.
                 self.console.print(f"[red]Path not found: {new_path}[/red]")
                 return
             elif ctx['type'] == 'bookmark' and ctx['bookmark'] is None:
-                self.console.print(f"[red]Bookmark not found[/red]")
+                self.console.print("[red]Bookmark not found[/red]")
                 return
 
             self.cwd = new_path
@@ -1311,7 +1310,7 @@ Type 'tutorial' for a quick tour.
                 self._cat_field(field, bookmark)
                 return
             else:
-                self.console.print(f"[red]Invalid path syntax. Use: cat <id>/<field>[/red]")
+                self.console.print("[red]Invalid path syntax. Use: cat <id>/<field>[/red]")
                 return
 
         bookmark = self._get_current_bookmark()

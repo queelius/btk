@@ -1184,3 +1184,86 @@ class TestExportHtmlApp:
         finally:
             if output_path.exists():
                 os.unlink(output_path)
+
+    def test_export_html_app_with_views(self, sample_bookmarks):
+        """Test that views are included in HTML-app export."""
+        with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as f:
+            output_path = Path(f.name)
+
+        try:
+            # Create views data
+            views = {
+                'starred': {
+                    'description': 'Starred bookmarks',
+                    'bookmark_ids': [sample_bookmarks[0].id],
+                    'builtin': True
+                },
+                'python_posts': {
+                    'description': 'Python-related bookmarks',
+                    'bookmark_ids': [b.id for b in sample_bookmarks],
+                    'builtin': False
+                }
+            }
+
+            export_html_app(sample_bookmarks, output_path, views=views)
+            content = output_path.read_text()
+
+            # Should have views section in HTML
+            assert 'views-section' in content
+            assert 'Curated Views' in content
+
+            # Should have views in JSON data
+            assert '"views"' in content
+            assert 'starred' in content
+            assert 'python_posts' in content
+            assert 'Starred bookmarks' in content
+            assert 'Python-related bookmarks' in content
+
+            # Should have JavaScript for views
+            assert 'setActiveView' in content
+            assert 'renderViewsSidebar' in content
+            assert 'activeView' in content
+        finally:
+            if output_path.exists():
+                os.unlink(output_path)
+
+    def test_export_html_app_without_views(self, sample_bookmarks):
+        """Test that export works without views (backwards compatibility)."""
+        with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as f:
+            output_path = Path(f.name)
+
+        try:
+            # Export without views parameter
+            export_html_app(sample_bookmarks, output_path)
+            content = output_path.read_text()
+
+            # Should still have views infrastructure (but empty)
+            assert 'views-section' in content
+            assert '"views": {}' in content or '"views":{}' in content.replace(' ', '')
+        finally:
+            if output_path.exists():
+                os.unlink(output_path)
+
+    def test_export_file_with_views(self, sample_bookmarks):
+        """Test that export_file passes views to html-app exporter."""
+        with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as f:
+            output_path = Path(f.name)
+
+        try:
+            views = {
+                'test_view': {
+                    'description': 'Test view',
+                    'bookmark_ids': [sample_bookmarks[0].id],
+                    'builtin': False
+                }
+            }
+
+            export_file(sample_bookmarks, output_path, 'html-app', views=views)
+            content = output_path.read_text()
+
+            # Should have the view data
+            assert 'test_view' in content
+            assert 'Test view' in content
+        finally:
+            if output_path.exists():
+                os.unlink(output_path)

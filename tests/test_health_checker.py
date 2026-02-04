@@ -281,7 +281,7 @@ class TestCLIIntegration:
         """Test health command is registered."""
         import subprocess
         result = subprocess.run(
-            ['python', '-m', 'btk.cli', 'bookmark', 'health', '--help'],
+            ['python', '-m', 'btk.cli', 'health', '--help'],
             capture_output=True,
             text=True
         )

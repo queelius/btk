@@ -11,14 +11,14 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 
 from sqlalchemy import (
-    create_engine, select, update, delete, func, or_, and_, text,
-    Engine, event
+    create_engine, select, func, or_, and_, text,
+    event
 )
 from sqlalchemy.orm import Session, sessionmaker, selectinload
 from sqlalchemy.pool import NullPool
 from sqlalchemy.exc import IntegrityError
 
-from btk.models import Base, Bookmark, Tag
+from btk.models import Base, Bookmark, Tag, Event
 from btk.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -130,6 +130,34 @@ class Database:
         finally:
             session.close()
 
+    def emit_event(
+        self,
+        event_type: str,
+        entity_type: str,
+        entity_id: Optional[int] = None,
+        entity_url: Optional[str] = None,
+        event_data: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """
+        Emit an event for the audit trail.
+
+        Args:
+            event_type: Type of event (bookmark_added, tag_removed, etc.)
+            entity_type: Entity type (bookmark, tag, collection)
+            entity_id: ID of the entity (nullable for deletions)
+            entity_url: URL for bookmarks (preserved even after deletion)
+            event_data: Additional event-specific data
+        """
+        with self.session() as session:
+            event = Event(
+                event_type=event_type,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                entity_url=entity_url,
+                event_data=event_data
+            )
+            session.add(event)
+
     def add(self, url: str, title: Optional[str] = None, skip_duplicates: bool = True, **kwargs) -> Optional[Bookmark]:
         """
         Add a bookmark to the database.
@@ -174,6 +202,18 @@ class Database:
                 bookmark.tags = self._get_or_create_tags(session, tag_names)
 
             session.add(bookmark)
+            session.flush()  # Get the ID before commit
+
+            # Emit event for bookmark creation
+            event = Event(
+                event_type="bookmark_added",
+                entity_type="bookmark",
+                entity_id=bookmark.id,
+                entity_url=url,
+                event_data={"title": bookmark.title, "tags": tag_names if tag_names else []}
+            )
+            session.add(event)
+
             # Commit will happen in context manager, and expire_on_commit=False
             # means the object stays accessible
             return bookmark
@@ -285,15 +325,62 @@ class Database:
             if not bookmark:
                 return False
 
+            # Track changes for event emission
+            changes = {}
+            url = bookmark.url
+
             # Handle tags specially
             if "tags" in updates:
                 tag_names = updates.pop("tags")
+                old_tags = set(t.name for t in bookmark.tags)
+                new_tags = set(tag_names)
                 bookmark.tags = self._get_or_create_tags(session, tag_names)
+                changes["tags"] = {"old": list(old_tags), "new": list(new_tags)}
 
-            # Update other fields
+                # Emit specific tag events
+                added_tags = new_tags - old_tags
+                removed_tags = old_tags - new_tags
+                if added_tags:
+                    session.add(Event(
+                        event_type="tag_added", entity_type="bookmark",
+                        entity_id=id, entity_url=bookmark.url,
+                        event_data={"tags": list(added_tags)}
+                    ))
+                if removed_tags:
+                    session.add(Event(
+                        event_type="tag_removed", entity_type="bookmark",
+                        entity_id=id, entity_url=bookmark.url,
+                        event_data={"tags": list(removed_tags)}
+                    ))
+
+            # Update other fields and track changes
             for key, value in updates.items():
                 if hasattr(bookmark, key):
-                    setattr(bookmark, key, value)
+                    old_value = getattr(bookmark, key)
+                    if old_value != value:
+                        changes[key] = {"old": old_value, "new": value}
+                        setattr(bookmark, key, value)
+
+            # Emit specific events for key boolean state changes
+            _state_event_map = {
+                "stars": ("bookmark_starred", "bookmark_unstarred"),
+                "archived": ("bookmark_archived", "bookmark_unarchived"),
+                "pinned": ("bookmark_pinned", "bookmark_unpinned"),
+            }
+            for field, (on_event, off_event) in _state_event_map.items():
+                if field in changes:
+                    event_type = on_event if changes[field]["new"] else off_event
+                    session.add(Event(
+                        event_type=event_type, entity_type="bookmark",
+                        entity_id=id, entity_url=url
+                    ))
+
+            # Emit general update event if there were changes
+            if changes:
+                session.add(Event(
+                    event_type="bookmark_updated", entity_type="bookmark",
+                    entity_id=id, entity_url=url, event_data=changes
+                ))
 
             return True
 
@@ -310,7 +397,19 @@ class Database:
         with self.session() as session:
             bookmark = session.get(Bookmark, id)
             if bookmark:
+                # Preserve URL and title before deletion for audit trail
+                url = bookmark.url
+                title = bookmark.title
+                tags = [t.name for t in bookmark.tags]
+
                 session.delete(bookmark)
+
+                # Emit deletion event with preserved data
+                session.add(Event(
+                    event_type="bookmark_deleted", entity_type="bookmark",
+                    entity_id=id, entity_url=url,
+                    event_data={"title": title, "tags": tags}
+                ))
                 return True
             return False
 
@@ -418,7 +517,7 @@ class Database:
             )
             return list(result.scalars())
 
-    def search(self, query: str = None, in_content: bool = False, **filters) -> List[Bookmark]:
+    def search(self, query: Optional[str] = None, in_content: bool = False, **filters) -> List[Bookmark]:
         """
         Search bookmarks with optional filters.
 
@@ -466,7 +565,6 @@ class Database:
             if 'tags' in filters:
                 # Filter by specific tags (AND logic - bookmark must have all tags)
                 tag_names = filters['tags']
-                from btk.models import Tag
                 for tag_name in tag_names:
                     query_filters.append(Bookmark.tags.any(Tag.name == tag_name))
             if 'untagged' in filters and filters['untagged']:

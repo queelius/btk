@@ -12,7 +12,7 @@ The reading queue uses the bookmark's extra_data JSON field to store:
 - estimated_read_time: int - estimated reading time in minutes
 """
 from datetime import datetime, timezone
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
 
 from .models import Bookmark

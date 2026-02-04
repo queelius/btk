@@ -105,7 +105,7 @@ class TestPluginRegistry:
     def test_registry_initialization(self, registry):
         """Test registry initialization."""
         assert registry.validate_strict == True
-        assert len(registry._plugins) == 5  # 5 plugin types
+        assert len(registry._plugins) == 6  # 6 plugin types (including media_preserver)
         assert len(registry._features) == 0
         assert len(registry._hooks) == 0
     

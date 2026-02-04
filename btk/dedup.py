@@ -1,9 +1,8 @@
 """
 Bookmark deduplication utilities.
 """
-from typing import List, Dict, Set, Tuple, Optional, Callable
+from typing import List, Dict, Tuple, Optional, Callable
 from collections import defaultdict
-import logging
 from btk.progress import with_progress
 
 

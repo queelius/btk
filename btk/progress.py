@@ -5,7 +5,7 @@ from functools import wraps
 import sys
 import os
 from typing import Any, Callable, Optional
-from rich.progress import track, Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+from rich.progress import track, Progress, SpinnerColumn, TextColumn
 
 
 def with_progress(description: Optional[str] = None) -> Callable:

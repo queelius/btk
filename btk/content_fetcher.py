@@ -8,8 +8,7 @@ and integration with the ContentCache database model.
 import zlib
 import hashlib
 import time
-from typing import Optional, Tuple, Dict, Any
-from datetime import datetime, timezone
+from typing import Optional, Dict, Any
 import requests
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
@@ -18,7 +17,7 @@ from markdownify import markdownify as md
 class ContentFetcher:
     """Fetch and process web content for bookmark caching."""
 
-    def __init__(self, timeout: int = 10, user_agent: str = None):
+    def __init__(self, timeout: int = 10, user_agent: Optional[str] = None):
         """
         Initialize the content fetcher.
 

@@ -12,7 +12,7 @@ import logging
 import shutil
 import tempfile
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
 from dataclasses import dataclass
 import platform
@@ -45,7 +45,7 @@ class BrowserImporter:
         """Import bookmarks from a browser profile."""
         raise NotImplementedError
     
-    def import_history(self, profile_path: Path, limit: int = None) -> List[Dict[str, Any]]:
+    def import_history(self, profile_path: Path, limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """Import browsing history from a browser profile."""
         raise NotImplementedError
     
@@ -251,7 +251,7 @@ class ChromeImporter(BrowserImporter):
                     parent_folder=folder_name
                 )
     
-    def import_history(self, profile_path: Path, limit: int = None) -> List[Dict[str, Any]]:
+    def import_history(self, profile_path: Path, limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """Import browsing history from Chrome profile."""
         history_db = profile_path / "History"
         
@@ -419,7 +419,7 @@ class FirefoxImporter(BrowserImporter):
             if temp_db and temp_db.exists():
                 temp_db.unlink()
     
-    def import_history(self, profile_path: Path, limit: int = None) -> List[Dict[str, Any]]:
+    def import_history(self, profile_path: Path, limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """Import browsing history from Firefox profile."""
         places_db = profile_path / "places.sqlite"
         
@@ -576,7 +576,7 @@ class SafariImporter(BrowserImporter):
                     parent_folder=folder_name
                 )
     
-    def import_history(self, profile_path: Path, limit: int = None) -> List[Dict[str, Any]]:
+    def import_history(self, profile_path: Path, limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """Import browsing history from Safari."""
         history_db = profile_path / "History.db"
         
@@ -682,7 +682,7 @@ class BrowserImportManager:
             raise ValueError(f"Unknown browser: {browser}")
     
     def import_browser_history(self, browser: str, profile_path: Path, 
-                             limit: int = None) -> List[Dict[str, Any]]:
+                             limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """
         Import browsing history from a specific browser profile.
         
@@ -752,7 +752,7 @@ def find_browser_profiles() -> Dict[str, List[BrowserProfile]]:
 
 
 def import_browser_bookmarks_to_library(lib_dir: str, browser: str = 'all',
-                                       profile_path: str = None,
+                                       profile_path: Optional[str] = None,
                                        include_history: bool = False,
                                        history_limit: int = 1000) -> Dict[str, Any]:
     """
@@ -938,7 +938,7 @@ def list_browser_profiles() -> List[Dict[str, Any]]:
 
 
 # Lower-level convenience functions (for direct use if needed)
-def import_from_browser(browser: str, profile_path: str = None,
+def import_from_browser(browser: str, profile_path: Optional[str] = None,
                        include_history: bool = False,
                        history_limit: int = 1000) -> List[Dict[str, Any]]:
     """

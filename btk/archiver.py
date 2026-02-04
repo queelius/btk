@@ -14,7 +14,6 @@ import requests
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional, List
-from urllib.parse import urlparse
 
 from . import content_cache
 
@@ -29,7 +28,7 @@ class BookmarkArchiver:
     permanently with full version history.
     """
     
-    def __init__(self, archive_dir: str = None):
+    def __init__(self, archive_dir: Optional[str] = None):
         """
         Initialize the archiver.
         
@@ -285,7 +284,7 @@ class BookmarkArchiver:
         
         return versions
     
-    def get_archived_content(self, url: str, timestamp: str = None) -> Optional[Dict[str, Any]]:
+    def get_archived_content(self, url: str, timestamp: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """
         Get archived content for a URL.
         
@@ -378,7 +377,7 @@ class BookmarkArchiver:
         
         return stats
     
-    def export_archive_summary(self, output_file: str = None) -> str:
+    def export_archive_summary(self, output_file: Optional[str] = None) -> str:
         """
         Export a summary of the archive.
         

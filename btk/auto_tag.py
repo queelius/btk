@@ -10,7 +10,6 @@ from typing import List, Dict, Any, Optional
 from urllib.parse import urlparse
 
 from . import plugins
-from . import utils
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +52,7 @@ def _load_default_plugins(registry):
 
 
 def suggest_tags_for_bookmark(bookmark: Dict[str, Any], 
-                             use_plugins: List[str] = None) -> List[str]:
+                             use_plugins: Optional[List[str]] = None) -> List[str]:
     """
     Suggest tags for a single bookmark using available tag suggesters.
     
@@ -221,11 +220,11 @@ def auto_tag_bookmarks(bookmarks: List[Dict[str, Any]],
 
 
 def create_filter_for_auto_tag(untagged_only: bool = False,
-                               url_pattern: str = None,
-                               domain: str = None,
+                               url_pattern: Optional[str] = None,
+                               domain: Optional[str] = None,
                                no_tags: bool = False,
-                               min_tags: int = None,
-                               max_tags: int = None) -> callable:
+                               min_tags: Optional[int] = None,
+                               max_tags: Optional[int] = None) -> callable:
     """
     Create a filter function for auto-tagging operations.
     

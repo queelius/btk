@@ -559,104 +559,6 @@ class TestListAndSearch:
 
             yield db_path
 
-    def test_cmd_list_returns_bookmarks(self, populated_db):
-        """cmd_list should return bookmarks."""
-        args = Namespace(
-            db=populated_db,
-            limit=None,
-            offset=0,
-            sort="added",
-            include_archived=False,
-            output="json"
-        )
-
-        with patch('btk.cli.output_bookmarks') as mock_output:
-            cli.cmd_list(args)
-            assert mock_output.called
-
-    def test_cmd_list_excludes_archived_by_default(self, populated_db):
-        """cmd_list should exclude archived by default."""
-        db = Database(populated_db)
-
-        args = Namespace(
-            db=populated_db,
-            limit=None,
-            offset=0,
-            sort="added",
-            include_archived=False,
-            output="json"
-        )
-
-        # Capture the bookmarks passed to output_bookmarks
-        with patch('btk.cli.output_bookmarks') as mock_output:
-            cli.cmd_list(args)
-            bookmarks = mock_output.call_args[0][0]
-            # Should not include archived
-            assert all(not b.archived for b in bookmarks)
-
-    def test_cmd_list_includes_archived_when_requested(self, populated_db):
-        """cmd_list should include archived when requested."""
-        args = Namespace(
-            db=populated_db,
-            limit=None,
-            offset=0,
-            sort="added",
-            include_archived=True,
-            output="json"
-        )
-
-        with patch('btk.cli.output_bookmarks') as mock_output:
-            cli.cmd_list(args)
-            bookmarks = mock_output.call_args[0][0]
-            # Should include at least one archived
-            assert any(b.archived for b in bookmarks)
-
-    def test_cmd_search_filters_by_query(self, populated_db):
-        """cmd_search should filter by query."""
-        args = Namespace(
-            db=populated_db,
-            query="Python",
-            in_content=False,
-            limit=None,
-            starred=False,
-            archived=False,
-            unarchived=False,
-            include_archived=False,
-            pinned=False,
-            tags=None,
-            untagged=False,
-            output="json"
-        )
-
-        with patch('btk.cli.output_bookmarks') as mock_output:
-            cli.cmd_search(args)
-            bookmarks = mock_output.call_args[0][0]
-            # Should only include Python bookmark
-            assert all("Python" in b.title or "python" in b.url.lower() for b in bookmarks)
-
-    def test_cmd_search_filters_by_starred(self, populated_db):
-        """cmd_search should filter by starred."""
-        args = Namespace(
-            db=populated_db,
-            query="",
-            in_content=False,
-            limit=None,
-            starred=True,
-            archived=False,
-            unarchived=False,
-            include_archived=False,
-            pinned=False,
-            tags=None,
-            untagged=False,
-            output="json"
-        )
-
-        with patch('btk.cli.output_bookmarks') as mock_output:
-            cli.cmd_search(args)
-            bookmarks = mock_output.call_args[0][0]
-            # Should only include starred bookmarks
-            assert all(b.stars for b in bookmarks)
-
     def test_cmd_get_returns_bookmark(self, populated_db):
         """cmd_get should return specific bookmark."""
         db = Database(populated_db)
@@ -1097,18 +999,6 @@ class TestDatabaseCommands:
         with patch('btk.cli.console') as mock_console:
             cli.cmd_db_schema(args)
             assert mock_console.print.called
-
-    def test_cmd_query_sql(self, populated_db):
-        """query should execute SQL WHERE clause queries."""
-        args = Namespace(
-            db=populated_db,
-            sql="title LIKE '%Example%'",  # WHERE clause, not full SQL
-            output="json"
-        )
-
-        with patch('btk.cli.output_bookmarks') as mock_output:
-            cli.cmd_query(args)
-            assert mock_output.called
 
 
 class TestContentCommands:
