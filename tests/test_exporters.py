@@ -409,6 +409,52 @@ class TestExportHtml:
                 os.unlink(output_path)
 
 
+class TestExportHtmlEscaping:
+    """Test XSS prevention in HTML exports."""
+
+    @pytest.fixture
+    def xss_bookmarks(self):
+        """Create bookmarks with XSS payloads."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "test.db")
+            db = Database(db_path)
+            db.add(
+                url='https://example.com/safe',
+                title='<script>alert("xss")</script>',
+                description='<img src=x onerror=alert(1)>',
+                tags=["safe"]
+            )
+            bookmarks = db.list()
+            yield bookmarks
+
+    def test_export_html_escapes_title(self, xss_bookmarks):
+        """Bookmark titles with HTML should be escaped in Netscape export."""
+        with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as f:
+            output_path = Path(f.name)
+        try:
+            export_html(xss_bookmarks, output_path)
+            content = open(output_path).read()
+            assert '<script>' not in content
+            assert '&lt;script&gt;' in content
+        finally:
+            if output_path.exists():
+                os.unlink(output_path)
+
+    def test_export_html_escapes_description(self, xss_bookmarks):
+        """Bookmark descriptions with HTML should be escaped."""
+        with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as f:
+            output_path = Path(f.name)
+        try:
+            export_html(xss_bookmarks, output_path)
+            content = open(output_path).read()
+            # Raw <img> tag must not appear; escaped &lt;img is safe
+            assert '<img ' not in content
+            assert '&lt;img src=x onerror=alert(1)&gt;' in content
+        finally:
+            if output_path.exists():
+                os.unlink(output_path)
+
+
 class TestExportMarkdown:
     """Test export_markdown function."""
 

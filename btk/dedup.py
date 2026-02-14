@@ -50,7 +50,7 @@ def merge_bookmark_metadata(bookmarks: List[Dict]) -> Dict:
     all_tags = set()
     for b in bookmarks:
         all_tags.update(b.get('tags', []))
-    merged['tags'] = sorted(list(all_tags))
+    merged['tags'] = sorted(all_tags)
     
     # Merge visit counts (sum)
     total_visits = sum(b.get('visit_count', 0) for b in bookmarks)

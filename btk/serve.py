@@ -20,6 +20,12 @@ from functools import partial
 
 from .db import Database
 
+# Fields that the REST API is allowed to modify via PUT/PATCH
+ALLOWED_UPDATE_FIELDS = frozenset({
+    "title", "description", "tags", "stars", "pinned", "archived",
+    "url", "author_name", "thumbnail_url",
+})
+
 
 class BTKAPIHandler(SimpleHTTPRequestHandler):
     """HTTP request handler for BTK REST API."""
@@ -216,7 +222,8 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
     def handle_update_bookmark(self, bookmark_id: str, data: Dict):
         """Update a bookmark."""
         try:
-            success = self.db.update(int(bookmark_id), **data)
+            filtered = {k: v for k, v in data.items() if k in ALLOWED_UPDATE_FIELDS}
+            success = self.db.update(int(bookmark_id), **filtered)
             if success:
                 bookmark = self.db.get(id=int(bookmark_id))
                 self.send_json(self._bookmark_to_dict(bookmark))
@@ -269,7 +276,7 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
             for b in bookmarks:
                 for t in b.tags:
                     tags.add(t.name)
-            self.send_json(sorted(list(tags)))
+            self.send_json(sorted(tags))
 
     def handle_bookmarks_by_date(self, query: Dict):
         """Get bookmarks grouped by date.

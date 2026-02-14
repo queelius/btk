@@ -393,7 +393,7 @@ def cmd_refresh(args):
 
         console.print(f"Refreshing {len(bookmarks)} unreachable bookmarks...")
 
-        success_count = 0
+        still_unreachable = 0
         recovered_count = 0
 
         for bookmark in bookmarks:
@@ -408,11 +408,11 @@ def cmd_refresh(args):
                 if not args.quiet:
                     console.print(f"[green]✓ Recovered: {bookmark.url}[/green]")
             else:
-                success_count += 1
+                still_unreachable += 1
 
         console.print(f"\n[green]✓ Recovered {recovered_count} bookmarks[/green]")
-        if success_count > 0:
-            console.print(f"[yellow]Still unreachable: {success_count}[/yellow]")
+        if still_unreachable > 0:
+            console.print(f"[yellow]Still unreachable: {still_unreachable}[/yellow]")
 
     else:
         console.print("[red]Error: Must specify --id, --all, or --unreachable[/red]")
@@ -442,7 +442,11 @@ def cmd_view(args):
             select(ContentCache).where(ContentCache.bookmark_id == bookmark.id)
         ).scalar_one_or_none()
 
-        if not cache or args.fetch:
+        if not cache and not args.fetch:
+            console.print("[yellow]No cached content available[/yellow]")
+            return
+
+        if args.fetch:
             # Fetch fresh content
             console.print(f"Fetching content from {bookmark.url}...")
             result = db.refresh_content(bookmark.id)

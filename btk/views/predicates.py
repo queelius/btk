@@ -107,6 +107,8 @@ class TagsPredicate(Predicate):
         elif self.mode == "any":
             return any(t in bookmark_tags for t in self.tags)
         elif self.mode == "none":
+            if not self.tags:
+                return len(bookmark_tags) == 0
             return not any(t in bookmark_tags for t in self.tags)
         elif self.mode == "match":
             # Glob pattern matching
@@ -117,6 +119,8 @@ class TagsPredicate(Predicate):
 
     def to_sql(self) -> Tuple[str, List[Any]]:
         if not self.tags:
+            if self.mode == "none":
+                return ("NOT EXISTS (SELECT 1 FROM bookmark_tags bt WHERE bt.bookmark_id = bookmarks.id)", [])
             return ("1=1", [])
 
         if self.mode == "all":
@@ -270,6 +274,14 @@ class TemporalPredicate(Predicate):
     field: str  # 'added', 'visited', 'last_visited'
     after: Optional[str] = None
     before: Optional[str] = None
+    within: Optional[str] = None
+
+    def __post_init__(self):
+        """Convert 'within' to an 'after' relative expression."""
+        if self.within and not self.after:
+            # "30 days" -> "30 days ago"
+            w = self.within.strip()
+            self.after = f"{w} ago" if "ago" not in w else w
 
     def _parse_date(self, date_str: str) -> Optional[datetime]:
         """Parse date string to datetime."""

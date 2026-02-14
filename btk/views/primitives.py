@@ -182,45 +182,6 @@ class OrderView(View):
         if not self.specs:
             return bookmarks
 
-        def sort_key(bookmark: OverriddenBookmark) -> tuple:
-            keys = []
-            for spec in self.specs:
-                try:
-                    value = getattr(bookmark, spec.field)
-                except AttributeError:
-                    value = None
-
-                # Handle null
-                if value is None:
-                    if spec.nulls == "first":
-                        null_key = (0,)
-                    else:
-                        null_key = (2,)
-                    keys.append((null_key, None))
-                    continue
-
-                # Case handling for strings
-                if isinstance(value, str) and not spec.case_sensitive:
-                    value = value.lower()
-
-                # Handle datetime
-                if isinstance(value, datetime):
-                    value = value.timestamp()
-
-                # Reverse for descending
-                if spec.direction == "desc":
-                    if isinstance(value, (int, float)):
-                        value = -value
-                    elif isinstance(value, str):
-                        # Reverse string comparison is tricky; use tuple
-                        keys.append(((1,), value))
-                        continue
-
-                keys.append(((1,), value))
-
-            return tuple(keys)
-
-        # Custom comparison for mixed desc/asc
         def compare_key(b: OverriddenBookmark) -> tuple:
             keys = []
             for spec in self.specs:
@@ -242,8 +203,12 @@ class OrderView(View):
                     value = value.lower()
 
                 # Apply direction
-                if spec.direction == "desc" and isinstance(value, (int, float)):
-                    value = -value
+                if spec.direction == "desc":
+                    if isinstance(value, (int, float)):
+                        value = -value
+                    elif isinstance(value, str):
+                        # Invert character ordinals for reverse string sort
+                        value = [-ord(c) for c in value]
 
                 keys.append((1, value))
 

@@ -92,7 +92,7 @@ def suggest_tags_for_bookmark(bookmark: Dict[str, Any],
             logger.error(f"Tag suggester {suggester.name} failed: {e}")
     
     # Deduplicate and sort
-    unique_tags = sorted(list(set(all_tags)))
+    unique_tags = sorted(set(all_tags))
     
     # Trigger hook for tag post-processing
     registry = _get_registry()
@@ -135,7 +135,7 @@ def auto_tag_bookmark(bookmark: Dict[str, Any],
     else:
         # Merge with existing tags
         combined_tags = existing_tags + suggested_tags
-        bookmark['tags'] = sorted(list(set(combined_tags)))
+        bookmark['tags'] = sorted(set(combined_tags))
         logger.info(f"Added tags: {[t for t in suggested_tags if t not in existing_tags]}")
     
     # Trigger hook for bookmark modification

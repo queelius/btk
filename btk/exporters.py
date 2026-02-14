@@ -3,6 +3,7 @@ Simplified exporters for BTK.
 
 Provides clean, composable export functions for various bookmark formats.
 """
+import html as html_module
 import json
 import csv
 import base64
@@ -260,15 +261,15 @@ def export_html(bookmarks: List[Bookmark], path: Path, hierarchical: bool = True
                 folder_data = folder_dict[folder_name]
 
                 # Write folder header
-                lines.append(f'{indent_str}<DT><H3>{folder_name}</H3>')
+                lines.append(f'{indent_str}<DT><H3>{html_module.escape(folder_name)}</H3>')
                 lines.append(f'{indent_str}<DL><p>')
 
                 # Write bookmarks in this folder
                 for b in folder_data['__bookmarks__']:
                     add_date = int(b.added.timestamp()) if b.added else ""
-                    lines.append(f'{indent_str}    <DT><A HREF="{b.url}" ADD_DATE="{add_date}">{b.title}</A>')
+                    lines.append(f'{indent_str}    <DT><A HREF="{html_module.escape(b.url)}" ADD_DATE="{add_date}">{html_module.escape(b.title or "")}</A>')
                     if b.description:
-                        lines.append(f'{indent_str}    <DD>{b.description}')
+                        lines.append(f'{indent_str}    <DD>{html_module.escape(b.description)}')
 
                 # Write subfolders recursively
                 if folder_data['__children__']:
@@ -285,9 +286,9 @@ def export_html(bookmarks: List[Bookmark], path: Path, hierarchical: bool = True
 
             for b in untagged:
                 add_date = int(b.added.timestamp()) if b.added else ""
-                lines.append(f'        <DT><A HREF="{b.url}" ADD_DATE="{add_date}">{b.title}</A>')
+                lines.append(f'        <DT><A HREF="{html_module.escape(b.url)}" ADD_DATE="{add_date}">{html_module.escape(b.title or "")}</A>')
                 if b.description:
-                    lines.append(f'        <DD>{b.description}')
+                    lines.append(f'        <DD>{html_module.escape(b.description)}')
 
             lines.append('    </DL><p>')
 
@@ -307,14 +308,14 @@ def export_html(bookmarks: List[Bookmark], path: Path, hierarchical: bool = True
 
         # Export tagged bookmarks in folders
         for tag_name, tag_items in sorted(tag_bookmarks.items()):
-            lines.append(f'    <DT><H3>{tag_name}</H3>')
+            lines.append(f'    <DT><H3>{html_module.escape(tag_name)}</H3>')
             lines.append('    <DL><p>')
 
             for b in tag_items:
                 add_date = int(b.added.timestamp()) if b.added else ""
-                lines.append(f'        <DT><A HREF="{b.url}" ADD_DATE="{add_date}">{b.title}</A>')
+                lines.append(f'        <DT><A HREF="{html_module.escape(b.url)}" ADD_DATE="{add_date}">{html_module.escape(b.title or "")}</A>')
                 if b.description:
-                    lines.append(f'        <DD>{b.description}')
+                    lines.append(f'        <DD>{html_module.escape(b.description)}')
 
             lines.append('    </DL><p>')
 
@@ -325,9 +326,9 @@ def export_html(bookmarks: List[Bookmark], path: Path, hierarchical: bool = True
 
             for b in untagged:
                 add_date = int(b.added.timestamp()) if b.added else ""
-                lines.append(f'        <DT><A HREF="{b.url}" ADD_DATE="{add_date}">{b.title}</A>')
+                lines.append(f'        <DT><A HREF="{html_module.escape(b.url)}" ADD_DATE="{add_date}">{html_module.escape(b.title or "")}</A>')
                 if b.description:
-                    lines.append(f'        <DD>{b.description}')
+                    lines.append(f'        <DD>{html_module.escape(b.description)}')
 
             lines.append('    </DL><p>')
 
@@ -474,9 +475,9 @@ def export_to_string(bookmarks: List[Bookmark], format: str) -> str:
         for b in bookmarks:
             title = b.title or b.url
             added_ts = int(b.added.timestamp()) if b.added else ""
-            lines.append(f'    <DT><A HREF="{b.url}" ADD_DATE="{added_ts}">{title}</A>')
+            lines.append(f'    <DT><A HREF="{html_module.escape(b.url)}" ADD_DATE="{added_ts}">{html_module.escape(title)}</A>')
             if b.description:
-                lines.append(f'    <DD>{b.description}')
+                lines.append(f'    <DD>{html_module.escape(b.description)}')
         lines.append('</DL><p>')
         return '\n'.join(lines)
 
@@ -3811,7 +3812,7 @@ def _build_long_echo_card(bookmark: Bookmark, preservation: Optional[dict] = Non
     # Tags
     tags_html = ""
     if bookmark.tags:
-        tag_spans = [f'<span class="tag">{t.name}</span>' for t in bookmark.tags]
+        tag_spans = [f'<span class="tag">{_escape_html(t.name)}</span>' for t in bookmark.tags]
         tags_html = f'<div class="bookmark-tags">{" ".join(tag_spans)}</div>'
 
     # Meta info

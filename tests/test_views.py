@@ -536,6 +536,21 @@ class TestOrderView:
         stars = [b.stars for b in result.bookmarks]
         assert stars == [5, 3, 1]
 
+    def test_order_descending_strings(self):
+        """Test descending order on string fields."""
+        bookmarks = [
+            MockBookmark(id=1, title="Alpha"),
+            MockBookmark(id=2, title="Charlie"),
+            MockBookmark(id=3, title="Bravo"),
+        ]
+        db = MockDatabase(bookmarks)
+
+        view = OrderView([OrderSpec(field="title", direction="desc")])
+        result = view.evaluate(db)
+
+        titles = [b.title for b in result.bookmarks]
+        assert titles == ["Charlie", "Bravo", "Alpha"]
+
     def test_from_string(self):
         """Test parsing order from string."""
         view = OrderView.from_string("title desc, added asc")
@@ -1257,6 +1272,26 @@ class TestTagsPredicateEdgeCases:
         pred = TagsPredicate(tags=["python"], mode="any")
         assert pred.matches(ob)
 
+    def test_none_mode_empty_tags_means_untagged(self):
+        """TagsPredicate(tags=[], mode='none') should only match bookmarks with NO tags."""
+        tagged = MockBookmark(id=1, tags=[MockTag("python")])
+        untagged = MockBookmark(id=2, tags=[])
+
+        pred = TagsPredicate(tags=[], mode="none")
+
+        # Untagged bookmark should match
+        assert pred.matches(OverriddenBookmark(untagged))
+        # Tagged bookmark should NOT match
+        assert not pred.matches(OverriddenBookmark(tagged))
+
+    def test_none_mode_empty_tags_sql(self):
+        """TagsPredicate(tags=[], mode='none') SQL should filter to untagged bookmarks."""
+        pred = TagsPredicate(tags=[], mode="none")
+        sql, params = pred.to_sql()
+        # Should NOT be "1=1" (which matches everything)
+        assert sql.strip() != "1=1"
+        assert "bookmark_tags" in sql.lower()
+
     def test_unknown_mode(self):
         """Test unknown mode returns False."""
         bookmark = MockBookmark(id=1, tags=[MockTag("python")])
@@ -1325,6 +1360,24 @@ class TestTemporalPredicateEdgeCases:
         pred = TemporalPredicate(field="added", after="1 day ago")
         # Field is None, should return False
         assert not pred.matches(ob)
+
+    def test_within_parameter(self):
+        """TemporalPredicate should accept 'within' and convert to 'after'."""
+        now = datetime.now()
+        recent = MockBookmark(id=1, added=now - timedelta(days=5))
+        old = MockBookmark(id=2, added=now - timedelta(days=60))
+
+        pred = TemporalPredicate(field="added", within="30 days")
+        assert pred.matches(OverriddenBookmark(recent))
+        assert not pred.matches(OverriddenBookmark(old))
+
+    def test_within_via_parser(self):
+        """YAML views using 'within' should parse without crashing."""
+        view_def = {
+            "select": {"added": {"within": "7 days"}},
+        }
+        view = parse_view(view_def)
+        assert view is not None
 
 
 class TestDomainPredicateEdgeCases:
