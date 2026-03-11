@@ -541,11 +541,12 @@ class TestHelperFunctions:
     """Tests for helper functions."""
 
     def test_escape_html(self):
-        """Test HTML escaping."""
-        from btk.exporters import _escape_html
+        """Test HTML escaping via html.escape (stdlib)."""
+        import html
 
-        assert _escape_html("<script>alert('xss')</script>") == "&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;"
-        assert _escape_html("A & B") == "A &amp; B"
-        assert _escape_html('"quoted"') == "&quot;quoted&quot;"
-        assert _escape_html("") == ""
-        assert _escape_html(None) == ""
+        assert html.escape("<script>alert('xss')</script>") == "&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;"
+        assert html.escape("A & B") == "A &amp; B"
+        assert html.escape('"quoted"', quote=True) == "&quot;quoted&quot;"
+        assert html.escape("") == ""
+        # None is handled by callers via `x or ""`
+        assert html.escape(None or "") == ""

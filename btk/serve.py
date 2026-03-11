@@ -223,6 +223,10 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
         """Update a bookmark."""
         try:
             filtered = {k: v for k, v in data.items() if k in ALLOWED_UPDATE_FIELDS}
+            if not filtered:
+                rejected = sorted(data.keys())
+                self.send_error_json(f'No valid fields to update. Rejected: {", ".join(rejected)}', 400)
+                return
             success = self.db.update(int(bookmark_id), **filtered)
             if success:
                 bookmark = self.db.get(id=int(bookmark_id))

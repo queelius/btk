@@ -3812,7 +3812,7 @@ def _build_long_echo_card(bookmark: Bookmark, preservation: Optional[dict] = Non
     # Tags
     tags_html = ""
     if bookmark.tags:
-        tag_spans = [f'<span class="tag">{_escape_html(t.name)}</span>' for t in bookmark.tags]
+        tag_spans = [f'<span class="tag">{html_module.escape(t.name)}</span>' for t in bookmark.tags]
         tags_html = f'<div class="bookmark-tags">{" ".join(tag_spans)}</div>'
 
     # Meta info
@@ -3828,7 +3828,7 @@ def _build_long_echo_card(bookmark: Bookmark, preservation: Optional[dict] = Non
     # Description
     desc_html = ""
     if bookmark.description:
-        desc_html = f'<div class="bookmark-description">{_escape_html(bookmark.description)}</div>'
+        desc_html = f'<div class="bookmark-description">{html_module.escape(bookmark.description or "")}</div>'
 
     # Preservation content
     preservation_html = ""
@@ -3849,7 +3849,7 @@ def _build_long_echo_card(bookmark: Bookmark, preservation: Optional[dict] = Non
 
         # Transcript
         if preservation.get('transcript_text'):
-            text = _escape_html(preservation['transcript_text'])
+            text = html_module.escape(preservation['transcript_text'])
             # Truncate very long transcripts for display
             if len(text) > 5000:
                 text = text[:5000] + "... [truncated]"
@@ -3862,7 +3862,7 @@ def _build_long_echo_card(bookmark: Bookmark, preservation: Optional[dict] = Non
 
         # Extracted text (PDF, etc.)
         if preservation.get('extracted_text'):
-            text = _escape_html(preservation['extracted_text'])
+            text = html_module.escape(preservation['extracted_text'])
             if len(text) > 5000:
                 text = text[:5000] + "... [truncated]"
             parts.append(f'''
@@ -3875,7 +3875,7 @@ def _build_long_echo_card(bookmark: Bookmark, preservation: Optional[dict] = Non
         # Cached markdown content (from regular content caching)
         if preservation.get('markdown_content') and not preservation.get('transcript_text') and not preservation.get('extracted_text'):
             # Only show if we don't have transcript/extracted text
-            text = _escape_html(preservation['markdown_content'])
+            text = html_module.escape(preservation['markdown_content'])
             if len(text) > 3000:
                 text = text[:3000] + "... [truncated]"
             parts.append(f'''
@@ -3892,9 +3892,9 @@ def _build_long_echo_card(bookmark: Bookmark, preservation: Optional[dict] = Non
     <article class="bookmark">
         <div class="bookmark-header">
             <h2 class="bookmark-title">
-                <a href="{_escape_html(bookmark.url)}" target="_blank" rel="noopener">{_escape_html(bookmark.title)}</a>
+                <a href="{html_module.escape(bookmark.url)}" target="_blank" rel="noopener">{html_module.escape(bookmark.title or "")}</a>
             </h2>
-            <div class="bookmark-url">{_escape_html(bookmark.url)}</div>
+            <div class="bookmark-url">{html_module.escape(bookmark.url)}</div>
             <div class="bookmark-meta">{" ".join(meta_items)}</div>
             {tags_html}
             {desc_html}
@@ -3902,19 +3902,6 @@ def _build_long_echo_card(bookmark: Bookmark, preservation: Optional[dict] = Non
         {preservation_html}
     </article>
     '''
-
-
-def _escape_html(text: str) -> str:
-    """Escape HTML special characters."""
-    if not text:
-        return ""
-    return (text
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
-        .replace("'", "&#39;")
-    )
 
 
 def export_echo(bookmarks: List[Bookmark], path: Path, db=None) -> None:

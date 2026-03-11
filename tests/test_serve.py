@@ -44,3 +44,9 @@ class TestFieldWhitelist:
         assert success
         bookmark = db.get(id=1)
         assert bookmark.title == "Updated"
+
+    def test_all_fields_rejected_yields_empty_dict(self):
+        """When ALL fields are disallowed, filtered dict should be empty."""
+        data = {"id": 999, "reachable": True, "unique_id": "abc"}
+        filtered = {k: v for k, v in data.items() if k in ALLOWED_UPDATE_FIELDS}
+        assert filtered == {}

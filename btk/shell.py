@@ -187,7 +187,7 @@ class BookmarkShell(cmd.Cmd):
 
     intro = '''
 ╔════════════════════════════════════════════════════════════════╗
-║                     BTK Shell v0.9.0                            ║
+║                     BTK Shell v0.9.1                            ║
 ║          Browse your bookmarks like a filesystem                ║
 ╚════════════════════════════════════════════════════════════════╝
 

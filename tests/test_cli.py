@@ -1064,6 +1064,25 @@ class TestContentCommands:
             # May print "no cached content" message
             assert mock_console.print.called
 
+    def test_cmd_view_no_cache_no_fetch_returns_gracefully(self, populated_db):
+        """view should return gracefully when no cache exists and --fetch not set."""
+        db = Database(populated_db)
+        bookmark = db.add(url="https://nocache.example.com", title="No Cache")
+
+        args = Namespace(
+            db=populated_db,
+            id=str(bookmark.id),
+            html=False,
+            raw=False,
+            fetch=False
+        )
+
+        with patch('btk.cli.console') as mock_console:
+            # Should NOT raise SystemExit or any exception
+            cli.cmd_view(args)
+            # Should print the "no cached content" warning
+            mock_console.print.assert_any_call("[yellow]No cached content available[/yellow]")
+
 
 class TestAutoTagCommand:
     """Test auto-tagging CLI command."""
