@@ -619,21 +619,12 @@ class TestExportM3u:
             db_path = os.path.join(tmpdir, "test.db")
             db = Database(path=db_path)
 
-            # Add media bookmarks
-            b1 = db.add(url="https://youtube.com/watch?v=abc123", title="Video 1")
-            b2 = db.add(url="https://youtube.com/watch?v=def456", title="Video 2")
+            # Add media bookmarks with media metadata
+            b1 = db.add(url="https://youtube.com/watch?v=abc123", title="Video 1",
+                        media_type='video', media_source='youtube', author_name='Test Channel')
+            b2 = db.add(url="https://youtube.com/watch?v=def456", title="Video 2",
+                        media_type='audio', media_source='youtube')
             b3 = db.add(url="https://example.com/page", title="Non-media")
-
-            # Set media attributes directly on the model
-            with db.session() as session:
-                bm1 = session.get(Bookmark, b1.id)
-                bm1.media_type = 'video'
-                bm1.media_source = 'youtube'
-                bm1.author_name = 'Test Channel'
-
-                bm2 = session.get(Bookmark, b2.id)
-                bm2.media_type = 'audio'
-                bm2.media_source = 'youtube'
 
             yield db.all()
 
@@ -840,17 +831,11 @@ class TestExportHtmlApp:
             b1 = db.add(url="https://example.com", title="Example Site",
                        description="A test site", tags=["test", "web"], stars=True)
             b2 = db.add(url="https://youtube.com/watch?v=abc123", title="Video",
-                       tags=["media"])
+                       tags=["media"], media_type='video', media_source='youtube',
+                       author_name='Test Channel',
+                       thumbnail_url='https://img.youtube.com/vi/abc123/0.jpg')
             b3 = db.add(url="https://arxiv.org/abs/1234.5678", title="Paper",
                        tags=["research", "ml"])
-
-            # Set media attributes on video bookmark
-            with db.session() as session:
-                bm2 = session.get(Bookmark, b2.id)
-                bm2.media_type = 'video'
-                bm2.media_source = 'youtube'
-                bm2.author_name = 'Test Channel'
-                bm2.thumbnail_url = 'https://img.youtube.com/vi/abc123/0.jpg'
 
             yield db.all()
 

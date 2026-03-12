@@ -250,6 +250,33 @@ class ViewRegistry:
         """Get metadata for a view."""
         return self._metadata.get(name, {})
 
+    def load_from_db(self, db: "Database") -> int:
+        """
+        Load views from the database's views table.
+
+        DB views are loaded after built-ins but before YAML files,
+        so YAML wins on name conflicts.
+
+        Args:
+            db: Database instance
+
+        Returns:
+            Number of views loaded
+        """
+        count = 0
+        for view_def in db.list_views():
+            self.register_definition(
+                view_def.name,
+                view_def.definition,
+                metadata={
+                    "description": view_def.description or "",
+                    "source": "db",
+                    "created_by": view_def.created_by,
+                },
+            )
+            count += 1
+        return count
+
     def load_file(self, path: Union[str, Path]) -> int:
         """
         Load views from a YAML file.

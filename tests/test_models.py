@@ -85,7 +85,6 @@ class TestBookmarkModel:
             pinned=True,
             reachable=True,
             last_visited=now,
-            favicon_path="/path/to/favicon.ico",
             favicon_data=b"fake icon data",
             favicon_mime_type="image/x-icon",
             extra_data={"key": "value"}
@@ -101,7 +100,6 @@ class TestBookmarkModel:
         assert bookmark.reachable is True
         # SQLite doesn't preserve timezone info, so just check the timestamp is close
         assert bookmark.last_visited is not None
-        assert bookmark.favicon_path == "/path/to/favicon.ico"
         assert bookmark.favicon_data == b"fake icon data"
         assert bookmark.favicon_mime_type == "image/x-icon"
         assert bookmark.extra_data == {"key": "value"}

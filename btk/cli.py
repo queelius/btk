@@ -3365,15 +3365,20 @@ def cmd_browser(args):
             console.print("[yellow]No bookmarks found[/yellow]")
             return
 
-        # Import into database with merge logic
+        # Import into database with merge logic and provenance tracking
         added = 0
         updated = 0
         skipped = 0
+        visits_added = 0
 
         for bm in bookmarks:
             url = bm.get("url")
             if not url:
                 continue
+
+            # Determine source metadata from the bookmark dict
+            source_type = bm.get("source", browser)
+            source_profile = args.profile
 
             # Check if bookmark already exists
             existing = db.search(url=url)
@@ -3398,9 +3403,40 @@ def cmd_browser(args):
                     else:
                         skipped += 1
                 else:
+                    # Even on skip, db.add with skip_duplicates creates provenance
+                    tags = bm.get("tags", [])
+                    db.add(
+                        url=url, title=bm.get("title", url), tags=tags,
+                        source_type=source_type, source_profile=source_profile,
+                        folder_path=bm.get("folder_path"),
+                        raw_data=bm.get("raw_data"),
+                    )
                     skipped += 1
+
+                # Add visit records for history items (even for duplicates)
+                bookmark_id = existing[0].id
+                for visit in bm.get("visits", []):
+                    visited_at = visit.get("visited_at")
+                    if visited_at and isinstance(visited_at, str):
+                        try:
+                            visited_at = datetime.fromisoformat(visited_at.replace('Z', '+00:00'))
+                        except ValueError:
+                            continue
+                    if visited_at:
+                        result = db.add_visit(
+                            bookmark_id=bookmark_id,
+                            visited_at=visited_at,
+                            source_type=source_type,
+                            transition_type=visit.get("transition_type"),
+                        )
+                        if result:
+                            visits_added += 1
+
+                # Refresh visit cache if visits were added
+                if bm.get("visits"):
+                    db.refresh_visit_cache(existing[0].id)
             else:
-                # Add new bookmark
+                # Add new bookmark with provenance
                 tags = bm.get("tags", [])
                 # Add browser source tag
                 if browser != "all":
@@ -3409,19 +3445,43 @@ def cmd_browser(args):
                 # Convert ISO date string to datetime if needed
                 added_date = bm.get("added")
                 if added_date and isinstance(added_date, str):
-                    from datetime import datetime
                     try:
                         added_date = datetime.fromisoformat(added_date.replace('Z', '+00:00'))
                     except ValueError:
                         added_date = None
 
-                db.add(
+                result = db.add(
                     url=url,
                     title=bm.get("title", url),
                     tags=tags,
-                    added=added_date
+                    added=added_date,
+                    bookmark_type=bm.get("bookmark_type", "bookmark"),
+                    source_type=source_type,
+                    source_profile=source_profile,
+                    folder_path=bm.get("folder_path"),
+                    raw_data=bm.get("raw_data"),
                 )
                 added += 1
+
+                # Add visit records for history items
+                if result and bm.get("visits"):
+                    for visit in bm.get("visits", []):
+                        visited_at = visit.get("visited_at")
+                        if visited_at and isinstance(visited_at, str):
+                            try:
+                                visited_at = datetime.fromisoformat(visited_at.replace('Z', '+00:00'))
+                            except ValueError:
+                                continue
+                        if visited_at:
+                            v = db.add_visit(
+                                bookmark_id=result.id,
+                                visited_at=visited_at,
+                                source_type=source_type,
+                                transition_type=visit.get("transition_type"),
+                            )
+                            if v:
+                                visits_added += 1
+                    db.refresh_visit_cache(result.id)
 
         # Summary
         console.print("\n[green]Import complete![/green]")
@@ -3429,6 +3489,8 @@ def cmd_browser(args):
         if update_existing:
             console.print(f"  Updated: {updated}")
         console.print(f"  Skipped (duplicates): {skipped}")
+        if visits_added:
+            console.print(f"  Visits recorded: {visits_added}")
 
 
 def cmd_shell(args):
@@ -3466,8 +3528,11 @@ def cmd_views(args):
 
     db = get_db(args.db)
 
-    # Initialize registry
+    # Initialize registry: built-ins → DB views → YAML files (YAML wins)
     registry = ViewRegistry()
+
+    # Load DB views
+    registry.load_from_db(db)
 
     # Load views from file if specified
     views_file = getattr(args, 'views_file', None)
@@ -3512,7 +3577,12 @@ def cmd_views(args):
 
             for name in views:
                 meta = registry.get_metadata(name)
-                view_type = "built-in" if meta.get("builtin") else "custom"
+                if meta.get("builtin"):
+                    view_type = "built-in"
+                elif meta.get("source") == "db":
+                    view_type = "db"
+                else:
+                    view_type = "yaml"
                 has_params = "yes" if meta.get("params") else ""
                 table.add_row(
                     name,
@@ -3699,6 +3769,32 @@ def cmd_views(args):
         bookmarks = [ob.original for ob in result.bookmarks]
         console.print(f"[dim]Query returned {len(bookmarks)} bookmarks[/dim]\n")
         output_bookmarks(bookmarks, args.output)
+
+    elif args.view_command == "save":
+        # Save a view definition to the database
+        name = args.name
+        definition_str = args.definition
+
+        try:
+            definition = json.loads(definition_str)
+        except json.JSONDecodeError as e:
+            console.print(f"[red]Invalid JSON definition: {e}[/red]")
+            return
+
+        description = getattr(args, 'description', None) or ""
+        created_by = getattr(args, 'created_by', 'user')
+
+        db.save_view(name, definition, description=description, created_by=created_by)
+        console.print(f"[green]View '{name}' saved to database[/green]")
+
+    elif args.view_command == "delete":
+        # Delete a view from the database
+        name = args.name
+
+        if db.delete_view(name):
+            console.print(f"[green]View '{name}' deleted[/green]")
+        else:
+            console.print(f"[yellow]View '{name}' not found in database[/yellow]")
 
 
 def cmd_plugin(args):
@@ -4557,6 +4653,22 @@ Examples:
                               help="Sort order (default: added desc)")
     view_create.add_argument("--limit", "-l", type=int, help="Limit results")
     view_create.set_defaults(func=cmd_views)
+
+    # view save <name> <definition_json>
+    view_save = view_subparsers.add_parser("save",
+                                            help="Save a view definition to the database")
+    view_save.add_argument("name", help="View name")
+    view_save.add_argument("definition", help="View definition as JSON string")
+    view_save.add_argument("--description", "-d", help="View description")
+    view_save.add_argument("--created-by", default="user",
+                            help="Creator (user, ai, system)")
+    view_save.set_defaults(func=cmd_views)
+
+    # view delete <name>
+    view_delete = view_subparsers.add_parser("delete",
+                                              help="Delete a view from the database")
+    view_delete.add_argument("name", help="View name to delete")
+    view_delete.set_defaults(func=cmd_views)
 
     view_parser.set_defaults(func=cmd_views)
 

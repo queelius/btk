@@ -23,7 +23,7 @@ from .db import Database
 # Fields that the REST API is allowed to modify via PUT/PATCH
 ALLOWED_UPDATE_FIELDS = frozenset({
     "title", "description", "tags", "stars", "pinned", "archived",
-    "url", "author_name", "thumbnail_url",
+    "url", "author_name", "thumbnail_url", "bookmark_type",
 })
 
 
@@ -902,7 +902,7 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
 
     def _bookmark_to_dict(self, bookmark) -> Dict:
         """Convert bookmark model to dictionary."""
-        return {
+        result = {
             'id': bookmark.id,
             'unique_id': bookmark.unique_id,
             'url': bookmark.url,
@@ -914,8 +914,39 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
             'stars': bookmark.stars,
             'archived': bookmark.archived,
             'pinned': bookmark.pinned,
-            'tags': [t.name for t in bookmark.tags]
+            'bookmark_type': getattr(bookmark, 'bookmark_type', 'bookmark'),
+            'tags': [t.name for t in bookmark.tags],
         }
+
+        # Include sources if loaded (guard against DetachedInstanceError)
+        try:
+            sources = bookmark.sources
+        except Exception:
+            sources = None
+        if sources:
+            result['sources'] = [
+                {
+                    'source_type': s.source_type,
+                    'source_name': s.source_name,
+                    'source_profile': s.source_profile,
+                    'folder_path': s.folder_path,
+                    'imported_at': s.imported_at.isoformat() if s.imported_at else None,
+                }
+                for s in bookmark.sources
+            ]
+
+        # Include media if present
+        if bookmark.media_type:
+            result['media'] = {
+                'media_type': bookmark.media_type,
+                'media_source': bookmark.media_source,
+                'media_id': getattr(bookmark, 'media_id', None),
+                'author_name': bookmark.author_name,
+                'author_url': getattr(bookmark, 'author_url', None),
+                'thumbnail_url': getattr(bookmark, 'thumbnail_url', None),
+            }
+
+        return result
 
     def log_message(self, format, *args):
         """Override to customize logging."""

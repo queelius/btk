@@ -108,6 +108,16 @@ SMART_COLLECTIONS = {
         filter_func=lambda bms: [b for b in bms if b.media_type is not None],
         description="All media bookmarks"
     ),
+    'history': SmartCollection(
+        name='history',
+        filter_func=lambda bms: [b for b in bms if getattr(b, 'bookmark_type', 'bookmark') == 'history'],
+        description="History items from browser sync"
+    ),
+    'tabs': SmartCollection(
+        name='tabs',
+        filter_func=lambda bms: [b for b in bms if getattr(b, 'bookmark_type', 'bookmark') == 'tab'],
+        description="Open tabs from browser sync"
+    ),
 }
 
 

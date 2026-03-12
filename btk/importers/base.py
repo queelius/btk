@@ -64,6 +64,11 @@ class ImportResult:
     thumbnail_url: Optional[str] = None
     published_at: Optional[datetime] = None
 
+    # Provenance metadata
+    source_type: Optional[str] = None  # e.g., youtube, spotify
+    source_name: Optional[str] = None
+    raw_data: Optional[Dict[str, Any]] = None
+
     # Extra data that doesn't fit standard fields
     extra_data: Dict[str, Any] = field(default_factory=dict)
 
@@ -81,6 +86,9 @@ class ImportResult:
             'author_url': self.author_url,
             'thumbnail_url': self.thumbnail_url,
             'published_at': self.published_at,
+            'source_type': self.source_type,
+            'source_name': self.source_name,
+            'raw_data': self.raw_data,
         }
         if self.extra_data:
             data['extra_data'] = self.extra_data

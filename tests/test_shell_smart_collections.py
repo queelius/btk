@@ -21,10 +21,10 @@ from btk.shell import BookmarkShell, SMART_COLLECTIONS
 class TestSmartCollectionRegistry:
     """Test the SMART_COLLECTIONS registry and metadata."""
 
-    def test_smart_collections_registry_contains_seven_collections(self):
-        """Registry should contain exactly 7 smart collections."""
-        assert len(SMART_COLLECTIONS) == 7
-        expected_collections = {'unread', 'popular', 'broken', 'untagged', 'pdfs', 'queue', 'media'}
+    def test_smart_collections_registry_contains_all_collections(self):
+        """Registry should contain all smart collections."""
+        assert len(SMART_COLLECTIONS) == 9
+        expected_collections = {'unread', 'popular', 'broken', 'untagged', 'pdfs', 'queue', 'media', 'history', 'tabs'}
         assert set(SMART_COLLECTIONS.keys()) == expected_collections
 
     def test_each_collection_has_required_attributes(self):

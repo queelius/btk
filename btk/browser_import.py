@@ -209,8 +209,8 @@ class ChromeImporter(BrowserImporter):
         
         return bookmarks
     
-    def _process_chrome_bookmark_folder(self, items: List[Dict], 
-                                       bookmarks: List[Dict], 
+    def _process_chrome_bookmark_folder(self, items: List[Dict],
+                                       bookmarks: List[Dict],
                                        parent_folder: str = ""):
         """Recursively process Chrome bookmark folders."""
         for item in items:
@@ -224,88 +224,110 @@ class ChromeImporter(BrowserImporter):
                     ),
                     'tags': [],
                     'description': '',
-                    'source': 'chrome'
+                    'source': 'chrome',
+                    'folder_path': parent_folder or None,
+                    'raw_data': item,  # Preserve full Chrome JSON node
                 }
-                
+
                 # Add folder as tag if present
                 if parent_folder and parent_folder not in ['Bookmarks bar', 'Other bookmarks']:
                     bookmark['tags'].append(f"chrome/{parent_folder}")
-                
+
                 # Add Chrome-specific metadata
                 if 'date_last_used' in item:
                     bookmark['last_visited'] = self._chrome_timestamp_to_datetime(
                         int(item['date_last_used'])
                     )
-                
+
                 bookmarks.append(bookmark)
-                
+
             elif item.get('type') == 'folder' and 'children' in item:
                 # It's a folder, recurse
                 folder_name = item.get('name', '')
                 if parent_folder and parent_folder not in ['Bookmarks bar', 'Other bookmarks']:
                     folder_name = f"{parent_folder}/{folder_name}"
-                    
+
                 self._process_chrome_bookmark_folder(
-                    item['children'], 
-                    bookmarks, 
+                    item['children'],
+                    bookmarks,
                     parent_folder=folder_name
                 )
     
     def import_history(self, profile_path: Path, limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """Import browsing history from Chrome profile."""
         history_db = profile_path / "History"
-        
+
         if not history_db.exists():
             logger.warning(f"No history database found at {history_db}")
             return []
-        
+
         # Copy database to avoid lock issues
         temp_db = None
         try:
             temp_db = self._copy_database(history_db)
-            
+
             conn = sqlite3.connect(temp_db)
             cursor = conn.cursor()
-            
-            # Query history
+
+            # Query history with individual visits for bookmark_visits
             query = """
-                SELECT 
-                    url,
-                    title,
-                    visit_count,
-                    last_visit_time
-                FROM urls
-                ORDER BY last_visit_time DESC
+                SELECT
+                    u.url,
+                    u.title,
+                    u.visit_count,
+                    u.last_visit_time,
+                    v.visit_time,
+                    v.transition
+                FROM urls u
+                JOIN visits v ON u.id = v.url
+                ORDER BY v.visit_time DESC
             """
-            
+
             if limit:
                 query += f" LIMIT {limit}"
-            
+
             cursor.execute(query)
             rows = cursor.fetchall()
-            
-            history = []
+
+            # Group visits by URL to produce one history entry per URL
+            # with a visits list for individual visit records
+            url_map = {}
             for row in rows:
-                url, title, visit_count, last_visit = row
-                
-                # Skip empty URLs
+                url, title, visit_count, last_visit, visit_time, transition = row
+
                 if not url:
                     continue
-                
-                bookmark = {
-                    'url': url,
-                    'title': title or url,
-                    'visit_count': visit_count,
-                    'last_visited': self._chrome_timestamp_to_datetime(last_visit),
-                    'tags': ['chrome/history'],
-                    'source': 'chrome_history'
+
+                if url not in url_map:
+                    url_map[url] = {
+                        'url': url,
+                        'title': title or url,
+                        'visit_count': visit_count,
+                        'last_visited': self._chrome_timestamp_to_datetime(last_visit),
+                        'tags': ['chrome/history'],
+                        'source': 'chrome_history',
+                        'bookmark_type': 'history',
+                        'visits': [],
+                    }
+
+                # Chrome transition types (core_mask = transition & 0xFF)
+                transition_map = {
+                    0: 'link', 1: 'typed', 2: 'auto_bookmark',
+                    3: 'auto_subframe', 4: 'manual_subframe',
+                    5: 'generated', 6: 'auto_toplevel', 7: 'form_submit',
+                    8: 'reload', 9: 'keyword', 10: 'keyword_generated',
                 }
-                
-                history.append(bookmark)
-            
+                core_transition = (transition or 0) & 0xFF
+                transition_name = transition_map.get(core_transition, 'other')
+
+                url_map[url]['visits'].append({
+                    'visited_at': self._chrome_timestamp_to_datetime(visit_time),
+                    'transition_type': transition_name,
+                })
+
             conn.close()
-            return history
-            
+            return list(url_map.values())
+
         except Exception as e:
             logger.error(f"Failed to import Chrome history: {e}")
             return []
@@ -388,24 +410,30 @@ class FirefoxImporter(BrowserImporter):
             bookmarks = []
             for row in rows:
                 title, url, date_added, last_modified, folders = row
-                
+
                 # Skip empty URLs
                 if not url:
                     continue
-                
+
                 bookmark = {
                     'url': url,
                     'title': title or url,
                     'added': self._firefox_timestamp_to_datetime(date_added),
                     'modified': self._firefox_timestamp_to_datetime(last_modified),
                     'tags': [],
-                    'source': 'firefox'
+                    'source': 'firefox',
+                    'folder_path': folders if folders and folders not in ['bookmarks', 'menu', 'toolbar'] else None,
+                    'raw_data': {
+                        'dateAdded': date_added,
+                        'lastModified': last_modified,
+                        'folders': folders,
+                    },
                 }
-                
+
                 # Add folder as tag if present
                 if folders and folders not in ['bookmarks', 'menu', 'toolbar']:
                     bookmark['tags'].append(f"firefox/{folders}")
-                
+
                 bookmarks.append(bookmark)
             
             conn.close()
@@ -422,61 +450,78 @@ class FirefoxImporter(BrowserImporter):
     def import_history(self, profile_path: Path, limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """Import browsing history from Firefox profile."""
         places_db = profile_path / "places.sqlite"
-        
+
         if not places_db.exists():
             logger.warning(f"No places database found at {places_db}")
             return []
-        
+
         # Copy database to avoid lock issues
         temp_db = None
         try:
             temp_db = self._copy_database(places_db)
-            
+
             conn = sqlite3.connect(temp_db)
             cursor = conn.cursor()
-            
-            # Query history
+
+            # Query history with individual visits
             query = """
-                SELECT 
-                    url,
-                    title,
-                    visit_count,
-                    last_visit_date
-                FROM moz_places
-                WHERE hidden = 0
-                    AND url NOT LIKE 'place:%'
-                    AND url NOT LIKE 'about:%'
-                ORDER BY last_visit_date DESC
+                SELECT
+                    p.url,
+                    p.title,
+                    p.visit_count,
+                    p.last_visit_date,
+                    h.visit_date,
+                    h.visit_type
+                FROM moz_places p
+                JOIN moz_historyvisits h ON p.id = h.place_id
+                WHERE p.hidden = 0
+                    AND p.url NOT LIKE 'place:%'
+                    AND p.url NOT LIKE 'about:%'
+                ORDER BY h.visit_date DESC
             """
-            
+
             if limit:
                 query += f" LIMIT {limit}"
-            
+
             cursor.execute(query)
             rows = cursor.fetchall()
-            
-            history = []
+
+            # Group visits by URL
+            url_map = {}
+            # Firefox visit types
+            visit_type_map = {
+                1: 'link', 2: 'typed', 3: 'auto_bookmark',
+                4: 'embed', 5: 'redirect_permanent',
+                6: 'redirect_temporary', 7: 'download',
+                8: 'framed_link', 9: 'reload',
+            }
+
             for row in rows:
-                url, title, visit_count, last_visit = row
-                
-                # Skip empty URLs
+                url, title, visit_count, last_visit, visit_date, visit_type = row
+
                 if not url:
                     continue
-                
-                bookmark = {
-                    'url': url,
-                    'title': title or url,
-                    'visit_count': visit_count,
-                    'last_visited': self._firefox_timestamp_to_datetime(last_visit),
-                    'tags': ['firefox/history'],
-                    'source': 'firefox_history'
-                }
-                
-                history.append(bookmark)
-            
+
+                if url not in url_map:
+                    url_map[url] = {
+                        'url': url,
+                        'title': title or url,
+                        'visit_count': visit_count,
+                        'last_visited': self._firefox_timestamp_to_datetime(last_visit),
+                        'tags': ['firefox/history'],
+                        'source': 'firefox_history',
+                        'bookmark_type': 'history',
+                        'visits': [],
+                    }
+
+                url_map[url]['visits'].append({
+                    'visited_at': self._firefox_timestamp_to_datetime(visit_date),
+                    'transition_type': visit_type_map.get(visit_type, 'other'),
+                })
+
             conn.close()
-            return history
-            
+            return list(url_map.values())
+
         except Exception as e:
             logger.error(f"Failed to import Firefox history: {e}")
             return []
@@ -540,13 +585,13 @@ class SafariImporter(BrowserImporter):
             logger.error(f"Failed to import Safari bookmarks: {e}")
             return []
     
-    def _process_safari_bookmark_items(self, items: List[Dict], 
-                                      bookmarks: List[Dict], 
+    def _process_safari_bookmark_items(self, items: List[Dict],
+                                      bookmarks: List[Dict],
                                       parent_folder: str = ""):
         """Recursively process Safari bookmark items."""
         for item in items:
             item_type = item.get('WebBookmarkType')
-            
+
             if item_type == 'WebBookmarkTypeLeaf':
                 # It's a bookmark
                 url_dict = item.get('URLString')
@@ -555,84 +600,90 @@ class SafariImporter(BrowserImporter):
                         'url': url_dict,
                         'title': item.get('URIDictionary', {}).get('title', url_dict),
                         'tags': [],
-                        'source': 'safari'
+                        'source': 'safari',
+                        'folder_path': parent_folder or None,
+                        'raw_data': item,  # Preserve full Safari plist node
                     }
-                    
+
                     # Add folder as tag if present
                     if parent_folder:
                         bookmark['tags'].append(f"safari/{parent_folder}")
-                    
+
                     bookmarks.append(bookmark)
-                    
+
             elif item_type == 'WebBookmarkTypeList' and 'Children' in item:
                 # It's a folder, recurse
                 folder_name = item.get('Title', '')
                 if parent_folder:
                     folder_name = f"{parent_folder}/{folder_name}"
-                    
+
                 self._process_safari_bookmark_items(
-                    item['Children'], 
-                    bookmarks, 
+                    item['Children'],
+                    bookmarks,
                     parent_folder=folder_name
                 )
     
     def import_history(self, profile_path: Path, limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """Import browsing history from Safari."""
         history_db = profile_path / "History.db"
-        
+
         if not history_db.exists():
             logger.warning(f"No history database found at {history_db}")
             return []
-        
+
         # Copy database to avoid lock issues
         temp_db = None
         try:
             temp_db = self._copy_database(history_db)
-            
+
             conn = sqlite3.connect(temp_db)
             cursor = conn.cursor()
-            
-            # Query history
+
+            # Query history with individual visits
             query = """
-                SELECT 
+                SELECT
                     hi.url,
                     hi.title,
                     hi.visit_count,
                     hv.visit_time
                 FROM history_items hi
                 JOIN history_visits hv ON hi.id = hv.history_item
-                GROUP BY hi.id
                 ORDER BY hv.visit_time DESC
             """
-            
+
             if limit:
                 query += f" LIMIT {limit}"
-            
+
             cursor.execute(query)
             rows = cursor.fetchall()
-            
-            history = []
+
+            # Group visits by URL
+            url_map = {}
             for row in rows:
                 url, title, visit_count, visit_time = row
-                
-                # Skip empty URLs
+
                 if not url:
                     continue
-                
-                bookmark = {
-                    'url': url,
-                    'title': title or url,
-                    'visit_count': visit_count,
-                    'last_visited': self._safari_timestamp_to_datetime(visit_time),
-                    'tags': ['safari/history'],
-                    'source': 'safari_history'
-                }
-                
-                history.append(bookmark)
-            
+
+                if url not in url_map:
+                    url_map[url] = {
+                        'url': url,
+                        'title': title or url,
+                        'visit_count': visit_count,
+                        'last_visited': self._safari_timestamp_to_datetime(visit_time),
+                        'tags': ['safari/history'],
+                        'source': 'safari_history',
+                        'bookmark_type': 'history',
+                        'visits': [],
+                    }
+
+                url_map[url]['visits'].append({
+                    'visited_at': self._safari_timestamp_to_datetime(visit_time),
+                })
+
             conn.close()
-            return history
-            
+            return list(url_map.values())
+
         except Exception as e:
             logger.error(f"Failed to import Safari history: {e}")
             return []

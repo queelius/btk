@@ -76,12 +76,28 @@ def chrome_profile(temp_dir):
         )
     """)
     
+    # Create visits table (Chrome stores individual visits here)
+    cursor.execute("""
+        CREATE TABLE visits (
+            id INTEGER PRIMARY KEY,
+            url INTEGER,
+            visit_time INTEGER,
+            transition INTEGER
+        )
+    """)
+
     # Insert sample data
     cursor.execute("""
-        INSERT INTO urls (url, title, visit_count, last_visit_time)
-        VALUES (?, ?, ?, ?)
-    """, ("https://python.org", "Python", 10, 13350000000000000))
-    
+        INSERT INTO urls (id, url, title, visit_count, last_visit_time)
+        VALUES (?, ?, ?, ?, ?)
+    """, (1, "https://python.org", "Python", 10, 13350000000000000))
+
+    # Insert a visit record
+    cursor.execute("""
+        INSERT INTO visits (url, visit_time, transition)
+        VALUES (?, ?, ?)
+    """, (1, 13350000000000000, 1))  # transition=1 is 'typed'
+
     conn.commit()
     conn.close()
     
@@ -124,15 +140,31 @@ def firefox_profile(temp_dir):
         )
     """)
     
+    # Create moz_historyvisits table
+    cursor.execute("""
+        CREATE TABLE moz_historyvisits (
+            id INTEGER PRIMARY KEY,
+            place_id INTEGER,
+            visit_date INTEGER,
+            visit_type INTEGER
+        )
+    """)
+
     # Insert sample data
     cursor.execute("""
         INSERT INTO moz_places (id, url, title, visit_count, last_visit_date)
         VALUES (1, 'https://mozilla.org', 'Mozilla', 5, 1700000000000000)
     """)
-    
+
     cursor.execute("""
         INSERT INTO moz_bookmarks (type, fk, parent, title, dateAdded, lastModified)
         VALUES (1, 1, 0, 'Mozilla', 1700000000000000, 1700000000000000)
+    """)
+
+    # Insert a visit record
+    cursor.execute("""
+        INSERT INTO moz_historyvisits (place_id, visit_date, visit_type)
+        VALUES (1, 1700000000000000, 2)
     """)
     
     conn.commit()
@@ -166,14 +198,18 @@ class TestChromeImporter:
         """Test importing history from Chrome."""
         importer = ChromeImporter()
         history = importer.import_history(chrome_profile)
-        
+
         assert len(history) == 1
         assert history[0]['url'] == 'https://python.org'
         assert history[0]['title'] == 'Python'
         assert history[0]['visit_count'] == 10
         assert history[0]['source'] == 'chrome_history'
         assert 'chrome/history' in history[0]['tags']
-    
+        assert history[0]['bookmark_type'] == 'history'
+        # Should have individual visit records
+        assert len(history[0]['visits']) == 1
+        assert history[0]['visits'][0]['transition_type'] == 'typed'
+
     def test_chrome_timestamp_conversion(self):
         """Test Chrome timestamp conversion."""
         importer = ChromeImporter()
@@ -224,13 +260,17 @@ class TestFirefoxImporter:
         """Test importing history from Firefox."""
         importer = FirefoxImporter()
         history = importer.import_history(firefox_profile)
-        
+
         assert len(history) == 1
         assert history[0]['url'] == 'https://mozilla.org'
         assert history[0]['title'] == 'Mozilla'
         assert history[0]['visit_count'] == 5
         assert history[0]['source'] == 'firefox_history'
-    
+        assert history[0]['bookmark_type'] == 'history'
+        # Should have individual visit records
+        assert len(history[0]['visits']) == 1
+        assert history[0]['visits'][0]['transition_type'] == 'typed'
+
     def test_firefox_timestamp_conversion(self):
         """Test Firefox timestamp conversion."""
         importer = FirefoxImporter()
