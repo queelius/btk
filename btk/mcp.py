@@ -30,7 +30,7 @@ def _resolve_db_path(db_path: Optional[str] = None) -> str:
 
         config = get_config()
         return config.resolve_database(db_path)
-    except ImportError:
+    except Exception:
         return db_path or _FALLBACK_DB
 
 
@@ -284,12 +284,13 @@ def create_server(db_path: Optional[str] = None) -> FastMCP:
 
     Args:
         db_path: Path to the SQLite database.  Falls back to btk config
-                 or "btk.db" if not provided.
+                 or ~/.local/share/btk/bookmarks.db if not provided.
 
     Returns:
         Configured FastMCP server.
     """
     resolved_path = _resolve_db_path(db_path)
+    os.makedirs(os.path.dirname(resolved_path), exist_ok=True)
     server = FastMCP("btk")
 
     # Lazily cached ORM Database instance for import/export tools.

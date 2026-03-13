@@ -18,9 +18,20 @@ from io import StringIO
 from unittest.mock import Mock, patch, MagicMock
 from argparse import Namespace
 
+from btk.config import init_config
 from btk.db import Database
 from btk.models import Bookmark, Tag
 from btk import cli
+import btk.db as _db_module
+
+
+@pytest.fixture(autouse=True)
+def _reset_db_singleton():
+    """Reset the get_db() and config singletons between tests so each test gets a fresh state."""
+    import btk.config as _config_module
+    yield
+    _db_module._db = None
+    _config_module._config = None
 
 
 class TestArgumentParser:
@@ -81,6 +92,7 @@ class TestTagCommands:
             db.add(url="https://example2.com", title="Site 2", tags=["old-tag"])
             db.add(url="https://example3.com", title="Site 3", tags=["different"])
 
+            init_config(database=db_path)
             yield db_path
 
     def test_cmd_tag_add_single_bookmark(self, populated_db):
@@ -386,6 +398,7 @@ class TestBookmarkCommands:
             db.add(url="https://python.org", title="Python", tags=["python"])
             db.add(url="https://rust-lang.org", title="Rust", tags=["rust"], stars=True)
 
+            init_config(database=db_path)
             yield db_path
 
     def test_cmd_add_creates_bookmark(self, populated_db):
@@ -557,6 +570,7 @@ class TestListAndSearch:
             db.add(url="https://rust-lang.org", title="Rust Language", tags=["rust"], stars=True)
             db.add(url="https://archived.com", title="Archived", archived=True)
 
+            init_config(database=db_path)
             yield db_path
 
     def test_cmd_get_returns_bookmark(self, populated_db):
@@ -659,6 +673,7 @@ class TestCommandIntegration:
             # Add test bookmarks
             db.add(url="https://example.com", title="Example", tags=["test"])
 
+            init_config(database=db_path)
             yield db_path
 
     def test_cmd_stats_returns_statistics(self, populated_db):
@@ -693,6 +708,7 @@ class TestImportExportCommands:
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             db = Database(db_path)
+            init_config(database=db_path)
             yield db_path
 
     @pytest.fixture
@@ -704,6 +720,7 @@ class TestImportExportCommands:
             db.add(url="https://python.org", title="Python", tags=["python", "programming"])
             db.add(url="https://rust-lang.org", title="Rust", tags=["rust"], stars=True)
             db.add(url="https://github.com", title="GitHub", tags=["dev", "git"])
+            init_config(database=db_path)
             yield db_path
 
     @pytest.fixture
@@ -874,6 +891,7 @@ class TestGraphCommands:
             db.add(url="https://rust-lang.org", title="Rust", tags=["rust", "programming"])
             db.add(url="https://github.com", title="GitHub", tags=["git", "dev"])
 
+            init_config(database=db_path)
             yield db_path
 
     def test_cmd_graph_build_creates_graph(self, populated_db, capsys):
@@ -976,6 +994,7 @@ class TestDatabaseCommands:
             db = Database(db_path)
             db.add(url="https://example.com", title="Example")
             db.add(url="https://test.org", title="Test")
+            init_config(database=db_path)
             yield db_path
 
     def test_cmd_db_info_shows_statistics(self, populated_db):
@@ -1011,6 +1030,7 @@ class TestContentCommands:
             db_path = os.path.join(tmpdir, "test.db")
             db = Database(db_path)
             db.add(url="https://example.com", title="Example")
+            init_config(database=db_path)
             yield db_path
 
     def test_cmd_refresh_with_bookmark_id(self, populated_db):
@@ -1094,6 +1114,7 @@ class TestAutoTagCommand:
             db_path = os.path.join(tmpdir, "test.db")
             db = Database(db_path)
             db.add(url="https://python.org", title="Python Programming Language")
+            init_config(database=db_path)
             yield db_path
 
     def test_cmd_auto_tag_suggests_tags(self, populated_db):
@@ -1209,6 +1230,7 @@ class TestBrowserCommands:
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
             db = Database(db_path)
+            init_config(database=db_path)
 
             args = Namespace(
                 db=db_path,
@@ -1244,6 +1266,7 @@ class TestBrowserCommands:
             db = Database(db_path)
             # Add existing bookmark
             db.add(url="https://example.com", title="Existing")
+            init_config(database=db_path)
 
             args = Namespace(
                 db=db_path,
@@ -1279,6 +1302,7 @@ class TestBrowserCommands:
             db = Database(db_path)
             # Add existing bookmark
             db.add(url="https://example.com", title="Old Title")
+            init_config(database=db_path)
 
             args = Namespace(
                 db=db_path,
@@ -1307,6 +1331,7 @@ class TestBrowserCommands:
         """browser import all should import from all detected browsers."""
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
+            init_config(database=db_path)
 
             args = Namespace(
                 db=db_path,
