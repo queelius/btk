@@ -11,16 +11,16 @@ import shutil
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from btk.config import BtkConfig, get_config, init_config
+from btk.config import BtkConfig, get_config, init_config, _DEFAULT_DATABASE, _DEFAULT_HISTORY_DATABASE
 
 
 class TestBtkConfigDefaults:
     """Test default configuration values."""
 
-    def test_default_database_is_btk_db(self):
-        """Default database should be 'btk.db'."""
+    def test_default_database_is_xdg_path(self):
+        """Default database should be XDG-compliant path."""
         config = BtkConfig()
-        assert config.database == "btk.db"
+        assert config.database == _DEFAULT_DATABASE
 
     def test_default_output_format_is_table(self):
         """Default output format should be 'table'."""
@@ -87,7 +87,7 @@ class TestConfigLoading:
         monkeypatch.setenv("HOME", str(mock_home))
 
         config = BtkConfig.load()
-        assert config.database == "btk.db"
+        assert config.database == str(mock_home / ".local/share/btk/bookmarks.db")
         assert config.output_format == "table"
 
     def test_load_from_local_btk_toml(self, temp_config_dir, monkeypatch):
@@ -442,14 +442,16 @@ class TestPathExpansion:
 class TestMultiDatabase:
     """Test named database resolution."""
 
-    def test_default_databases_is_empty(self):
+    def test_default_databases_includes_history(self):
+        """Default databases should include history."""
         config = BtkConfig()
-        assert config.databases == {}
+        assert "history" in config.databases
+        assert config.databases["history"] == _DEFAULT_HISTORY_DATABASE
 
     def test_resolve_database_returns_default_when_none(self):
         config = BtkConfig()
-        config.database = "btk.db"
-        assert config.resolve_database(None) == "btk.db"
+        config.database = "test.db"
+        assert config.resolve_database(None) == "test.db"
 
     def test_resolve_database_returns_named_database(self):
         config = BtkConfig()
@@ -458,8 +460,8 @@ class TestMultiDatabase:
 
     def test_resolve_database_returns_default_for_empty_string(self):
         config = BtkConfig()
-        config.database = "btk.db"
-        assert config.resolve_database("") == "btk.db"
+        config.database = "test.db"
+        assert config.resolve_database("") == "test.db"
 
     def test_resolve_database_falls_back_to_literal_path(self):
         config = BtkConfig()
@@ -474,11 +476,11 @@ class TestMultiDatabase:
 
     def test_list_databases_includes_default_and_named(self):
         config = BtkConfig()
-        config.database = "btk.db"
+        config.database = "test.db"
         config.databases = {"history": "/data/history.db", "tabs": "/data/tabs.db"}
         result = config.list_databases()
         assert result == {
-            "default": "btk.db",
+            "default": "test.db",
             "history": "/data/history.db",
             "tabs": "/data/tabs.db",
         }
@@ -620,4 +622,5 @@ class TestGlobalConfigFunctions:
 
         config = init_config(database=None)
 
-        assert config.database == "btk.db"  # Default preserved
+        expected_db = str(mock_home / ".local/share/btk/bookmarks.db")
+        assert config.database == expected_db
