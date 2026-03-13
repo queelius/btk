@@ -12,6 +12,10 @@ from typing import Dict, Any, Optional
 from dataclasses import dataclass, field, asdict
 
 
+_DEFAULT_DATABASE = "~/.local/share/btk/bookmarks.db"
+_DEFAULT_HISTORY_DATABASE = "~/.local/share/btk/history.db"
+
+
 @dataclass
 class BtkConfig:
     """
@@ -26,8 +30,10 @@ class BtkConfig:
     """
 
     # Database settings
-    database: str = field(default="btk.db")
-    databases: Dict[str, str] = field(default_factory=dict)  # Named databases (e.g. history, tabs)
+    database: str = field(default=_DEFAULT_DATABASE)
+    databases: Dict[str, str] = field(default_factory=lambda: {
+        "history": _DEFAULT_HISTORY_DATABASE,
+    })
     database_url: Optional[str] = field(default=None)  # Full connection string (overrides database)
     database_echo: bool = field(default=False)  # SQLAlchemy echo for debugging
     connection_pool_size: int = field(default=5)
@@ -61,6 +67,9 @@ class BtkConfig:
     plugins_enabled: bool = field(default=True)
     plugins_dir: str = field(default="~/.config/btk/plugins")
     log_level: str = field(default="INFO")
+
+    def __post_init__(self):
+        self._database_explicitly_set: bool = False
 
     @classmethod
     def load(cls, config_file: Optional[Path] = None) -> "BtkConfig":
@@ -101,6 +110,10 @@ class BtkConfig:
         # Apply environment variables (BTK_* prefix)
         config._apply_env_vars()
 
+        # Auto-discover local ./btk.db for backward compatibility
+        if not config._database_explicitly_set and Path("btk.db").exists():
+            config.database = str(Path.cwd() / "btk.db")
+
         # Expand paths
         config._expand_paths()
 
@@ -114,6 +127,8 @@ class BtkConfig:
 
     def _merge(self, data: Dict[str, Any]):
         """Merge configuration data into this instance."""
+        if "database" in data:
+            self._database_explicitly_set = True
         for key, value in data.items():
             if hasattr(self, key):
                 if isinstance(getattr(self, key), dict) and isinstance(value, dict):
@@ -129,6 +144,8 @@ class BtkConfig:
             if key.startswith(prefix):
                 config_key = key[len(prefix):].lower()
                 if hasattr(self, config_key):
+                    if config_key == "database":
+                        self._database_explicitly_set = True
                     # Convert string values to appropriate types
                     current_value = getattr(self, config_key)
                     if isinstance(current_value, bool):
@@ -273,7 +290,7 @@ def init_config(database: Optional[str] = None, **kwargs) -> BtkConfig:
     config = get_config()
 
     if database:
-        config.database = database
+        config.database = config.resolve_database(database)
 
     for key, value in kwargs.items():
         if hasattr(config, key) and value is not None:
