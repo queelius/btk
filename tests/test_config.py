@@ -523,6 +523,74 @@ class TestMultiDatabase:
         }
 
 
+class TestLocalDatabaseDiscovery:
+    """Test backward-compatible ./btk.db auto-discovery."""
+
+    def test_discovers_local_btk_db(self, tmp_path, monkeypatch):
+        """Should use ./btk.db when it exists and no config sets database."""
+        monkeypatch.chdir(tmp_path)
+        mock_home = tmp_path / "home"
+        mock_home.mkdir()
+        monkeypatch.setenv("HOME", str(mock_home))
+
+        (tmp_path / "btk.db").touch()
+
+        config = BtkConfig.load()
+        assert config.database == str(tmp_path / "btk.db")
+
+    def test_xdg_default_when_no_local_btk_db(self, tmp_path, monkeypatch):
+        """Should use XDG default when no ./btk.db exists."""
+        monkeypatch.chdir(tmp_path)
+        mock_home = tmp_path / "home"
+        mock_home.mkdir()
+        monkeypatch.setenv("HOME", str(mock_home))
+
+        config = BtkConfig.load()
+        assert config.database == str(mock_home / ".local/share/btk/bookmarks.db")
+
+    def test_explicit_config_overrides_local_btk_db(self, tmp_path, monkeypatch):
+        """Config file database= should override local ./btk.db discovery."""
+        monkeypatch.chdir(tmp_path)
+        mock_home = tmp_path / "home"
+        mock_home.mkdir()
+        monkeypatch.setenv("HOME", str(mock_home))
+
+        (tmp_path / "btk.db").touch()
+        (tmp_path / "btk.toml").write_text('database = "custom.db"\n')
+
+        config = BtkConfig.load()
+        assert config.database == "custom.db"
+
+    def test_env_var_overrides_local_btk_db(self, tmp_path, monkeypatch):
+        """BTK_DATABASE env var should override local ./btk.db discovery."""
+        monkeypatch.chdir(tmp_path)
+        mock_home = tmp_path / "home"
+        mock_home.mkdir()
+        monkeypatch.setenv("HOME", str(mock_home))
+
+        (tmp_path / "btk.db").touch()
+        monkeypatch.setenv("BTK_DATABASE", "env.db")
+
+        config = BtkConfig.load()
+        assert config.database == "env.db"
+
+    def test_explicit_default_in_toml_prevents_local_discovery(self, tmp_path, monkeypatch):
+        """Explicitly writing the default path in TOML should prevent local discovery."""
+        monkeypatch.chdir(tmp_path)
+        mock_home = tmp_path / "home"
+        mock_home.mkdir()
+        monkeypatch.setenv("HOME", str(mock_home))
+
+        (tmp_path / "btk.db").touch()
+        (tmp_path / "btk.toml").write_text(
+            f'database = "{_DEFAULT_DATABASE}"\n'
+        )
+
+        config = BtkConfig.load()
+        expected = str(mock_home / ".local/share/btk/bookmarks.db")
+        assert config.database == expected
+
+
 class TestMergeConfiguration:
     """Test configuration merging behavior."""
 
