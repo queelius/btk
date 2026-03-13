@@ -136,7 +136,7 @@ def output_bookmarks(bookmarks: List[Bookmark], format: str = "table"):
 
 def cmd_add(args):
     """Add a new bookmark."""
-    db = get_db(args.db)
+    db = get_db()
 
     # Parse tags
     tags = args.tags.split(",") if args.tags else []
@@ -230,7 +230,7 @@ def build_filters(args):
 
 def cmd_get(args):
     """Get a specific bookmark."""
-    db = get_db(args.db)
+    db = get_db()
 
     # Try to parse as ID first, then as unique_id
     try:
@@ -248,7 +248,7 @@ def cmd_get(args):
 
 def cmd_update(args):
     """Update a bookmark."""
-    db = get_db(args.db)
+    db = get_db()
 
     # Get current bookmark to support adding/removing tags
     bookmark = db.get(int(args.id))
@@ -300,7 +300,7 @@ def cmd_update(args):
 
 def cmd_refresh(args):
     """Refresh cached content for bookmarks."""
-    db = get_db(args.db)
+    db = get_db()
 
     if args.id:
         # Refresh specific bookmark
@@ -421,7 +421,7 @@ def cmd_refresh(args):
 
 def cmd_view(args):
     """View cached content for a bookmark."""
-    db = get_db(args.db)
+    db = get_db()
     from btk.models import ContentCache
     from btk.content_fetcher import ContentFetcher
     from sqlalchemy import select
@@ -508,7 +508,7 @@ def cmd_view(args):
 
 def cmd_auto_tag(args):
     """Auto-generate tags for bookmarks using NLP."""
-    db = get_db(args.db)
+    db = get_db()
     import os
     from btk.models import ContentCache
     from sqlalchemy import select
@@ -650,7 +650,7 @@ def cmd_preserve(args):
         PreservationManager, preserve_bookmark
     )
 
-    db = get_db(args.db)
+    db = get_db()
     manager = PreservationManager()
 
     if args.id:
@@ -766,7 +766,7 @@ def cmd_preserve_status(args):
     from btk.preservation import PreservationManager
     from btk.models import Bookmark, ContentCache
 
-    db = get_db(args.db)
+    db = get_db()
     manager = PreservationManager()
 
     with db.session() as session:
@@ -809,7 +809,7 @@ def cmd_preserve_status(args):
 
 def cmd_delete(args):
     """Delete a bookmark."""
-    db = get_db(args.db)
+    db = get_db()
 
     # Handle multiple IDs
     ids = [int(id_str) for id_str in args.ids]
@@ -837,7 +837,7 @@ def cmd_query_flags(args):
     from sqlalchemy import and_, or_
     from btk.models import Bookmark, Tag
 
-    db = get_db(args.db)
+    db = get_db()
 
     # Start with all bookmarks (or from a view if specified)
     filters = []
@@ -984,7 +984,7 @@ def cmd_query_flags(args):
 
 def cmd_add_shortcut(args):
     """Add a bookmark (shortcut for 'btk bookmark add')."""
-    db = get_db(args.db)
+    db = get_db()
 
     tags = [t.strip() for t in args.tags.split(',')] if args.tags else []
 
@@ -1020,7 +1020,7 @@ def cmd_open_shortcut(args):
     import webbrowser
     from datetime import datetime, timezone
 
-    db = get_db(args.db)
+    db = get_db()
     bookmark = _resolve_bookmark(db, args.id)
 
     if not bookmark:
@@ -1041,7 +1041,7 @@ def cmd_open_shortcut(args):
 
 def cmd_star_shortcut(args):
     """Star a bookmark (shortcut)."""
-    db = get_db(args.db)
+    db = get_db()
     bookmark = _resolve_bookmark(db, args.id)
 
     if not bookmark:
@@ -1057,7 +1057,7 @@ def cmd_star_shortcut(args):
 
 def cmd_unstar_shortcut(args):
     """Unstar a bookmark (shortcut)."""
-    db = get_db(args.db)
+    db = get_db()
     bookmark = _resolve_bookmark(db, args.id)
 
     if not bookmark:
@@ -1073,7 +1073,7 @@ def cmd_unstar_shortcut(args):
 
 def cmd_tag_shortcut(args):
     """Add tags to a bookmark (shortcut)."""
-    db = get_db(args.db)
+    db = get_db()
     bookmark = _resolve_bookmark(db, args.id)
 
     if not bookmark:
@@ -1091,7 +1091,7 @@ def cmd_tag_shortcut(args):
 
 def cmd_untag_shortcut(args):
     """Remove tags from a bookmark (shortcut)."""
-    db = get_db(args.db)
+    db = get_db()
     bookmark = _resolve_bookmark(db, args.id)
 
     if not bookmark:
@@ -1110,7 +1110,7 @@ def cmd_untag_shortcut(args):
 
 def cmd_rm_shortcut(args):
     """Delete a bookmark (shortcut for 'btk bookmark delete')."""
-    db = get_db(args.db)
+    db = get_db()
     bookmark = _resolve_bookmark(db, args.id)
 
     if not bookmark:
@@ -1130,7 +1130,7 @@ def cmd_activity(args):
     from btk.models import Event
     from sqlalchemy import select
 
-    db = get_db(args.db)
+    db = get_db()
     limit = args.limit if args.limit else 20
 
     with db.session() as session:
@@ -1174,7 +1174,7 @@ def cmd_activity(args):
 
 def cmd_stats(args):
     """Show quick database statistics."""
-    db = get_db(args.db)
+    db = get_db()
     stats = db.stats()
 
     if args.output == 'json':
@@ -1203,7 +1203,7 @@ def cmd_health(args):
     """Check health of bookmark URLs."""
     from btk.health_checker import run_health_check, summarize_results
 
-    db = get_db(args.db)
+    db = get_db()
 
     # Determine which bookmarks to check
     if args.id:
@@ -1332,7 +1332,7 @@ def cmd_queue(args):
         add_to_queue, remove_from_queue, update_progress, set_priority
     )
 
-    db = get_db(args.db)
+    db = get_db()
     cmd = args.queue_command
 
     if cmd == "list":
@@ -1492,7 +1492,7 @@ def cmd_media(args):
     from btk.media_detector import MediaDetector
     from btk.media_fetcher import MediaFetcher, YtDlpNotAvailableError, MediaFetchError
 
-    db = get_db(args.db)
+    db = get_db()
     cmd = args.media_command
     detector = MediaDetector()
 
@@ -1808,7 +1808,7 @@ def cmd_media(args):
 
 def cmd_db_info(args):
     """Show detailed database information."""
-    db = get_db(args.db)
+    db = get_db()
     info = db.info()
 
     if args.output == "json":
@@ -1828,7 +1828,7 @@ def cmd_db_info(args):
 
 def cmd_db_schema(args):
     """Show database schema."""
-    db = get_db(args.db)
+    db = get_db()
     schema = db.schema()
 
     if args.output == "json":
@@ -1866,7 +1866,7 @@ def cmd_sql(args):
     from btk.config import get_config
 
     config = get_config()
-    db_path = config.resolve_database(args.db)
+    db_path = config.database
 
     # Read query from args or stdin
     if args.query:
@@ -2142,11 +2142,10 @@ def cmd_mcp(args):
 
     from btk.config import get_config
     config = get_config()
-    db_arg = args.db if hasattr(args, 'db') else None
-    db_path = config.resolve_database(db_arg)
+    db_path = config.database
 
     server = create_server(db_path=db_path)
-    server.run(transport=getattr(args, 'transport', 'stdio'))
+    server.run(transport=args.transport)
 
 
 def cmd_examples(args):
@@ -2336,7 +2335,7 @@ def cmd_youtube_auth(args):
 def cmd_youtube_library(args):
     """Import user's liked videos."""
     importer = _get_youtube_importer(args, require_oauth=True)
-    db = get_db(args.db)
+    db = get_db()
 
     console.print("[bold]Importing liked videos...[/bold]")
     results = importer.import_library(limit=args.limit)
@@ -2346,7 +2345,7 @@ def cmd_youtube_library(args):
 def cmd_youtube_subscriptions(args):
     """Import user's subscriptions as channel bookmarks."""
     importer = _get_youtube_importer(args, require_oauth=True)
-    db = get_db(args.db)
+    db = get_db()
 
     console.print("[bold]Importing subscriptions...[/bold]")
     results = importer.import_subscriptions(limit=args.limit)
@@ -2356,7 +2355,7 @@ def cmd_youtube_subscriptions(args):
 def cmd_youtube_playlists(args):
     """List or import user's playlists."""
     importer = _get_youtube_importer(args, require_oauth=True)
-    db = get_db(args.db)
+    db = get_db()
 
     if getattr(args, 'list', False):
         # Just list playlists
@@ -2385,7 +2384,7 @@ def cmd_youtube_playlists(args):
 def cmd_youtube_playlist(args):
     """Import a specific playlist's videos."""
     importer = _get_youtube_importer(args, require_oauth=False)
-    db = get_db(args.db)
+    db = get_db()
 
     console.print(f"[bold]Importing playlist: {args.playlist_id}[/bold]")
     results = importer.import_playlist(args.playlist_id, limit=args.limit)
@@ -2395,7 +2394,7 @@ def cmd_youtube_playlist(args):
 def cmd_youtube_channel(args):
     """Import videos from a channel."""
     importer = _get_youtube_importer(args, require_oauth=False)
-    db = get_db(args.db)
+    db = get_db()
 
     console.print(f"[bold]Importing channel: {args.channel_id}[/bold]")
     results = importer.import_channel(args.channel_id, limit=args.limit)
@@ -2405,7 +2404,7 @@ def cmd_youtube_channel(args):
 def cmd_youtube_video(args):
     """Import a single video."""
     importer = _get_youtube_importer(args, require_oauth=False)
-    db = get_db(args.db)
+    db = get_db()
 
     console.print(f"[bold]Importing video: {args.video_id}[/bold]")
     result = importer.import_video(args.video_id)
@@ -2433,7 +2432,7 @@ def cmd_youtube_video(args):
 def cmd_youtube_user(args):
     """Import another user's public content."""
     importer = _get_youtube_importer(args, require_oauth=False)
-    db = get_db(args.db)
+    db = get_db()
 
     user_id = args.user_id
     import_videos = args.videos
@@ -2461,7 +2460,7 @@ def cmd_cleanup(args):
     """Auto-cleanup stale and broken bookmarks."""
     from btk.cleanup import cleanup_all, get_cleanup_preview
 
-    db = get_db(args.db)
+    db = get_db()
 
     # Parse options
     broken = not args.no_broken
@@ -2527,7 +2526,7 @@ def cmd_import(args):
     """Import bookmarks from various formats."""
     from btk.importers import import_file
 
-    db = get_db(args.db)
+    db = get_db()
 
     # Import based on file extension or specified format
     path = Path(args.file)
@@ -2585,11 +2584,11 @@ def cmd_export(args):
         except Exception:
             # If stdin reading fails, fall back to database mode
             console.print("[yellow]Warning: Failed to read from stdin, using database mode[/yellow]")
-            db = get_db(args.db)
+            db = get_db()
             bookmarks = db.list()
     else:
         # Normal mode: query database
-        db = get_db(args.db)
+        db = get_db()
 
         # Get bookmarks to export
         if hasattr(args, 'query') and args.query:
@@ -2654,7 +2653,7 @@ def cmd_export(args):
             try:
                 db
             except NameError:
-                db = get_db(args.db)
+                db = get_db()
             export_file(bookmarks, args.file, args.format, views=views_data, db=db)
         else:
             export_file(bookmarks, args.file, args.format, views=views_data)
@@ -2667,7 +2666,7 @@ def cmd_export(args):
 
 def cmd_tags(args):
     """Manage tags."""
-    db = get_db(args.db)
+    db = get_db()
 
     with db.session() as session:
         from sqlalchemy import select, func
@@ -2700,7 +2699,7 @@ def cmd_tags(args):
 
 def cmd_tag_add(args):
     """Add tag to bookmark(s)."""
-    db = get_db(args.db)
+    db = get_db()
 
     from btk.models import Tag, Bookmark
 
@@ -2734,7 +2733,7 @@ def cmd_tag_add(args):
 
 def cmd_tag_remove(args):
     """Remove tag from bookmark(s)."""
-    db = get_db(args.db)
+    db = get_db()
 
     from btk.models import Tag, Bookmark
 
@@ -2767,7 +2766,7 @@ def cmd_tag_remove(args):
 
 def cmd_tag_rename(args):
     """Rename a tag across all bookmarks."""
-    db = get_db(args.db)
+    db = get_db()
 
     from btk.models import Tag, Bookmark
 
@@ -2827,7 +2826,7 @@ def cmd_graph(args):
     """Manage bookmark graph."""
     from btk.graph import BookmarkGraph, GraphConfig
 
-    db = get_db(args.db)
+    db = get_db()
     graph = BookmarkGraph(db)
 
     if args.graph_command == "build":
@@ -3123,7 +3122,7 @@ def cmd_browser(args):
             console.print(f"\n[dim]Total: {len(profiles)} profiles[/dim]")
 
     elif args.browser_command == "import":
-        db = get_db(args.db)
+        db = get_db()
         browser = args.browser
         include_history = args.history
         history_limit = args.history_limit
@@ -3291,9 +3290,9 @@ def cmd_serve(args):
 
     from btk.config import get_config
     config = get_config()
-    db_path = config.resolve_database(args.db if hasattr(args, 'db') else None)
-    port = args.port if hasattr(args, 'port') else 8000
-    host = args.host if hasattr(args, 'host') else '127.0.0.1'
+    db_path = config.database
+    port = args.port
+    host = args.host
 
     run_server(db_path=db_path, port=port, host=host)
 
@@ -3303,7 +3302,7 @@ def cmd_views(args):
     from btk.views import ViewRegistry, ViewContext
     from pathlib import Path
 
-    db = get_db(args.db)
+    db = get_db()
 
     # Initialize registry: built-ins → DB views → YAML files (YAML wins)
     registry = ViewRegistry()
@@ -3736,13 +3735,13 @@ Quick Start:
   btk examples                        # See all examples
 
 Configuration:
-  Database: ./btk.db (or BTK_DATABASE env, or --db flag)
+  Database: ~/.local/share/btk/bookmarks.db (or ./btk.db, BTK_DATABASE, --db)
   Config: ~/.config/btk/config.toml
         """
     )
 
     # Global options
-    parser.add_argument("--db", help="Database file (default: btk.db)")
+    parser.add_argument("--db", help="Database name or path")
     parser.add_argument("--config", help="Config file path")
     parser.add_argument("-q", "--quiet", action="store_true", help="Minimal output")
     parser.add_argument("-o", "--output", choices=["table", "json", "csv", "plain", "urls"],
