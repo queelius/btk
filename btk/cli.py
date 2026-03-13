@@ -1931,155 +1931,6 @@ def cmd_sql(args):
 # Claude Code Skill
 # =============================================================================
 
-BTK_SKILL = '''---
-name: btk
-description: Use this skill when working with btk (Bookmark Toolkit) - a CLI for managing bookmarks with SQLite storage, hierarchical tags, and a typed query DSL. Invoke for bookmark operations, queries, imports/exports, or btk shell navigation.
----
-
-# BTK - Bookmark Toolkit
-
-A CLI tool for managing bookmarks with SQLite storage, hierarchical tags, and a typed query DSL.
-
-## Quick Reference
-
-```bash
-# Common operations
-btk bookmark add https://example.com --tags "web,tool"
-btk bookmark list --limit 10
-btk bookmark search "python"
-btk query run --name starred --limit 10
-btk shell  # Interactive mode
-```
-
-## Command Groups
-
-| Command | Purpose |
-|---------|---------|
-| `btk bookmark` | CRUD operations on bookmarks |
-| `btk tag` | Tag management (list, add, remove, rename, copy, stats) |
-| `btk query` | Typed query DSL for complex searches |
-| `btk import` | Import from HTML, JSON, CSV, YouTube, browser |
-| `btk export` | Export to HTML, JSON, CSV, html-app |
-| `btk shell` | Interactive filesystem-like navigation |
-| `btk serve` | REST API server with web UI |
-| `btk sql` | Execute raw SQL queries with `-o json/csv/table/plain` |
-
-## Query DSL (`btk query`)
-
-The query command uses a typed expression language:
-
-### Filter Expressions
-```yaml
-# Exact match
-stars: true
-visit_count: 0
-
-# Comparisons
-visit_count: ">= 5"
-stars: "!= 0"
-
-# Temporal
-added: "within 30 days"
-added: "before 2024-01-01"
-
-# Collections (with glob support)
-tags: "any [ai/*, ml/*]"
-tags: "all [python, web]"
-domain: [github.com, gitlab.com]
-
-# String matching
-url: "contains github"
-url: "ends_with .pdf"
-title: "starts_with How"
-```
-
-### Query Examples
-```bash
-# Run a named query
-btk query run --name starred --limit 10
-
-# Inline YAML query
-btk query run --inline '{filter: {url: "contains arxiv"}, sort: "added desc", limit: 5}'
-
-# List available queries
-btk query list
-
-# Export results
-btk query export recent output.json --format json
-```
-
-### Built-in Queries
-`all`, `recent`, `starred`, `pinned`, `archived`, `unread`, `popular`, `broken`, `untagged`, `videos`, `pdfs`, `preserved`
-
-## Output Formats
-
-`btk sql` supports `-o` output format:
-- `table` (default): Rich formatted table
-- `json`: JSON for parsing/piping
-- `csv`: CSV format
-- `plain`: Raw values, one per line
-
-```bash
-btk sql -e "SELECT * FROM bookmarks LIMIT 10" -o json | jq '.[] | .url'
-btk sql -e "SELECT url FROM bookmarks WHERE stars=1" -o plain
-```
-
-## Shell Mode
-
-`btk shell` provides filesystem-like navigation:
-
-```
-/                          # Root
-/tags/programming/python/  # Browse by hierarchical tag
-/starred/                  # Starred bookmarks
-/recent/today/added/       # Time-based navigation
-/untagged/                 # Smart collection
-/domains/github.com/       # Browse by domain
-```
-
-Commands: `ls`, `cd`, `cat <id>`, `open <id>`, `tag <id> <tags>`, `star <id>`
-
-## Database
-
-SQLite at `btk.db` (override with `--db`).
-
-Key tables:
-- `bookmarks`: id, url, title, description, added, stars, visit_count, pinned, archived
-- `tags`: id, name, description, color
-- `bookmark_tags`: bookmark_id, tag_id (many-to-many)
-- `content_cache`: Cached page content, transcripts, thumbnails
-
-### SQL Examples
-```bash
-btk sql -e "SELECT COUNT(*) FROM bookmarks"
-btk sql -e "SELECT name, COUNT(*) as c FROM tags t JOIN bookmark_tags bt ON t.id=bt.tag_id GROUP BY name ORDER BY c DESC LIMIT 10"
-```
-
-## Import/Export
-
-```bash
-# Import
-btk import html bookmarks.html
-btk import json data.json
-btk browser import chrome  # From browser
-
-# Export (syntax: btk export FILE --format FORMAT [filters])
-btk export output.json --format json --starred
-btk export site/ --format html-app  # Interactive web app
-btk query export starred out.json --format json
-```
-
-## Tips
-
-1. Use `btk sql -o json` when parsing output programmatically
-2. Query DSL supports globs: `tags: "any [ai/*]"` matches ai/ml, ai/nlp, etc.
-3. Use `btk shell` for interactive exploration
-4. `btk serve` starts a REST API at http://localhost:8000
-5. Tags are hierarchical: `programming/python/web`
-6. Use `btk examples <topic>` to see detailed examples for any command group
-'''
-
-
 # Examples organized by command group
 CLI_EXAMPLES = {
     "bookmark": """
@@ -2283,14 +2134,6 @@ CLI_EXAMPLES = {
   # GET  /api/tags                            # List tags
   # GET  /api/search?q=...                    # Full-text search
 """,
-    "claude": """
-  btk claude status                           # Check skill installation status
-  btk claude install                          # Install global skill (~/.claude/skills/btk/)
-  btk claude install --local                  # Install in current project only
-  btk claude show                             # Print skill content
-  btk claude uninstall                        # Remove global skill
-  btk claude uninstall --local                # Remove local skill
-""",
     "plugin": """
   btk plugin list                             # List registered plugins
   btk plugin info <name>                      # Show plugin details
@@ -2319,67 +2162,6 @@ def cmd_examples(args):
     else:
         console.print(f"[yellow]No examples for '{topic}'. Available topics:[/yellow]")
         console.print(", ".join(sorted(CLI_EXAMPLES.keys())))
-
-
-def cmd_claude(args):
-    """Manage Claude Code integration (skill installation)."""
-    from pathlib import Path
-    import shutil
-
-    command = args.claude_command
-
-    # Skills require a directory with SKILL.md inside
-    # Structure: .claude/skills/btk/SKILL.md
-    if getattr(args, 'local', False):
-        skills_base = Path.cwd() / ".claude" / "skills"
-        location = "local"
-    else:
-        skills_base = Path.home() / ".claude" / "skills"
-        location = "global"
-
-    skill_dir = skills_base / "btk"
-    skill_path = skill_dir / "SKILL.md"
-
-    if command == "install":
-        # Create directory if needed
-        skill_dir.mkdir(parents=True, exist_ok=True)
-
-        # Write skill file
-        skill_path.write_text(BTK_SKILL)
-
-        console.print(f"[green]Installed btk skill to {skill_path}[/green]")
-        console.print(f"[dim]Location: {location}[/dim]")
-        console.print()
-        console.print("[dim]Restart Claude Code to load the skill.[/dim]")
-
-    elif command == "show":
-        # Just print the skill content
-        print(BTK_SKILL)
-
-    elif command == "uninstall":
-        if skill_dir.exists():
-            shutil.rmtree(skill_dir)
-            console.print(f"[green]Removed btk skill from {skill_dir}[/green]")
-        else:
-            console.print(f"[yellow]No skill found at {skill_dir}[/yellow]")
-
-    elif command == "status":
-        # Check installation status
-        global_path = Path.home() / ".claude" / "skills" / "btk" / "SKILL.md"
-        local_path = Path.cwd() / ".claude" / "skills" / "btk" / "SKILL.md"
-
-        console.print("[bold]BTK Claude Skill Status[/bold]")
-        console.print()
-
-        if global_path.exists():
-            console.print(f"[green]Global:[/green] {global_path}")
-        else:
-            console.print("[dim]Global:[/dim] not installed")
-
-        if local_path.exists():
-            console.print(f"[green]Local:[/green]  {local_path}")
-        else:
-            console.print("[dim]Local:[/dim]  not installed")
 
 
 def cmd_fts_build(args):
@@ -3911,7 +3693,7 @@ COMMAND_CATEGORIES = {
     "Query & Browse": ["query", "sql", "shell"],
     "Management": ["tag", "queue", "content", "media", "view"],
     "Data": ["import", "export", "browser"],
-    "System": ["db", "config", "serve", "plugin", "claude", "graph"],
+    "System": ["db", "config", "serve", "plugin", "graph"],
     "Info": ["activity", "stats", "examples"],
 }
 
@@ -4521,34 +4303,6 @@ Configuration:
                                  choices=list(CLI_EXAMPLES.keys()) + ["all"],
                                  help="Topic to show examples for (default: all)")
     examples_parser.set_defaults(func=cmd_examples)
-
-    # =================
-    # CLAUDE COMMAND GROUP
-    # =================
-    claude_parser = subparsers.add_parser("claude", help="Claude Code integration")
-    claude_subparsers = claude_parser.add_subparsers(dest="claude_command", required=True)
-
-    # claude install
-    claude_install = claude_subparsers.add_parser("install", help="Install btk skill for Claude Code")
-    claude_install.add_argument("--local", action="store_true",
-                                help="Install to current directory instead of global ~/.claude/")
-    claude_install.set_defaults(func=cmd_claude)
-
-    # claude show
-    claude_show = claude_subparsers.add_parser("show", help="Show the btk skill content")
-    claude_show.set_defaults(func=cmd_claude)
-
-    # claude uninstall
-    claude_uninstall = claude_subparsers.add_parser("uninstall", help="Remove btk skill")
-    claude_uninstall.add_argument("--local", action="store_true",
-                                  help="Remove from current directory instead of global")
-    claude_uninstall.set_defaults(func=cmd_claude)
-
-    # claude status
-    claude_status = claude_subparsers.add_parser("status", help="Check skill installation status")
-    claude_status.set_defaults(func=cmd_claude)
-
-    claude_parser.set_defaults(func=cmd_claude)
 
     # =================
     # QUERY COMMAND (Flag-based composable query)
