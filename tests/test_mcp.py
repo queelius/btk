@@ -1,4 +1,4 @@
-"""Tests for the btk MCP server (get_schema and query tools)."""
+"""Tests for the btk MCP server (get_schema, query, and mutate tools)."""
 
 import asyncio
 import json
@@ -74,12 +74,12 @@ def db_path(tmp_path):
             FOREIGN KEY (bookmark_id) REFERENCES bookmarks(id)
         );
 
-        -- Sample data
+        -- Sample data (unique_id = sha256(url)[:8])
         INSERT INTO bookmarks (id, unique_id, url, title)
-        VALUES (1, 'abc12345', 'https://example.com', 'Example Site');
+        VALUES (1, '100680ad', 'https://example.com', 'Example Site');
 
         INSERT INTO bookmarks (id, unique_id, url, title, stars)
-        VALUES (2, 'def67890', 'https://python.org', 'Python', 1);
+        VALUES (2, '25d3e0d8', 'https://python.org', 'Python', 1);
 
         INSERT INTO tags (id, name) VALUES (1, 'programming');
         INSERT INTO tags (id, name) VALUES (2, 'web');
@@ -185,3 +185,335 @@ class TestQuery:
         text = _call(server, "query", {"sql": "SELECT * FROM nonexistent_table"})
         result = json.loads(text)
         assert "error" in result
+
+
+# ---------- mutate: add tests ----------
+
+
+class TestMutateAdd:
+    def test_add_single_bookmark(self, db_path):
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "add", "url": "https://rust-lang.org", "title": "Rust"}
+        ]})
+        result = json.loads(text)
+        assert result["total"] == 1
+        assert result["succeeded"] == 1
+        assert result["results"][0]["status"] == "ok"
+        new_id = result["results"][0]["id"]
+        assert isinstance(new_id, int)
+
+        # Verify via query
+        text = _call(server, "query", {
+            "sql": "SELECT title FROM bookmarks WHERE id = ?",
+            "params": [new_id],
+        })
+        rows = json.loads(text)
+        assert len(rows) == 1
+        assert rows[0]["title"] == "Rust"
+
+    def test_add_with_tags(self, db_path):
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "add", "url": "https://docs.python.org", "title": "Python Docs",
+             "tags": ["python", "tutorial"]}
+        ]})
+        result = json.loads(text)
+        assert result["results"][0]["status"] == "ok"
+        new_id = result["results"][0]["id"]
+
+        # Verify tags linked
+        text = _call(server, "query", {
+            "sql": (
+                "SELECT t.name FROM tags t "
+                "JOIN bookmark_tags bt ON t.id = bt.tag_id "
+                "WHERE bt.bookmark_id = ? ORDER BY t.name"
+            ),
+            "params": [new_id],
+        })
+        rows = json.loads(text)
+        tag_names = [r["name"] for r in rows]
+        assert "python" in tag_names
+        assert "tutorial" in tag_names
+
+    def test_add_duplicate_url_skips(self, db_path):
+        """https://example.com is already in the fixture."""
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "add", "url": "https://example.com", "title": "Dupe"}
+        ]})
+        result = json.loads(text)
+        assert result["results"][0]["status"] == "skipped"
+        assert result["results"][0]["existing_id"] == 1
+
+    def test_add_multiple_in_batch(self, db_path):
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "add", "url": "https://a.com"},
+            {"op": "add", "url": "https://b.com"},
+            {"op": "add", "url": "https://c.com"},
+        ]})
+        result = json.loads(text)
+        assert result["total"] == 3
+        assert result["succeeded"] == 3
+        for r in result["results"]:
+            assert r["status"] == "ok"
+
+
+# ---------- mutate: update tests ----------
+
+
+class TestMutateUpdate:
+    def test_update_single_field(self, db_path):
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "update", "bookmark_ids": [1], "fields": {"stars": True}}
+        ]})
+        result = json.loads(text)
+        assert result["results"][0]["status"] == "ok"
+        assert result["results"][0]["affected"] == 1
+
+        # Verify via query
+        text = _call(server, "query", {
+            "sql": "SELECT stars FROM bookmarks WHERE id = 1"
+        })
+        rows = json.loads(text)
+        assert rows[0]["stars"] == 1
+
+    def test_update_multiple_bookmarks(self, db_path):
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "update", "bookmark_ids": [1, 2],
+             "fields": {"description": "Updated desc"}}
+        ]})
+        result = json.loads(text)
+        assert result["results"][0]["status"] == "ok"
+        assert result["results"][0]["affected"] == 2
+
+    def test_update_nonexistent(self, db_path):
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "update", "bookmark_ids": [9999],
+             "fields": {"title": "Ghost"}}
+        ]})
+        result = json.loads(text)
+        assert result["results"][0]["status"] == "ok"
+        assert result["results"][0]["affected"] == 0
+
+    def test_update_rejects_unsafe_fields(self, db_path):
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "update", "bookmark_ids": [1], "fields": {"id": 999}}
+        ]})
+        result = json.loads(text)
+        assert result["results"][0]["status"] == "error"
+        assert "Disallowed fields" in result["results"][0]["reason"]
+
+
+# ---------- mutate: delete tests ----------
+
+
+class TestMutateDelete:
+    def test_delete_bookmark(self, db_path):
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "delete", "bookmark_ids": [1]}
+        ]})
+        result = json.loads(text)
+        assert result["results"][0]["status"] == "ok"
+        assert result["results"][0]["affected"] == 1
+
+        # Verify count dropped
+        text = _call(server, "query", {
+            "sql": "SELECT COUNT(*) AS cnt FROM bookmarks"
+        })
+        rows = json.loads(text)
+        assert rows[0]["cnt"] == 1
+
+    def test_delete_multiple(self, db_path):
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "delete", "bookmark_ids": [1, 2]}
+        ]})
+        result = json.loads(text)
+        assert result["results"][0]["status"] == "ok"
+        assert result["results"][0]["affected"] == 2
+
+
+# ---------- mutate: tag tests ----------
+
+
+class TestMutateTag:
+    def test_add_tags(self, db_path):
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "tag", "bookmark_ids": [1], "add": ["tutorial", "web"]}
+        ]})
+        result = json.loads(text)
+        assert result["results"][0]["status"] == "ok"
+        assert result["results"][0]["tags_added"] == 2
+
+        # Verify via query
+        text = _call(server, "query", {
+            "sql": (
+                "SELECT t.name FROM tags t "
+                "JOIN bookmark_tags bt ON t.id = bt.tag_id "
+                "WHERE bt.bookmark_id = 1 ORDER BY t.name"
+            )
+        })
+        rows = json.loads(text)
+        tag_names = [r["name"] for r in rows]
+        assert "tutorial" in tag_names
+        assert "web" in tag_names
+
+    def test_remove_tags(self, db_path):
+        """Bookmark 2 has tag 'programming'; remove it."""
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "tag", "bookmark_ids": [2], "remove": ["programming"]}
+        ]})
+        result = json.loads(text)
+        assert result["results"][0]["status"] == "ok"
+        assert result["results"][0]["tags_removed"] == 1
+
+        # Verify 0 tags left
+        text = _call(server, "query", {
+            "sql": "SELECT COUNT(*) AS cnt FROM bookmark_tags WHERE bookmark_id = 2"
+        })
+        rows = json.loads(text)
+        assert rows[0]["cnt"] == 0
+
+    def test_tag_multiple_bookmarks(self, db_path):
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "tag", "bookmark_ids": [1, 2], "add": ["batch-tagged"]}
+        ]})
+        result = json.loads(text)
+        assert result["results"][0]["status"] == "ok"
+        assert result["results"][0]["tags_added"] == 2
+
+        # Verify both bookmarks have the tag
+        text = _call(server, "query", {
+            "sql": (
+                "SELECT COUNT(*) AS cnt FROM bookmark_tags bt "
+                "JOIN tags t ON bt.tag_id = t.id "
+                "WHERE t.name = 'batch-tagged'"
+            )
+        })
+        rows = json.loads(text)
+        assert rows[0]["cnt"] == 2
+
+
+# ---------- mutate: merge tests ----------
+
+
+class TestMutateMerge:
+    def test_merge_moves_tags(self, db_path):
+        """Add bookmarks 3 and 4; give 4 a tag; merge 4 into 3; verify tag moved."""
+        # Insert extra bookmarks and a tag directly
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO bookmarks (id, unique_id, url, title) "
+            "VALUES (3, 'merge_aa', 'https://merge-a.com', 'Merge A')"
+        )
+        cur.execute(
+            "INSERT INTO bookmarks (id, unique_id, url, title) "
+            "VALUES (4, 'merge_bb', 'https://merge-b.com', 'Merge B')"
+        )
+        cur.execute("INSERT INTO tags (id, name) VALUES (10, 'merge-tag')")
+        cur.execute("INSERT INTO bookmark_tags (bookmark_id, tag_id) VALUES (4, 10)")
+        conn.commit()
+        conn.close()
+
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "merge", "keep_id": 3, "duplicate_ids": [4]}
+        ]})
+        result = json.loads(text)
+        assert result["results"][0]["status"] == "ok"
+        assert result["results"][0]["keep_id"] == 3
+        assert result["results"][0]["deleted"] == 1
+
+        # Verify tag moved to keeper
+        text = _call(server, "query", {
+            "sql": (
+                "SELECT t.name FROM tags t "
+                "JOIN bookmark_tags bt ON t.id = bt.tag_id "
+                "WHERE bt.bookmark_id = 3"
+            )
+        })
+        rows = json.loads(text)
+        tag_names = [r["name"] for r in rows]
+        assert "merge-tag" in tag_names
+
+        # Verify bookmark 4 is deleted
+        text = _call(server, "query", {
+            "sql": "SELECT id FROM bookmarks WHERE id = 4"
+        })
+        rows = json.loads(text)
+        assert len(rows) == 0
+
+    def test_merge_keeps_stars(self, db_path):
+        """Bookmark 3 has stars=0, bookmark 4 has stars=1; merge 4 into 3."""
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO bookmarks (id, unique_id, url, title, stars) "
+            "VALUES (3, 'star_aa', 'https://star-a.com', 'Star A', 0)"
+        )
+        cur.execute(
+            "INSERT INTO bookmarks (id, unique_id, url, title, stars) "
+            "VALUES (4, 'star_bb', 'https://star-b.com', 'Star B', 1)"
+        )
+        conn.commit()
+        conn.close()
+
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "merge", "keep_id": 3, "duplicate_ids": [4]}
+        ]})
+        result = json.loads(text)
+        assert result["results"][0]["status"] == "ok"
+
+        # Verify keeper has stars=1
+        text = _call(server, "query", {
+            "sql": "SELECT stars FROM bookmarks WHERE id = 3"
+        })
+        rows = json.loads(text)
+        assert rows[0]["stars"] == 1
+
+
+# ---------- transaction safety tests ----------
+
+
+class TestTransactionSafety:
+    def test_bad_op_does_not_corrupt(self, db_path):
+        """Batch with one good add + one update on nonexistent; verify add persisted."""
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "add", "url": "https://safe.com", "title": "Safe"},
+            {"op": "update", "bookmark_ids": [9999], "fields": {"title": "Nope"}},
+        ]})
+        result = json.loads(text)
+        assert result["total"] == 2
+        assert result["succeeded"] == 2  # update on nonexistent still succeeds with affected=0
+
+        # Verify the add persisted
+        text = _call(server, "query", {
+            "sql": "SELECT title FROM bookmarks WHERE url = 'https://safe.com'"
+        })
+        rows = json.loads(text)
+        assert len(rows) == 1
+        assert rows[0]["title"] == "Safe"
+
+    def test_unknown_op_returns_error(self, db_path):
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": [
+            {"op": "fly_to_moon"}
+        ]})
+        result = json.loads(text)
+        assert result["total"] == 1
+        assert result["succeeded"] == 0
+        assert result["results"][0]["status"] == "error"
+        assert "Unknown operation" in result["results"][0]["reason"]
