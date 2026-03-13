@@ -15,7 +15,7 @@ import mimetypes
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from functools import partial
 
 from .db import Database
@@ -953,7 +953,7 @@ class BTKAPIHandler(SimpleHTTPRequestHandler):
         print(f"[{self.log_date_time_string()}] {args[0]}")
 
 
-def run_server(db_path: str = 'btk.db', port: int = 8000, host: str = '127.0.0.1'):
+def run_server(db_path: Optional[str] = None, port: int = 8000, host: str = '127.0.0.1'):
     """
     Start the BTK REST API server.
 
@@ -970,6 +970,10 @@ def run_server(db_path: str = 'btk.db', port: int = 8000, host: str = '127.0.0.1
         print(f"Warning: Frontend not found at {frontend_dir}")
         print("API will work but no web UI available")
         frontend_dir = btk_dir  # Fallback
+
+    if db_path is None:
+        from btk.config import get_config
+        db_path = get_config().database
 
     # Initialize database
     db = Database(db_path)
