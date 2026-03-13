@@ -180,7 +180,7 @@ class BtkConfig:
         Returns:
             Resolved database path string.
         """
-        if name_or_path is None:
+        if not name_or_path:
             return self.database
 
         # Check named databases first

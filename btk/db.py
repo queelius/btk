@@ -1033,14 +1033,15 @@ def get_db(path: Optional[str] = None, reload: bool = False) -> Database:
 
     Args:
         path: A named database (e.g. "history"), a file path, or None for default.
-        reload: Force re-creation of the database instance.
+              When provided, returns a fresh instance without affecting the global.
+        reload: Force re-creation of the default database instance.
     """
     global _db
-    if _db is None or reload or path:
-        # Resolve named databases via config
-        resolved = None
-        if path:
-            config = get_config()
-            resolved = config.resolve_database(path)
-        _db = Database(resolved)
+    if path:
+        # Named/explicit databases are not cached in the global
+        config = get_config()
+        resolved = config.resolve_database(path)
+        return Database(resolved)
+    if _db is None or reload:
+        _db = Database()
     return _db

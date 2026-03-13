@@ -46,8 +46,8 @@ def db_path(tmp_path):
             bookmark_id INTEGER NOT NULL,
             tag_id INTEGER NOT NULL,
             PRIMARY KEY (bookmark_id, tag_id),
-            FOREIGN KEY (bookmark_id) REFERENCES bookmarks(id),
-            FOREIGN KEY (tag_id) REFERENCES tags(id)
+            FOREIGN KEY (bookmark_id) REFERENCES bookmarks(id) ON DELETE CASCADE,
+            FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
         );
 
         CREATE TABLE bookmark_sources (
@@ -56,7 +56,7 @@ def db_path(tmp_path):
             source_type TEXT,
             source_name TEXT,
             imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (bookmark_id) REFERENCES bookmarks(id)
+            FOREIGN KEY (bookmark_id) REFERENCES bookmarks(id) ON DELETE CASCADE
         );
 
         CREATE TABLE bookmark_visits (
@@ -64,7 +64,7 @@ def db_path(tmp_path):
             bookmark_id INTEGER NOT NULL,
             visited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             source_type TEXT,
-            FOREIGN KEY (bookmark_id) REFERENCES bookmarks(id)
+            FOREIGN KEY (bookmark_id) REFERENCES bookmarks(id) ON DELETE CASCADE
         );
 
         CREATE TABLE bookmark_media (
@@ -72,7 +72,7 @@ def db_path(tmp_path):
             bookmark_id INTEGER NOT NULL,
             media_type TEXT,
             media_source TEXT,
-            FOREIGN KEY (bookmark_id) REFERENCES bookmarks(id)
+            FOREIGN KEY (bookmark_id) REFERENCES bookmarks(id) ON DELETE CASCADE
         );
 
         -- Sample data (unique_id = sha256(url)[:8])
@@ -156,6 +156,18 @@ class TestQuery:
             "UPDATE bookmarks SET title = 'hacked'",
             "DELETE FROM bookmarks",
             "DROP TABLE bookmarks",
+        ]:
+            text = _call(server, "query", {"sql": stmt})
+            result = json.loads(text)
+            assert "error" in result, f"Should reject: {stmt}"
+
+    def test_rejects_pragma(self, db_path):
+        """PRAGMA statements should be rejected (some are write operations)."""
+        server = create_server(db_path=db_path)
+        for stmt in [
+            "PRAGMA writable_schema = ON",
+            "PRAGMA journal_mode = DELETE",
+            "PRAGMA table_info(bookmarks)",
         ]:
             text = _call(server, "query", {"sql": stmt})
             result = json.loads(text)
@@ -521,6 +533,15 @@ class TestTransactionSafety:
         assert result["succeeded"] == 0
         assert result["results"][0]["status"] == "error"
         assert "Unknown operation" in result["results"][0]["reason"]
+
+    def test_empty_batch(self, db_path):
+        server = create_server(db_path=db_path)
+        text = _call(server, "mutate", {"operations": []})
+        result = json.loads(text)
+        assert result["total"] == 0
+        assert result["succeeded"] == 0
+        assert result["skipped"] == 0
+        assert result["results"] == []
 
 
 # ---------- btk_db_path fixture for import/export tests ----------

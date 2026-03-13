@@ -456,6 +456,11 @@ class TestMultiDatabase:
         config.databases = {"history": "/data/history.db"}
         assert config.resolve_database("history") == "/data/history.db"
 
+    def test_resolve_database_returns_default_for_empty_string(self):
+        config = BtkConfig()
+        config.database = "btk.db"
+        assert config.resolve_database("") == "btk.db"
+
     def test_resolve_database_falls_back_to_literal_path(self):
         config = BtkConfig()
         config.databases = {"history": "/data/history.db"}

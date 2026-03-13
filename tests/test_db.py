@@ -892,35 +892,47 @@ class TestDatabaseHelperMethods:
 class TestGetDbFunction:
     """Test the global get_db() function."""
 
-    def test_get_db_creates_singleton(self):
-        """Test that get_db creates a singleton instance."""
+    def test_get_db_default_is_singleton(self):
+        """get_db() without path returns the same cached instance."""
+        import btk.db
+        btk.db._db = None
+
+        db1 = get_db()
+        db2 = get_db()
+        assert db1 is db2
+
+    def test_get_db_with_path_does_not_cache(self):
+        """get_db(path=...) returns a fresh instance without corrupting the global."""
+        import btk.db
+        btk.db._db = None
+
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
 
-            db1 = get_db(path=db_path)
-            db2 = get_db()
+            default_db = get_db()
+            named_db = get_db(path=db_path)
+            default_again = get_db()
 
-            assert db1 is db2
+            assert named_db is not default_db
+            assert default_again is default_db  # global unchanged
 
     def test_get_db_reload_creates_new(self):
-        """Test that reload=True creates new instance."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = os.path.join(tmpdir, "test.db")
+        """reload=True creates a new default instance."""
+        import btk.db
+        btk.db._db = None
 
-            db1 = get_db(path=db_path)
-            db2 = get_db(reload=True)
+        db1 = get_db()
+        db2 = get_db(reload=True)
+        assert db1 is not db2
 
-            assert db1 is not db2
-
-    def test_get_db_new_path_creates_new(self):
-        """Test that new path creates new instance."""
+    def test_get_db_different_paths_are_independent(self):
+        """Different paths return different instances."""
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path1 = os.path.join(tmpdir, "test1.db")
             db_path2 = os.path.join(tmpdir, "test2.db")
 
             db1 = get_db(path=db_path1)
             db2 = get_db(path=db_path2)
-
             assert db1 is not db2
 
 

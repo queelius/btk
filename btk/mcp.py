@@ -10,7 +10,7 @@ from typing import Optional
 import aiosqlite
 from fastmcp import FastMCP
 
-_ALLOWED_KEYWORDS = frozenset({"SELECT", "WITH", "EXPLAIN", "PRAGMA"})
+_ALLOWED_KEYWORDS = frozenset({"SELECT", "WITH", "EXPLAIN"})
 
 _UPDATE_WHITELIST = frozenset({
     "title", "description", "stars", "archived", "pinned",
@@ -323,7 +323,7 @@ def create_server(db_path: Optional[str] = None) -> FastMCP:
             return json.dumps({"error": f"Disallowed SQL keyword: {first_keyword}"})
 
         try:
-            async with aiosqlite.connect(resolved_path) as db:
+            async with aiosqlite.connect(f"file:{resolved_path}?mode=ro", uri=True) as db:
                 db.row_factory = aiosqlite.Row
                 cursor = await db.execute(sql, params or [])
                 rows = await cursor.fetchall()
