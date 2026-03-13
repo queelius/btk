@@ -5,6 +5,7 @@ Exposes bookmark database tools over MCP using FastMCP and aiosqlite.
 """
 
 import json
+import os
 from typing import Optional
 
 import aiosqlite
@@ -17,6 +18,10 @@ _UPDATE_WHITELIST = frozenset({
     "bookmark_type", "reachable", "visit_count", "last_visited",
 })
 
+# Duplicated from btk.config._DEFAULT_DATABASE (expanded) because this
+# fallback only fires when btk.config fails to import.
+_FALLBACK_DB = os.path.expanduser("~/.local/share/btk/bookmarks.db")
+
 
 def _resolve_db_path(db_path: Optional[str] = None) -> str:
     """Resolve the database path from explicit argument, config, or fallback."""
@@ -25,10 +30,8 @@ def _resolve_db_path(db_path: Optional[str] = None) -> str:
 
         config = get_config()
         return config.resolve_database(db_path)
-    except Exception:
-        pass
-
-    return db_path or "btk.db"
+    except ImportError:
+        return db_path or _FALLBACK_DB
 
 
 async def _get_or_create_tag(conn: aiosqlite.Connection, tag_name: str) -> int:
@@ -228,7 +231,7 @@ async def _op_merge(conn: aiosqlite.Connection, op: dict) -> dict:
         [keep_id] + list(duplicate_ids),
     )
 
-    # Promote stars/pinned
+    # Promote stars/pinned from duplicates to keeper in a single UPDATE
     cursor = await conn.execute(
         f"SELECT MAX(stars), MAX(pinned) FROM bookmarks WHERE id IN ({placeholders})",
         duplicate_ids,
@@ -236,13 +239,15 @@ async def _op_merge(conn: aiosqlite.Connection, op: dict) -> dict:
     row = await cursor.fetchone()
     if row:
         max_stars, max_pinned = row
-        if max_stars:
+        if max_stars or max_pinned:
+            sets = []
+            if max_stars:
+                sets.append("stars = 1")
+            if max_pinned:
+                sets.append("pinned = 1")
             await conn.execute(
-                "UPDATE bookmarks SET stars = 1 WHERE id = ?", (keep_id,)
-            )
-        if max_pinned:
-            await conn.execute(
-                "UPDATE bookmarks SET pinned = 1 WHERE id = ?", (keep_id,)
+                f"UPDATE bookmarks SET {', '.join(sets)} WHERE id = ?",
+                (keep_id,),
             )
 
     # Clean up satellite tables for duplicates before deleting
@@ -287,6 +292,17 @@ def create_server(db_path: Optional[str] = None) -> FastMCP:
     resolved_path = _resolve_db_path(db_path)
     server = FastMCP("btk")
 
+    # Lazily cached ORM Database instance for import/export tools.
+    # Avoids re-running migrations on every call.
+    _orm_db = None
+
+    def _get_orm_db():
+        nonlocal _orm_db
+        if _orm_db is None:
+            from btk.db import Database
+            _orm_db = Database(path=resolved_path)
+        return _orm_db
+
     @server.tool()
     async def get_schema() -> str:
         """Return CREATE TABLE DDL and row counts for every table in the database."""
@@ -310,7 +326,7 @@ def create_server(db_path: Optional[str] = None) -> FastMCP:
     async def query(sql: str, params: Optional[list] = None) -> str:
         """Execute a read-only SQL query and return results as JSON.
 
-        Only SELECT, WITH, EXPLAIN, and PRAGMA statements are allowed.
+        Only SELECT, WITH, and EXPLAIN statements are allowed.
 
         Args:
             sql: The SQL query to execute.
@@ -400,22 +416,21 @@ def create_server(db_path: Optional[str] = None) -> FastMCP:
         from pathlib import Path
 
         path = Path(file_path)
-        if not path.exists():
-            return json.dumps({"error": f"File not found: {file_path}"})
-
         fmt = format  # None means auto-detect from extension
 
         def _do_import():
-            from btk.db import Database
             from btk.importers.file_importers import import_file
 
-            db = Database(path=resolved_path)
+            db = _get_orm_db()
             count = import_file(db, path, format=fmt)
             return {"status": "ok", "imported": count}
 
-        loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(None, _do_import)
-        return json.dumps(result, default=str)
+        try:
+            loop = asyncio.get_running_loop()
+            result = await loop.run_in_executor(None, _do_import)
+            return json.dumps(result, default=str)
+        except FileNotFoundError:
+            return json.dumps({"error": f"File not found: {file_path}"})
 
     @server.tool()
     async def export_bookmarks(
@@ -437,19 +452,19 @@ def create_server(db_path: Optional[str] = None) -> FastMCP:
         """
         import asyncio
 
-        id_set = set(bookmark_ids) if bookmark_ids else None
-
         def _do_export():
-            from btk.db import Database
             from btk.exporters import export_file
+            from btk.models import Bookmark
+            from sqlalchemy import select
+            from sqlalchemy.orm import selectinload
 
-            db = Database(path=resolved_path)
-            all_bookmarks = db.all()
-
-            if id_set is not None:
-                bookmarks = [b for b in all_bookmarks if b.id in id_set]
-            else:
-                bookmarks = all_bookmarks
+            db = _get_orm_db()
+            with db.session(expire_on_commit=False) as session:
+                query = select(Bookmark).options(selectinload(Bookmark.tags))
+                if bookmark_ids:
+                    query = query.where(Bookmark.id.in_(bookmark_ids))
+                query = query.order_by(Bookmark.added.desc())
+                bookmarks = list(session.execute(query).scalars())
 
             from pathlib import Path as P
             export_file(bookmarks, P(file_path), format)
