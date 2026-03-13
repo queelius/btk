@@ -1152,35 +1152,6 @@ class TestConfigCommand:
             assert mock_print.called
 
 
-class TestShellCommand:
-    """Test shell command launching."""
-
-    @pytest.fixture
-    def temp_db(self):
-        """Create a temporary database."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = os.path.join(tmpdir, "test.db")
-            db = Database(db_path)
-            yield db_path
-
-    def test_cmd_shell_creates_shell_instance(self, temp_db):
-        """shell command should create BookmarkShell instance."""
-        args = Namespace(
-            db=temp_db
-        )
-
-        with patch('btk.shell.BookmarkShell') as mock_shell_class:
-            mock_shell = MagicMock()
-            mock_shell_class.return_value = mock_shell
-
-            # Mock cmdloop to prevent blocking
-            mock_shell.cmdloop = MagicMock()
-
-            cli.cmd_shell(args)
-            mock_shell_class.assert_called_once_with(temp_db)
-            mock_shell.cmdloop.assert_called_once()
-
-
 class TestBrowserCommands:
     """Test browser CLI commands."""
 

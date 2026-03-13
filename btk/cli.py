@@ -1866,7 +1866,7 @@ def cmd_sql(args):
     from btk.config import get_config
 
     config = get_config()
-    db_path = args.db or config.database
+    db_path = config.resolve_database(args.db)
 
     # Read query from args or stdin
     if args.query:
@@ -2053,16 +2053,6 @@ CLI_EXAMPLES = {
   btk sql -e "SELECT name, COUNT(*) as cnt FROM tags t JOIN bookmark_tags bt ON t.id = bt.tag_id GROUP BY name ORDER BY cnt DESC LIMIT 10"
   echo "SELECT * FROM bookmarks LIMIT 5" | btk sql
 """,
-    "shell": """
-  btk shell                                 # Start interactive shell
-
-  # Inside the shell:
-  cd /tags/programming/python               # Navigate to tag
-  ls                                        # List bookmarks
-  cat 123                                   # View bookmark details
-  star 123                                  # Star a bookmark
-  open 123                                  # Open in browser
-""",
     "graph": """
   btk graph build                           # Build similarity graph
   btk graph neighbors 123                   # Find similar bookmarks
@@ -2152,7 +2142,8 @@ def cmd_mcp(args):
 
     from btk.config import get_config
     config = get_config()
-    db_path = args.db if hasattr(args, 'db') and args.db else str(config.get_database_path())
+    db_arg = args.db if hasattr(args, 'db') else None
+    db_path = config.resolve_database(db_arg)
 
     server = create_server(db_path=db_path)
     server.run(transport=getattr(args, 'transport', 'stdio'))
@@ -3291,28 +3282,16 @@ def cmd_browser(args):
             console.print(f"  Visits recorded: {visits_added}")
 
 
-def cmd_shell(args):
-    """Launch interactive bookmark shell."""
-    from btk.shell import BookmarkShell
 
-    db_path = args.db if hasattr(args, 'db') else 'btk.db'
-
-    try:
-        shell = BookmarkShell(db_path)
-        shell.cmdloop()
-    except KeyboardInterrupt:
-        console.print("\n[cyan]Interrupted. Goodbye![/cyan]")
-    except Exception as e:
-        console.print(f"[red]Error: {e}[/red]")
-        import traceback
-        traceback.print_exc()
 
 
 def cmd_serve(args):
     """Start the BTK REST API server."""
     from btk.serve import run_server
 
-    db_path = args.db if hasattr(args, 'db') else 'btk.db'
+    from btk.config import get_config
+    config = get_config()
+    db_path = config.resolve_database(args.db if hasattr(args, 'db') else None)
     port = args.port if hasattr(args, 'port') else 8000
     host = args.host if hasattr(args, 'host') else '127.0.0.1'
 
@@ -3706,7 +3685,7 @@ def cmd_plugin(args):
 # Command categories for help output
 COMMAND_CATEGORIES = {
     "Bookmark Commands": ["add", "get", "update", "rm", "open", "star", "unstar", "health"],
-    "Query & Browse": ["query", "sql", "shell"],
+    "Query & Browse": ["query", "sql"],
     "Management": ["tag", "queue", "content", "media", "view"],
     "Data": ["import", "export", "browser"],
     "System": ["db", "config", "serve", "mcp", "plugin", "graph"],
@@ -3754,7 +3733,6 @@ Quick Start:
   btk add https://example.com --tags "web"
   btk query --limit 10                # List recent bookmarks
   btk query --starred                 # Show starred bookmarks
-  btk shell                           # Interactive mode
   btk examples                        # See all examples
 
 Configuration:
@@ -4285,12 +4263,6 @@ Configuration:
     config_parser.add_argument("key", nargs="?", help="Config key")
     config_parser.add_argument("value", nargs="?", help="Config value (for set)")
     config_parser.set_defaults(func=cmd_config)
-
-    # =================
-    # SHELL COMMAND
-    # =================
-    shell_parser = subparsers.add_parser("shell", help="Interactive bookmark shell")
-    shell_parser.set_defaults(func=cmd_shell)
 
     # =================
     # SERVE COMMAND
