@@ -24,6 +24,9 @@ dependencies = [
     "jmespath"
 ]
 
+[project.optional-dependencies]
+mcp = ["fastmcp>=2.0", "aiosqlite>=0.20"]
+
 [project.scripts]
 btk = "btk.cli:main"  # CLI entry point
 
