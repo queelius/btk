@@ -46,7 +46,7 @@ make test-match MATCH=test_import          # Run tests matching pattern
 ## Testing
 
 ```bash
-# Run all tests (~1000+ tests)
+# Run all tests (~1150+ tests)
 pytest
 
 # Run with coverage
@@ -194,14 +194,36 @@ Built-in views: `all`, `recent`, `starred`, `pinned`, `archived`, `unread`, `pop
 
 ## Multi-Database Configuration
 
-btk supports named databases via TOML config (`~/.config/btk/config.toml` or `./btk.toml`):
+btk uses XDG-compliant default paths and supports named databases via TOML config (`~/.config/btk/config.toml` or `./btk.toml`):
+
+```
+~/.config/btk/config.toml          # config
+~/.config/btk/plugins/             # plugins
+~/.config/btk/views.yaml           # view definitions
+~/.local/share/btk/bookmarks.db    # default curated bookmarks
+~/.local/share/btk/history.db      # browser history (pre-configured)
+```
+
+### Database Resolution Chain
+
+Database path is resolved in this priority (highest wins):
+
+1. CLI `--db` flag
+2. `BTK_DATABASE` environment variable
+3. Config file `database = "..."` (from `config.toml` or local `btk.toml`)
+4. Local `./btk.db` if it exists in the working directory (auto-discover for backward compat)
+5. XDG default: `~/.local/share/btk/bookmarks.db`
+
+### Named Databases
+
+The `history` database is pre-configured. Add more in TOML config:
 
 ```toml
-database = "btk.db"                          # Default (curated bookmarks)
+# database = "~/.local/share/btk/bookmarks.db"  # default (usually omitted)
 
 [databases]
-history = "~/.local/share/btk/history.db"    # Browser history (high-volume)
-# tabs = "~/.local/share/btk/tabs.db"        # Future: open tabs
+# history is pre-configured, no need to declare it
+# tabs = "~/.local/share/btk/tabs.db"            # Future: open tabs
 ```
 
 The `--db` flag accepts either a named database or a literal path:
@@ -265,7 +287,7 @@ mkdocs gh-deploy
 
 ```
 btk/                    # Main package (includes mcp.py)
-tests/                  # Test suite (~1100+ tests)
+tests/                  # Test suite (~1150+ tests)
 dev/                    # Development database and views
 docs/                   # MkDocs documentation
 ```
