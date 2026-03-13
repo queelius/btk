@@ -27,6 +27,7 @@ class BtkConfig:
 
     # Database settings
     database: str = field(default="btk.db")
+    databases: Dict[str, str] = field(default_factory=dict)  # Named databases (e.g. history, tabs)
     database_url: Optional[str] = field(default=None)  # Full connection string (overrides database)
     database_echo: bool = field(default=False)  # SQLAlchemy echo for debugging
     connection_pool_size: int = field(default=5)
@@ -146,6 +147,12 @@ class BtkConfig:
                 expanded = os.path.expanduser(os.path.expandvars(value))
                 setattr(self, field_name, expanded)
 
+        # Expand paths in named databases
+        self.databases = {
+            name: os.path.expanduser(os.path.expandvars(path))
+            for name, path in self.databases.items()
+        }
+
     def save(self, path: Optional[Path] = None):
         """
         Save current configuration to TOML file.
@@ -160,6 +167,39 @@ class BtkConfig:
 
         with open(path, "wb") as f:
             tomli_w.dump(asdict(self), f)
+
+    def resolve_database(self, name_or_path: Optional[str] = None) -> str:
+        """Resolve a database reference to a path.
+
+        Checks named databases first, then treats the value as a literal path.
+        Returns the default database path if name_or_path is None.
+
+        Args:
+            name_or_path: A named database key (e.g. "history") or a file path.
+
+        Returns:
+            Resolved database path string.
+        """
+        if name_or_path is None:
+            return self.database
+
+        # Check named databases first
+        if name_or_path in self.databases:
+            return self.databases[name_or_path]
+
+        # Treat as literal path
+        return os.path.expanduser(os.path.expandvars(name_or_path))
+
+    def list_databases(self) -> Dict[str, str]:
+        """Return all configured databases (default + named).
+
+        Returns:
+            Dict mapping database names to paths. The default database
+            is included under the key "default".
+        """
+        result = {"default": self.database}
+        result.update(self.databases)
+        return result
 
     def get_database_path(self) -> Path:
         """Get the resolved database path."""

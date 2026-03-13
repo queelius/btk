@@ -246,6 +246,8 @@ class TestMutateAdd:
         result = json.loads(text)
         assert result["results"][0]["status"] == "skipped"
         assert result["results"][0]["existing_id"] == 1
+        assert result["skipped"] == 1
+        assert result["succeeded"] == 0
 
     def test_add_multiple_in_batch(self, db_path):
         server = create_server(db_path=db_path)
@@ -499,6 +501,7 @@ class TestTransactionSafety:
         result = json.loads(text)
         assert result["total"] == 2
         assert result["succeeded"] == 2  # update on nonexistent still succeeds with affected=0
+        assert result["skipped"] == 0
 
         # Verify the add persisted
         text = _call(server, "query", {
@@ -625,15 +628,25 @@ class TestExport:
         assert "https://example.com" in urls
         assert "https://python.org" in urls
 
-    def test_export_with_filter(self, btk_db_path, tmp_path):
-        """Export only starred bookmarks and verify count."""
-        out_file = tmp_path / "starred.json"
+    def test_export_with_bookmark_ids(self, btk_db_path, tmp_path):
+        """Export only specific bookmarks by ID and verify count."""
+        out_file = tmp_path / "filtered.json"
 
         server = create_server(db_path=btk_db_path)
+
+        # First, find the ID of the starred bookmark via query
+        text = _call(server, "query", {
+            "sql": "SELECT id FROM bookmarks WHERE stars = 1",
+        })
+        rows = json.loads(text)
+        starred_ids = [r["id"] for r in rows]
+        assert len(starred_ids) == 1
+
+        # Export only those IDs
         text = _call(server, "export_bookmarks", {
             "file_path": str(out_file),
             "format": "json",
-            "filter_sql": "stars = 1",
+            "bookmark_ids": starred_ids,
         })
         result = json.loads(text)
         assert result["status"] == "ok"

@@ -7,15 +7,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Bookmark Toolkit (btk) is a Python command-line tool for managing and analyzing bookmarks using a SQLite database. It provides:
 
 - Multi-format import/export (HTML, JSON, CSV, Markdown, HTML-app)
-- Interactive shell with virtual filesystem navigation
 - Hierarchical tag system
 - Content caching with full-text search
 - Auto-tagging via NLP/TF-IDF
 - Plugin system for extensibility
 - View DSL for composable bookmark queries
+- MCP server for LLM integration (fastmcp + aiosqlite)
+- Multi-database config (separate stores for bookmarks, history, etc.)
 - REST API server with web UI
 
-**Current Version:** 0.8.0
+**Current Version:** 0.9.1
 **Package Name:** bookmark-tk (PyPI)
 **Python:** >=3.8
 
@@ -38,7 +39,7 @@ make clean          # Clean build artifacts
 # Useful shortcuts
 make quick-test     # Fast test run (-x --tb=short)
 make ci             # Full CI pipeline (install-dev, check, test-coverage)
-make test-file FILE=tests/test_shell.py    # Run specific test file
+make test-file FILE=tests/test_mcp.py      # Run specific test file
 make test-match MATCH=test_import          # Run tests matching pattern
 ```
 
@@ -52,7 +53,7 @@ pytest
 pytest --cov=btk --cov-report=term-missing
 
 # Test specific modules
-pytest tests/test_shell.py -v
+pytest tests/test_mcp.py -v
 pytest tests/test_views.py -v
 pytest tests/test_exporters.py -v
 ```
@@ -61,9 +62,9 @@ pytest tests/test_exporters.py -v
 
 ```
 btk/
-├── __init__.py          # Version: __version__ = "0.7.5"
+├── __init__.py          # Version
 ├── cli.py               # Grouped argparse CLI (btk <group> <command>)
-├── shell.py             # Interactive shell with VFS interface
+├── mcp.py               # MCP server (fastmcp + aiosqlite)
 ├── db.py                # SQLAlchemy database operations
 ├── models.py            # ORM models (Bookmark, Tag, ContentCache, etc.)
 ├── importers.py         # Import from HTML, JSON, CSV, Markdown, text
@@ -93,10 +94,9 @@ btk/
 
 ### Key Components
 
-- **shell.py**: Virtual filesystem interface with POSIX-like commands (cd, ls, pwd, cat)
-  - Smart collections: `/unread`, `/popular`, `/broken`, `/untagged`, `/pdfs`
-  - Time-based navigation: `/recent/{today,week,month,year}/{added,visited,starred}`
-  - Tag hierarchy browsing: `/tags/programming/python`
+- **mcp.py**: MCP server with 5 tools: `get_schema`, `query`, `mutate`, `import_bookmarks`, `export_bookmarks`
+  - `mutate` dispatches batched operations: add, update, delete, tag, merge
+  - Uses raw aiosqlite (not ORM) for mutations; ORM via run_in_executor for import/export
 
 - **views/**: Composable View DSL following SICP principles
   - Views as functions: Database → ViewResult
@@ -122,9 +122,6 @@ collections: id, name, query, description
 ## Common CLI Commands
 
 ```bash
-# Start interactive shell (recommended)
-btk shell
-
 # Bookmark operations
 btk bookmark add https://example.com --title "Example" --tags web,tutorial
 btk bookmark list
@@ -153,6 +150,12 @@ btk view export starred output.html --format html-app
 btk db info
 btk db vacuum
 btk serve                       # Start REST API + web UI
+btk mcp                         # Start MCP server (stdio)
+btk mcp --transport sse         # Start MCP server (SSE)
+
+# Multi-database (--db resolves named databases from config)
+btk bookmark list --db history  # Query the history database
+btk sql -e "SELECT COUNT(*) FROM bookmarks" --db history
 ```
 
 ## View DSL
@@ -189,29 +192,21 @@ recent_ai:
 
 Built-in views: `all`, `recent`, `starred`, `pinned`, `archived`, `unread`, `popular`, `broken`, `untagged`
 
-## Shell Virtual Filesystem
+## Multi-Database Configuration
 
+btk supports named databases via TOML config (`~/.config/btk/config.toml` or `./btk.toml`):
+
+```toml
+database = "btk.db"                          # Default (curated bookmarks)
+
+[databases]
+history = "~/.local/share/btk/history.db"    # Browser history (high-volume)
+# tabs = "~/.local/share/btk/tabs.db"        # Future: open tabs
 ```
-/                      # Root - shows top-level directories
-├── bookmarks/         # All bookmarks by ID
-│   └── <id>/          # Individual bookmark (cat for details)
-├── tags/              # Hierarchical tag navigation
-│   └── programming/
-│       └── python/    # Bookmarks with this tag
-├── starred/           # Starred bookmarks
-├── archived/          # Archived bookmarks
-├── domains/           # Bookmarks by domain
-├── recent/            # Time-based navigation
-│   ├── today/         # added/, visited/, starred/
-│   ├── week/
-│   ├── month/
-│   └── year/
-├── unread/            # Smart: never visited
-├── popular/           # Smart: visit_count > 5
-├── broken/            # Smart: unreachable URLs
-├── untagged/          # Smart: no tags
-└── pdfs/              # Smart: PDF URLs
-```
+
+The `--db` flag accepts either a named database or a literal path:
+- `--db history` → resolves to configured path
+- `--db /path/to/other.db` → literal path
 
 ## Dev Database Insights
 
@@ -239,6 +234,7 @@ The dev database (`dev/btk.db`, ~790 MB) contains ~6,770 bookmarks with:
 ## Important Notes
 
 - **Database-first**: Uses SQLite via SQLAlchemy, not JSON files
+- **Multi-database**: Named databases in config for separating bookmarks from history
 - **Virtual environment**: Makefile auto-manages `.venv/` directory
 - **Hierarchical tags**: Use `/` separator (e.g., `programming/python/web`)
 - **Views file**: Place `btk-views.yaml` in working dir or `~/.config/btk/views.yaml`
@@ -247,7 +243,7 @@ The dev database (`dev/btk.db`, ~790 MB) contains ~6,770 bookmarks with:
 ## Release Process
 
 ```bash
-# 1. Bump version in: pyproject.toml, btk/__init__.py, btk/shell.py
+# 1. Bump version in: pyproject.toml, btk/__init__.py
 # 2. Update docs/development/changelog.md
 # 3. Run tests
 make test-coverage
@@ -268,10 +264,8 @@ mkdocs gh-deploy
 ## Project Structure
 
 ```
-btk/                    # Main package
-tests/                  # Test suite (~1000+ tests)
+btk/                    # Main package (includes mcp.py)
+tests/                  # Test suite (~1100+ tests)
 dev/                    # Development database and views
-integrations/
-└── mcp-btk/            # Model Context Protocol server (Node.js)
 docs/                   # MkDocs documentation
 ```

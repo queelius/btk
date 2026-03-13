@@ -1029,8 +1029,18 @@ _db: Optional[Database] = None
 
 
 def get_db(path: Optional[str] = None, reload: bool = False) -> Database:
-    """Get the global database instance."""
+    """Get the global database instance.
+
+    Args:
+        path: A named database (e.g. "history"), a file path, or None for default.
+        reload: Force re-creation of the database instance.
+    """
     global _db
     if _db is None or reload or path:
-        _db = Database(path)
+        # Resolve named databases via config
+        resolved = None
+        if path:
+            config = get_config()
+            resolved = config.resolve_database(path)
+        _db = Database(resolved)
     return _db

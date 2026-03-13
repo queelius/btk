@@ -439,6 +439,83 @@ class TestPathExpansion:
         assert config.database == "/custom/data/btk.db"
 
 
+class TestMultiDatabase:
+    """Test named database resolution."""
+
+    def test_default_databases_is_empty(self):
+        config = BtkConfig()
+        assert config.databases == {}
+
+    def test_resolve_database_returns_default_when_none(self):
+        config = BtkConfig()
+        config.database = "btk.db"
+        assert config.resolve_database(None) == "btk.db"
+
+    def test_resolve_database_returns_named_database(self):
+        config = BtkConfig()
+        config.databases = {"history": "/data/history.db"}
+        assert config.resolve_database("history") == "/data/history.db"
+
+    def test_resolve_database_falls_back_to_literal_path(self):
+        config = BtkConfig()
+        config.databases = {"history": "/data/history.db"}
+        assert config.resolve_database("/other/path.db") == "/other/path.db"
+
+    def test_resolve_database_expands_tilde(self, monkeypatch, tmp_path):
+        monkeypatch.setenv("HOME", str(tmp_path))
+        config = BtkConfig()
+        result = config.resolve_database("~/my.db")
+        assert result == str(tmp_path / "my.db")
+
+    def test_list_databases_includes_default_and_named(self):
+        config = BtkConfig()
+        config.database = "btk.db"
+        config.databases = {"history": "/data/history.db", "tabs": "/data/tabs.db"}
+        result = config.list_databases()
+        assert result == {
+            "default": "btk.db",
+            "history": "/data/history.db",
+            "tabs": "/data/tabs.db",
+        }
+
+    def test_expand_paths_expands_named_databases(self, monkeypatch, tmp_path):
+        monkeypatch.setenv("HOME", str(tmp_path))
+        config = BtkConfig()
+        config.databases = {"history": "~/history.db"}
+        config._expand_paths()
+        assert config.databases["history"] == str(tmp_path / "history.db")
+
+    def test_load_named_databases_from_toml(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        mock_home = tmp_path / "home"
+        mock_home.mkdir()
+        monkeypatch.setenv("HOME", str(mock_home))
+
+        local_config = tmp_path / "btk.toml"
+        local_config.write_text(
+            'database = "btk.db"\n\n'
+            '[databases]\n'
+            'history = "/data/history.db"\n'
+            'tabs = "/data/tabs.db"\n'
+        )
+
+        config = BtkConfig.load()
+        assert config.databases == {
+            "history": "/data/history.db",
+            "tabs": "/data/tabs.db",
+        }
+
+    def test_merge_databases_dict(self):
+        """Named databases from multiple config files should merge."""
+        config = BtkConfig()
+        config.databases = {"history": "/global/history.db"}
+        config._merge({"databases": {"tabs": "/local/tabs.db"}})
+        assert config.databases == {
+            "history": "/global/history.db",
+            "tabs": "/local/tabs.db",
+        }
+
+
 class TestMergeConfiguration:
     """Test configuration merging behavior."""
 

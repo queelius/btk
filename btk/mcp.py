@@ -20,18 +20,27 @@ _UPDATE_WHITELIST = frozenset({
 
 def _resolve_db_path(db_path: Optional[str] = None) -> str:
     """Resolve the database path from explicit argument, config, or fallback."""
-    if db_path:
-        return db_path
-
     try:
         from btk.config import get_config
 
         config = get_config()
-        return config.database
+        return config.resolve_database(db_path)
     except Exception:
         pass
 
-    return "btk.db"
+    return db_path or "btk.db"
+
+
+async def _get_or_create_tag(conn: aiosqlite.Connection, tag_name: str) -> int:
+    """Get existing tag ID or create a new tag, returning the ID."""
+    cursor = await conn.execute("SELECT id FROM tags WHERE name = ?", (tag_name,))
+    row = await cursor.fetchone()
+    if row:
+        return row[0]
+    await conn.execute("INSERT INTO tags (name) VALUES (?)", (tag_name,))
+    cursor = await conn.execute("SELECT last_insert_rowid()")
+    (tag_id,) = await cursor.fetchone()
+    return tag_id
 
 
 async def _op_add(conn: aiosqlite.Connection, op: dict) -> dict:
@@ -70,18 +79,7 @@ async def _op_add(conn: aiosqlite.Connection, op: dict) -> dict:
     # Handle tags
     tags = op.get("tags", [])
     for tag_name in tags:
-        cursor = await conn.execute(
-            "SELECT id FROM tags WHERE name = ?", (tag_name,)
-        )
-        row = await cursor.fetchone()
-        if row:
-            tag_id = row[0]
-        else:
-            await conn.execute(
-                "INSERT INTO tags (name) VALUES (?)", (tag_name,)
-            )
-            cursor = await conn.execute("SELECT last_insert_rowid()")
-            (tag_id,) = await cursor.fetchone()
+        tag_id = await _get_or_create_tag(conn, tag_name)
         await conn.execute(
             "INSERT OR IGNORE INTO bookmark_tags (bookmark_id, tag_id) VALUES (?, ?)",
             (bookmark_id, tag_id),
@@ -112,7 +110,7 @@ async def _op_update(conn: aiosqlite.Connection, op: dict) -> dict:
         else:
             normalized[k] = v
 
-    set_clause = ", ".join(f"{k} = ?" for k in normalized)
+    set_clause = ", ".join(f'"{k}" = ?' for k in normalized)
     values = list(normalized.values())
     placeholders = ", ".join("?" for _ in bookmark_ids)
     values.extend(bookmark_ids)
@@ -164,19 +162,7 @@ async def _op_tag(conn: aiosqlite.Connection, op: dict) -> dict:
 
     # Add tags
     for tag_name in add_tags:
-        cursor = await conn.execute(
-            "SELECT id FROM tags WHERE name = ?", (tag_name,)
-        )
-        row = await cursor.fetchone()
-        if row:
-            tag_id = row[0]
-        else:
-            await conn.execute(
-                "INSERT INTO tags (name) VALUES (?)", (tag_name,)
-            )
-            cursor = await conn.execute("SELECT last_insert_rowid()")
-            (tag_id,) = await cursor.fetchone()
-
+        tag_id = await _get_or_create_tag(conn, tag_name)
         for bid in bookmark_ids:
             cursor = await conn.execute(
                 "INSERT OR IGNORE INTO bookmark_tags (bookmark_id, tag_id) VALUES (?, ?)",
@@ -364,6 +350,7 @@ def create_server(db_path: Optional[str] = None) -> FastMCP:
         """
         results = []
         succeeded = 0
+        skipped = 0
 
         async with aiosqlite.connect(resolved_path) as db:
             await db.execute("PRAGMA foreign_keys = ON")
@@ -382,8 +369,10 @@ def create_server(db_path: Optional[str] = None) -> FastMCP:
                 try:
                     result = await handler(db, op)
                     results.append(result)
-                    if result.get("status") in ("ok", "skipped"):
+                    if result.get("status") == "ok":
                         succeeded += 1
+                    elif result.get("status") == "skipped":
+                        skipped += 1
                 except Exception as exc:
                     results.append({"status": "error", "reason": str(exc)})
 
@@ -392,6 +381,7 @@ def create_server(db_path: Optional[str] = None) -> FastMCP:
         return json.dumps({
             "total": len(operations),
             "succeeded": succeeded,
+            "skipped": skipped,
             "results": results,
         })
 
@@ -413,18 +403,7 @@ def create_server(db_path: Optional[str] = None) -> FastMCP:
         if not path.exists():
             return json.dumps({"error": f"File not found: {file_path}"})
 
-        # Auto-detect format from extension
-        fmt = format
-        if not fmt:
-            ext_map = {
-                ".html": "html", ".htm": "html", ".json": "json",
-                ".csv": "csv", ".md": "markdown", ".txt": "text",
-            }
-            fmt = ext_map.get(path.suffix.lower())
-            if not fmt:
-                return json.dumps({
-                    "error": f"Cannot detect format from extension: {path.suffix}"
-                })
+        fmt = format  # None means auto-detect from extension
 
         def _do_import():
             from btk.db import Database
@@ -434,7 +413,7 @@ def create_server(db_path: Optional[str] = None) -> FastMCP:
             count = import_file(db, path, format=fmt)
             return {"status": "ok", "imported": count}
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(None, _do_import)
         return json.dumps(result, default=str)
 
@@ -442,29 +421,35 @@ def create_server(db_path: Optional[str] = None) -> FastMCP:
     async def export_bookmarks(
         file_path: str,
         format: str = "json",
-        filter_sql: Optional[str] = None,
+        bookmark_ids: Optional[list[int]] = None,
     ) -> str:
         """Export bookmarks to a file.
 
         Supported formats: json, csv, html, markdown, text, m3u.
 
+        Use the query tool first to find bookmark IDs, then pass them here
+        to export a filtered subset.
+
         Args:
             file_path: Path to write the export file.
             format: Export format (json, csv, html, markdown, text, m3u). Default: json.
-            filter_sql: Optional SQL WHERE clause to filter bookmarks (e.g., "stars = 1").
+            bookmark_ids: Optional list of bookmark IDs to export. Exports all if omitted.
         """
         import asyncio
+
+        id_set = set(bookmark_ids) if bookmark_ids else None
 
         def _do_export():
             from btk.db import Database
             from btk.exporters import export_file
 
             db = Database(path=resolved_path)
+            all_bookmarks = db.all()
 
-            if filter_sql:
-                bookmarks = db.query(sql=filter_sql)
+            if id_set is not None:
+                bookmarks = [b for b in all_bookmarks if b.id in id_set]
             else:
-                bookmarks = db.all()
+                bookmarks = all_bookmarks
 
             from pathlib import Path as P
             export_file(bookmarks, P(file_path), format)
@@ -475,7 +460,7 @@ def create_server(db_path: Optional[str] = None) -> FastMCP:
                 "format": format,
             }
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(None, _do_export)
         return json.dumps(result, default=str)
 
