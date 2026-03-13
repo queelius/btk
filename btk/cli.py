@@ -2142,6 +2142,22 @@ CLI_EXAMPLES = {
 }
 
 
+def cmd_mcp(args):
+    """Start the MCP server for LLM integration."""
+    try:
+        from btk.mcp import create_server
+    except ImportError:
+        console.print("[red]MCP dependencies not installed. Run: pip install bookmark-tk[mcp][/red]")
+        return
+
+    from btk.config import get_config
+    config = get_config()
+    db_path = args.db if hasattr(args, 'db') and args.db else str(config.get_database_path())
+
+    server = create_server(db_path=db_path)
+    server.run(transport=getattr(args, 'transport', 'stdio'))
+
+
 def cmd_examples(args):
     """Show examples for BTK commands."""
     from rich.panel import Panel
@@ -3693,7 +3709,7 @@ COMMAND_CATEGORIES = {
     "Query & Browse": ["query", "sql", "shell"],
     "Management": ["tag", "queue", "content", "media", "view"],
     "Data": ["import", "export", "browser"],
-    "System": ["db", "config", "serve", "plugin", "graph"],
+    "System": ["db", "config", "serve", "mcp", "plugin", "graph"],
     "Info": ["activity", "stats", "examples"],
 }
 
@@ -4303,6 +4319,14 @@ Configuration:
                                  choices=list(CLI_EXAMPLES.keys()) + ["all"],
                                  help="Topic to show examples for (default: all)")
     examples_parser.set_defaults(func=cmd_examples)
+
+    # =================
+    # MCP COMMAND
+    # =================
+    mcp_parser = subparsers.add_parser("mcp", help="Start MCP server for LLM integration")
+    mcp_parser.add_argument("--transport", choices=["stdio", "sse"], default="stdio",
+                            help="MCP transport (default: stdio)")
+    mcp_parser.set_defaults(func=cmd_mcp)
 
     # =================
     # QUERY COMMAND (Flag-based composable query)
