@@ -1,8 +1,9 @@
-"""Tests for the btk MCP server (get_schema, query, and mutate tools)."""
+"""Tests for the btk MCP server (get_schema, query, mutate, import, and export tools)."""
 
 import asyncio
 import json
 import sqlite3
+from pathlib import Path
 
 import pytest
 
@@ -517,3 +518,129 @@ class TestTransactionSafety:
         assert result["succeeded"] == 0
         assert result["results"][0]["status"] == "error"
         assert "Unknown operation" in result["results"][0]["reason"]
+
+
+# ---------- btk_db_path fixture for import/export tests ----------
+
+
+@pytest.fixture
+def btk_db_path(tmp_path):
+    """Create a btk database using the ORM (needed for import/export tests)."""
+    from btk.db import Database
+
+    path = str(tmp_path / "btk_test.db")
+    db = Database(path=path)
+    db.add(url="https://example.com", title="Example", stars=True)
+    db.add(url="https://python.org", title="Python", tags=["programming"])
+    return path
+
+
+# ---------- import_bookmarks tests ----------
+
+
+class TestImport:
+    def test_import_html(self, btk_db_path, tmp_path):
+        """Import a minimal Netscape HTML bookmark file and verify via query."""
+        html_file = tmp_path / "bookmarks.html"
+        html_file.write_text(
+            '<!DOCTYPE NETSCAPE-Bookmark-file-1>\n'
+            '<DL><DT><A HREF="https://rust-lang.org">Rust</A>\n'
+            '<DT><A HREF="https://golang.org">Go</A></DL>',
+            encoding="utf-8",
+        )
+
+        server = create_server(db_path=btk_db_path)
+        text = _call(server, "import_bookmarks", {
+            "file_path": str(html_file),
+        })
+        result = json.loads(text)
+        assert result["status"] == "ok"
+        assert result["imported"] == 2
+
+        # Verify bookmarks exist
+        text = _call(server, "query", {
+            "sql": "SELECT COUNT(*) AS cnt FROM bookmarks",
+        })
+        rows = json.loads(text)
+        assert rows[0]["cnt"] == 4  # 2 original + 2 imported
+
+    def test_import_json(self, btk_db_path, tmp_path):
+        """Import a minimal JSON bookmark file and verify via query."""
+        json_file = tmp_path / "bookmarks.json"
+        json_file.write_text(json.dumps([
+            {"url": "https://docs.rs", "title": "Docs.rs", "tags": ["rust"]},
+            {"url": "https://crates.io", "title": "Crates.io"},
+        ]), encoding="utf-8")
+
+        server = create_server(db_path=btk_db_path)
+        text = _call(server, "import_bookmarks", {
+            "file_path": str(json_file),
+        })
+        result = json.loads(text)
+        assert result["status"] == "ok"
+        assert result["imported"] == 2
+
+        # Verify
+        text = _call(server, "query", {
+            "sql": "SELECT title FROM bookmarks WHERE url = 'https://docs.rs'",
+        })
+        rows = json.loads(text)
+        assert len(rows) == 1
+        assert rows[0]["title"] == "Docs.rs"
+
+    def test_import_nonexistent_file(self, btk_db_path):
+        """Importing a nonexistent file returns an error."""
+        server = create_server(db_path=btk_db_path)
+        text = _call(server, "import_bookmarks", {
+            "file_path": "/no/such/file.json",
+        })
+        result = json.loads(text)
+        assert "error" in result
+        assert "not found" in result["error"].lower() or "File not found" in result["error"]
+
+
+# ---------- export_bookmarks tests ----------
+
+
+class TestExport:
+    def test_export_json(self, btk_db_path, tmp_path):
+        """Export all bookmarks to JSON and verify file content."""
+        out_file = tmp_path / "export.json"
+
+        server = create_server(db_path=btk_db_path)
+        text = _call(server, "export_bookmarks", {
+            "file_path": str(out_file),
+            "format": "json",
+        })
+        result = json.loads(text)
+        assert result["status"] == "ok"
+        assert result["exported"] == 2
+        assert result["format"] == "json"
+
+        # Verify file content
+        with open(out_file) as f:
+            data = json.load(f)
+        assert len(data) == 2
+        urls = {b["url"] for b in data}
+        assert "https://example.com" in urls
+        assert "https://python.org" in urls
+
+    def test_export_with_filter(self, btk_db_path, tmp_path):
+        """Export only starred bookmarks and verify count."""
+        out_file = tmp_path / "starred.json"
+
+        server = create_server(db_path=btk_db_path)
+        text = _call(server, "export_bookmarks", {
+            "file_path": str(out_file),
+            "format": "json",
+            "filter_sql": "stars = 1",
+        })
+        result = json.loads(text)
+        assert result["status"] == "ok"
+        assert result["exported"] == 1
+
+        # Verify only starred bookmark exported
+        with open(out_file) as f:
+            data = json.load(f)
+        assert len(data) == 1
+        assert data[0]["url"] == "https://example.com"

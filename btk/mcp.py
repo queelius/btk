@@ -395,4 +395,88 @@ def create_server(db_path: Optional[str] = None) -> FastMCP:
             "results": results,
         })
 
+    @server.tool()
+    async def import_bookmarks(file_path: str, format: Optional[str] = None) -> str:
+        """Import bookmarks from a file.
+
+        Supported formats: html, json, csv, markdown, text.
+        Format is auto-detected from file extension if not specified.
+
+        Args:
+            file_path: Path to the file to import.
+            format: Import format (html, json, csv, markdown, text). Auto-detected if omitted.
+        """
+        import asyncio
+        from pathlib import Path
+
+        path = Path(file_path)
+        if not path.exists():
+            return json.dumps({"error": f"File not found: {file_path}"})
+
+        # Auto-detect format from extension
+        fmt = format
+        if not fmt:
+            ext_map = {
+                ".html": "html", ".htm": "html", ".json": "json",
+                ".csv": "csv", ".md": "markdown", ".txt": "text",
+            }
+            fmt = ext_map.get(path.suffix.lower())
+            if not fmt:
+                return json.dumps({
+                    "error": f"Cannot detect format from extension: {path.suffix}"
+                })
+
+        def _do_import():
+            from btk.db import Database
+            from btk.importers.file_importers import import_file
+
+            db = Database(path=resolved_path)
+            count = import_file(db, path, format=fmt)
+            return {"status": "ok", "imported": count}
+
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _do_import)
+        return json.dumps(result, default=str)
+
+    @server.tool()
+    async def export_bookmarks(
+        file_path: str,
+        format: str = "json",
+        filter_sql: Optional[str] = None,
+    ) -> str:
+        """Export bookmarks to a file.
+
+        Supported formats: json, csv, html, markdown, text, m3u.
+
+        Args:
+            file_path: Path to write the export file.
+            format: Export format (json, csv, html, markdown, text, m3u). Default: json.
+            filter_sql: Optional SQL WHERE clause to filter bookmarks (e.g., "stars = 1").
+        """
+        import asyncio
+
+        def _do_export():
+            from btk.db import Database
+            from btk.exporters import export_file
+
+            db = Database(path=resolved_path)
+
+            if filter_sql:
+                bookmarks = db.query(sql=filter_sql)
+            else:
+                bookmarks = db.all()
+
+            from pathlib import Path as P
+            export_file(bookmarks, P(file_path), format)
+            return {
+                "status": "ok",
+                "exported": len(bookmarks),
+                "file": file_path,
+                "format": format,
+            }
+
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _do_export)
+        return json.dumps(result, default=str)
+
     return server
