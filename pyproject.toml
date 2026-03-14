@@ -34,6 +34,9 @@ btk = "btk.cli:main"  # CLI entry point
 where = ["."]
 include = ["btk", "btk.*"]
 
+[tool.setuptools.package-data]
+"btk.html_app.assets" = ["*.css", "*.js", "*.wasm"]
+
 [tool.black]
 line-length = 120
 target-version = ['py38', 'py39', 'py310', 'py311', 'py312']

@@ -2561,7 +2561,7 @@ def cmd_export(args):
         try:
             data = json.load(sys.stdin)
             # Convert JSON data back to Bookmark objects
-            from btk.models import Bookmark, Tag
+            from btk.models import Tag
             bookmarks = []
             for item in data:
                 # Create a minimal Bookmark object from JSON
@@ -2646,6 +2646,32 @@ def cmd_export(args):
         except ImportError:
             pass  # Views module not available
 
+    # Validate --no-embed path
+    if getattr(args, 'no_embed', False) and args.format == 'html-app':
+        if args.file.endswith('.html') or args.file.endswith('.htm'):
+            console.print("[red]Error: --no-embed produces a directory, not a file. "
+                          "Remove the .html extension from the output path.[/red]")
+            sys.exit(1)
+
+    # Resolve --include-db databases for html-app
+    include_dbs = None
+    if args.format == 'html-app' and getattr(args, 'include_db', None):
+        from btk.db import Database
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+
+        config = get_config()
+        include_dbs = {}
+        for db_name in args.include_db:
+            db_path = config.resolve_database(db_name)
+            extra_db = Database(path=db_path)
+            with extra_db.session(expire_on_commit=False) as session:
+                q = select(Bookmark).options(selectinload(Bookmark.tags), selectinload(Bookmark.media))
+                q = q.order_by(Bookmark.added.desc())
+                include_dbs[db_name] = list(session.execute(q).scalars())
+
+    embed = not getattr(args, 'no_embed', False)
+
     try:
         # preservation-html and json-full need db access for cached content
         if args.format in ('preservation-html', 'json-full', 'echo'):
@@ -2654,9 +2680,11 @@ def cmd_export(args):
                 db
             except NameError:
                 db = get_db()
-            export_file(bookmarks, args.file, args.format, views=views_data, db=db)
+            export_file(bookmarks, args.file, args.format, views=views_data, db=db,
+                        embed=embed, include_dbs=include_dbs)
         else:
-            export_file(bookmarks, args.file, args.format, views=views_data)
+            export_file(bookmarks, args.file, args.format, views=views_data,
+                        embed=embed, include_dbs=include_dbs)
         if not args.quiet:
             console.print(f"[green]Exported {len(bookmarks)} bookmarks to {args.file}[/green]")
     except Exception as e:
@@ -4133,6 +4161,10 @@ Configuration:
     export_parser.add_argument("--archived", action="store_true", help="Filter to archived bookmarks")
     export_parser.add_argument("--include-archived", action="store_true", help="Include archived bookmarks")
     export_parser.add_argument("--tags", help="Filter by tags (comma-separated)")
+    export_parser.add_argument("--no-embed", action="store_true", default=False,
+                               help="Directory mode for html-app export (multiple files instead of single HTML)")
+    export_parser.add_argument("--include-db", action="append", default=None,
+                               help="Include a named database in html-app export (repeatable)")
     export_parser.set_defaults(func=cmd_export)
 
     # =================

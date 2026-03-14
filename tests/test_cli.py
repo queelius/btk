@@ -875,6 +875,188 @@ class TestImportExportCommands:
             assert data[0]["stars"] is True
 
 
+class TestExportHtmlAppFlags:
+    """Test --no-embed and --include-db flags for html-app export."""
+
+    @pytest.fixture
+    def populated_db(self):
+        """Create a populated test database."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "test.db")
+            db = Database(db_path)
+            db.add(url="https://example.com", title="Example", tags=["test"])
+            db.add(url="https://test.com", title="Test", stars=True)
+            init_config(database=db_path)
+            yield db_path
+
+    def test_export_html_app_embed_mode_default(self, populated_db):
+        """html-app export should default to embedded (single-file) mode."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = os.path.join(tmpdir, "export.html")
+
+            args = Namespace(
+                db=populated_db,
+                format="html-app",
+                file=output_path,
+                include_archived=False,
+                starred=False,
+                archived=False,
+                unarchived=False,
+                pinned=False,
+                tags=None,
+                untagged=False,
+                no_embed=False,
+                include_db=None,
+                quiet=True
+            )
+
+            cli.cmd_export(args)
+
+            assert os.path.exists(output_path)
+            content = open(output_path).read()
+            assert '<!DOCTYPE html>' in content
+            assert 'id="btk-db"' in content
+
+    def test_export_html_app_no_embed_rejects_html_extension(self, populated_db):
+        """--no-embed should reject .html output path."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = os.path.join(tmpdir, "export.html")
+
+            args = Namespace(
+                db=populated_db,
+                format="html-app",
+                file=output_path,
+                include_archived=False,
+                starred=False,
+                archived=False,
+                unarchived=False,
+                pinned=False,
+                tags=None,
+                untagged=False,
+                no_embed=True,
+                include_db=None,
+                quiet=True
+            )
+
+            with pytest.raises(SystemExit):
+                cli.cmd_export(args)
+
+    def test_export_html_app_no_embed_rejects_htm_extension(self, populated_db):
+        """--no-embed should reject .htm output path."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = os.path.join(tmpdir, "export.htm")
+
+            args = Namespace(
+                db=populated_db,
+                format="html-app",
+                file=output_path,
+                include_archived=False,
+                starred=False,
+                archived=False,
+                unarchived=False,
+                pinned=False,
+                tags=None,
+                untagged=False,
+                no_embed=True,
+                include_db=None,
+                quiet=True
+            )
+
+            with pytest.raises(SystemExit):
+                cli.cmd_export(args)
+
+    def test_export_html_app_no_embed_creates_directory(self, populated_db):
+        """--no-embed should create a directory with index.html and assets."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = os.path.join(tmpdir, "my-export")
+
+            args = Namespace(
+                db=populated_db,
+                format="html-app",
+                file=output_path,
+                include_archived=False,
+                starred=False,
+                archived=False,
+                unarchived=False,
+                pinned=False,
+                tags=None,
+                untagged=False,
+                no_embed=True,
+                include_db=None,
+                quiet=True
+            )
+
+            cli.cmd_export(args)
+
+            # Directory mode should create directory with index.html
+            assert os.path.isdir(output_path)
+            assert os.path.exists(os.path.join(output_path, "index.html"))
+
+    def test_export_html_app_include_db_merges_databases(self, populated_db):
+        """--include-db should merge bookmarks from named databases."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create an extra database
+            extra_db_path = os.path.join(tmpdir, "extra.db")
+            extra_db = Database(extra_db_path)
+            extra_db.add(url="https://extra.com", title="Extra", tags=["extra"])
+
+            # Configure it as a named database
+            init_config(database=populated_db, databases={"extra": extra_db_path})
+
+            output_path = os.path.join(tmpdir, "export.html")
+
+            args = Namespace(
+                db=populated_db,
+                format="html-app",
+                file=output_path,
+                include_archived=False,
+                starred=False,
+                archived=False,
+                unarchived=False,
+                pinned=False,
+                tags=None,
+                untagged=False,
+                no_embed=False,
+                include_db=["extra"],
+                quiet=True
+            )
+
+            cli.cmd_export(args)
+
+            assert os.path.exists(output_path)
+            content = open(output_path).read()
+            assert 'id="btk-db"' in content
+
+    def test_export_no_embed_ignored_for_non_html_app(self, populated_db):
+        """--no-embed should be ignored for non-html-app formats."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = os.path.join(tmpdir, "export.json")
+
+            args = Namespace(
+                db=populated_db,
+                format="json",
+                file=output_path,
+                include_archived=False,
+                starred=False,
+                archived=False,
+                unarchived=False,
+                pinned=False,
+                tags=None,
+                untagged=False,
+                no_embed=True,
+                include_db=None,
+                quiet=True
+            )
+
+            cli.cmd_export(args)
+
+            # Should still produce valid JSON output
+            assert os.path.exists(output_path)
+            with open(output_path) as f:
+                data = json.load(f)
+            assert isinstance(data, list)
+
+
 class TestGraphCommands:
     """Test graph-related CLI commands."""
 
