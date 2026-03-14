@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "bookmark-tk"
+version: "0.9.0"
+repository-code: "https://github.com/queelius/btk"
+url: "https://pypi.org/project/bookmark-tk/"
+authors:
+  - family-names: "Towell"
+    given-names: "Alexander"
+    orcid: "https://orcid.org/0000-0001-6443-9897"
