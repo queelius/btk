@@ -17,7 +17,13 @@ site
 .mypy_cache
 *.egg
 bookmarks
-test_export.py
-test_export.html
-test_export.csv
 .worktrees
+
+# Working-dir database (auto-discovered, not part of repo)
+btk.db
+
+# Scratch/temp
+tmp/
+*.bak
+test_export.*
+plugins/btk.db
