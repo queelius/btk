@@ -1,8 +1,11 @@
 """Tests for the sql.js HTML-app export module."""
 import base64
 import json
+import os
 import sqlite3
+import tempfile
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pytest
 
@@ -227,3 +230,182 @@ class TestEncodeExportDb:
         # Should be valid base64
         decoded = base64.b64decode(encoded)
         assert decoded == db_bytes
+
+
+class TestAssembleEmbedded:
+    """Test embedded (single-file) HTML assembly."""
+
+    def test_produces_valid_html(self):
+        from btk.html_app.builder import build_export_db
+        from btk.html_app.template import assemble_embedded
+        db_bytes = build_export_db([])
+        html = assemble_embedded(db_bytes, views={})
+        assert html.startswith("<!DOCTYPE html>")
+        assert "</html>" in html
+
+    def test_contains_sql_wasm_js(self):
+        from btk.html_app.builder import build_export_db
+        from btk.html_app.template import assemble_embedded
+        db_bytes = build_export_db([])
+        html = assemble_embedded(db_bytes, views={})
+        assert "initSqlJs" in html or "sql-wasm" in html.lower()
+
+    def test_contains_base64_db(self):
+        from btk.html_app.builder import build_export_db, encode_export_db
+        from btk.html_app.template import assemble_embedded
+        db_bytes = build_export_db([_make_bookmark()])
+        html = assemble_embedded(db_bytes, views={})
+        encoded = encode_export_db(db_bytes)
+        assert encoded in html
+
+    def test_contains_wasm_data_uri(self):
+        from btk.html_app.builder import build_export_db
+        from btk.html_app.template import assemble_embedded
+        db_bytes = build_export_db([])
+        html = assemble_embedded(db_bytes, views={})
+        assert "data:application/wasm;base64," in html
+
+    def test_contains_app_css(self):
+        from btk.html_app.builder import build_export_db
+        from btk.html_app.template import assemble_embedded
+        db_bytes = build_export_db([])
+        html = assemble_embedded(db_bytes, views={})
+        assert "<style>" in html
+        # Should contain actual CSS content (e.g., the root variables)
+        assert "--bg-primary" in html
+
+    def test_views_embedded_as_json(self):
+        from btk.html_app.builder import build_export_db
+        from btk.html_app.template import assemble_embedded
+        db_bytes = build_export_db([])
+        views = {"starred": {"description": "Starred bookmarks", "bookmark_ids": [1, 2]}}
+        html = assemble_embedded(db_bytes, views=views)
+        assert '"starred"' in html
+        assert 'id="btk-views"' in html
+
+    def test_contains_query_modal(self):
+        from btk.html_app.builder import build_export_db
+        from btk.html_app.template import assemble_embedded
+        db_bytes = build_export_db([])
+        html = assemble_embedded(db_bytes, views={})
+        assert 'id="query-modal"' in html
+        assert 'id="query-input"' in html
+        assert 'id="query-results"' in html
+
+    def test_contains_db_filter_section(self):
+        from btk.html_app.builder import build_export_db
+        from btk.html_app.template import assemble_embedded
+        db_bytes = build_export_db([])
+        html = assemble_embedded(db_bytes, views={})
+        assert 'id="db-filter-section"' in html
+
+    def test_load_mode_embedded(self):
+        from btk.html_app.builder import build_export_db
+        from btk.html_app.template import assemble_embedded
+        db_bytes = build_export_db([])
+        html = assemble_embedded(db_bytes, views={})
+        assert '"embedded"' in html
+
+    def test_contains_btk_db_element(self):
+        from btk.html_app.builder import build_export_db
+        from btk.html_app.template import assemble_embedded
+        db_bytes = build_export_db([])
+        html = assemble_embedded(db_bytes, views={})
+        assert 'id="btk-db"' in html
+
+
+class TestAssembleDirectory:
+    """Test directory-mode output."""
+
+    def test_creates_directory_structure(self):
+        from btk.html_app.builder import build_export_db
+        from btk.html_app.template import assemble_directory
+        db_bytes = build_export_db([])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            outdir = Path(tmpdir) / "export"
+            assemble_directory(db_bytes, outdir, views={})
+
+            assert (outdir / "index.html").exists()
+            assert (outdir / "sql-wasm.js").exists()
+            assert (outdir / "sql-wasm.wasm").exists()
+            assert (outdir / "export.db").exists()
+
+    def test_db_file_matches_bytes(self):
+        from btk.html_app.builder import build_export_db
+        from btk.html_app.template import assemble_directory
+        b = _make_bookmark()
+        db_bytes = build_export_db([b])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            outdir = Path(tmpdir) / "export"
+            assemble_directory(db_bytes, outdir, views={})
+
+            with open(outdir / "export.db", "rb") as f:
+                assert f.read() == db_bytes
+
+    def test_index_html_uses_fetch(self):
+        from btk.html_app.builder import build_export_db
+        from btk.html_app.template import assemble_directory
+        db_bytes = build_export_db([])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            outdir = Path(tmpdir) / "export"
+            assemble_directory(db_bytes, outdir, views={})
+
+            html = (outdir / "index.html").read_text()
+            assert "fetch(" in html
+            # Should NOT have base64-embedded db or wasm
+            assert "data:application/wasm;base64," not in html
+
+    def test_index_html_references_external_sqljs(self):
+        from btk.html_app.builder import build_export_db
+        from btk.html_app.template import assemble_directory
+        db_bytes = build_export_db([])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            outdir = Path(tmpdir) / "export"
+            assemble_directory(db_bytes, outdir, views={})
+
+            html = (outdir / "index.html").read_text()
+            assert 'src="sql-wasm.js"' in html
+
+    def test_load_mode_directory(self):
+        from btk.html_app.builder import build_export_db
+        from btk.html_app.template import assemble_directory
+        db_bytes = build_export_db([])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            outdir = Path(tmpdir) / "export"
+            assemble_directory(db_bytes, outdir, views={})
+
+            html = (outdir / "index.html").read_text()
+            assert '"directory"' in html
+
+    def test_no_base64_db_in_directory_mode(self):
+        from btk.html_app.builder import build_export_db, encode_export_db
+        from btk.html_app.template import assemble_directory
+        b = _make_bookmark()
+        db_bytes = build_export_db([b])
+        encoded = encode_export_db(db_bytes)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            outdir = Path(tmpdir) / "export"
+            assemble_directory(db_bytes, outdir, views={})
+
+            html = (outdir / "index.html").read_text()
+            assert encoded not in html
+            assert 'id="btk-db"' not in html
+
+    def test_views_embedded_in_directory_mode(self):
+        from btk.html_app.builder import build_export_db
+        from btk.html_app.template import assemble_directory
+        db_bytes = build_export_db([])
+        views = {"recent": {"description": "Recent", "bookmark_ids": [3]}}
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            outdir = Path(tmpdir) / "export"
+            assemble_directory(db_bytes, outdir, views=views)
+
+            html = (outdir / "index.html").read_text()
+            assert '"recent"' in html
