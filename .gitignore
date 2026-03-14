@@ -1,29 +1,40 @@
-__pycache__
+# Python
+__pycache__/
 *.pyc
 *.pyo
-*.egg-info
-dev
-dist
-build
-lib
-venv
-.venv
-env
-.env
-.coverage
-htmlcov
-site
-.pytest_cache
-.mypy_cache
 *.egg
-bookmarks
-.worktrees
+*.egg-info/
+
+# Build artifacts
+dist/
+build/
+site/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Test / lint caches
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.benchmarks/
+
+# IDE / tools
+.worktrees/
 
 # Working-dir database (auto-discovered, not part of repo)
 btk.db
 
-# Scratch/temp
+# Dev database
+dev/
+
+# Scratch / temp
 tmp/
 *.bak
+*.cast
 test_export.*
 plugins/btk.db

@@ -1,6 +1,0 @@
-dev
-dist
-*.pyc
-__pycache__
-lib
-*.egg-info
