@@ -409,3 +409,56 @@ class TestAssembleDirectory:
 
             html = (outdir / "index.html").read_text()
             assert '"recent"' in html
+
+
+class TestExportHtmlAppIntegration:
+    """End-to-end tests for the export pipeline."""
+
+    def test_embedded_export_produces_file(self, tmp_path):
+        from btk.html_app import export_html_app
+        b = _make_bookmark()
+        out = tmp_path / "export.html"
+        export_html_app([b], out, embed=True)
+        assert out.exists()
+        content = out.read_text()
+        assert "<!DOCTYPE html>" in content
+        assert "initSqlJs" in content or "sql-wasm" in content.lower()
+
+    def test_directory_export_produces_files(self, tmp_path):
+        from btk.html_app import export_html_app
+        b = _make_bookmark()
+        outdir = tmp_path / "export"
+        export_html_app([b], outdir, embed=False)
+        assert (outdir / "index.html").exists()
+        assert (outdir / "export.db").exists()
+        assert (outdir / "sql-wasm.js").exists()
+        assert (outdir / "sql-wasm.wasm").exists()
+
+    def test_multi_db_export(self, tmp_path):
+        from btk.html_app import export_html_app
+        main_b = _make_bookmark(id=1, url="https://main.com", unique_id="main0001")
+        hist_b = _make_bookmark(id=1, url="https://hist.com", unique_id="hist0001")
+
+        outdir = tmp_path / "multi"
+        export_html_app(
+            [main_b], outdir, embed=False,
+            include_dbs={"history": [hist_b]}
+        )
+
+        # Verify the DB has both
+        conn = sqlite3.connect(str(outdir / "export.db"))
+        rows = conn.execute("SELECT source_db FROM bookmarks ORDER BY id").fetchall()
+        assert len(rows) == 2
+        sources = {r[0] for r in rows}
+        assert sources == {"default", "history"}
+        conn.close()
+
+    def test_export_file_dispatch(self, tmp_path):
+        """Verify export_file correctly dispatches to html_app."""
+        from btk.exporters import export_file
+        b = _make_bookmark()
+        out = tmp_path / "dispatch.html"
+        export_file([b], out, "html-app")
+        assert out.exists()
+        content = out.read_text()
+        assert "<!DOCTYPE html>" in content
