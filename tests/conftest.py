@@ -423,3 +423,42 @@ def populated_database():
         )
 
         yield db
+
+
+# ============ bookmark-memex Fixtures ============
+
+@pytest.fixture
+def tmp_db_path():
+    """Temporary database file path for bookmark-memex tests, cleaned up after test."""
+    tmp_dir = tempfile.mkdtemp(prefix="bm_test_")
+    db_path = os.path.join(tmp_dir, "test.db")
+    yield db_path
+    shutil.rmtree(tmp_dir)
+
+
+@pytest.fixture
+def bm_sample_bookmarks():
+    """Sample bookmark data for testing bookmark-memex imports and exports."""
+    return [
+        {
+            "url": "https://docs.python.org/3/",
+            "title": "Python Documentation",
+            "description": "Official Python docs",
+            "tags": ["programming/python", "documentation"],
+            "starred": True,
+        },
+        {
+            "url": "https://github.com",
+            "title": "GitHub",
+            "description": "Code hosting platform",
+            "tags": ["development", "git"],
+            "starred": True,
+        },
+        {
+            "url": "https://arxiv.org/abs/2301.00001",
+            "title": "Sample ArXiv Paper",
+            "description": "",
+            "tags": ["research", "ai"],
+            "starred": False,
+        },
+    ]
