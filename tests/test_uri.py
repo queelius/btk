@@ -1,0 +1,109 @@
+"""Unit tests for bookmark_memex.uri."""
+import pytest
+
+from bookmark_memex.uri import (
+    build_bookmark_uri,
+    build_annotation_uri,
+    parse_uri,
+    ParsedUri,
+    InvalidUriError,
+    SCHEME,
+    KINDS,
+)
+
+
+class TestConstants:
+    def test_scheme(self):
+        assert SCHEME == "bookmark-memex"
+
+    def test_kinds(self):
+        assert "bookmark" in KINDS
+        assert "annotation" in KINDS
+
+
+class TestBuilders:
+    def test_build_bookmark_uri(self):
+        assert build_bookmark_uri("abc123") == "bookmark-memex://bookmark/abc123"
+
+    def test_build_annotation_uri(self):
+        assert build_annotation_uri("uuid-val") == "bookmark-memex://annotation/uuid-val"
+
+    def test_build_bookmark_uri_preserves_id(self):
+        uid = "sha256:deadbeef01234567"
+        assert build_bookmark_uri(uid) == f"bookmark-memex://bookmark/{uid}"
+
+    def test_build_bookmark_uri_rejects_empty_id(self):
+        with pytest.raises(ValueError):
+            build_bookmark_uri("")
+
+    def test_build_annotation_uri_rejects_empty_id(self):
+        with pytest.raises(ValueError):
+            build_annotation_uri("")
+
+
+class TestParser:
+    def test_parse_bookmark_uri(self):
+        result = parse_uri("bookmark-memex://bookmark/abc123")
+        assert result == ParsedUri(scheme=SCHEME, kind="bookmark", id="abc123", fragment=None)
+
+    def test_parse_annotation_uri(self):
+        result = parse_uri("bookmark-memex://annotation/uuid-xyz")
+        assert result.kind == "annotation"
+        assert result.id == "uuid-xyz"
+        assert result.fragment is None
+
+    def test_parse_uri_with_fragment(self):
+        result = parse_uri("bookmark-memex://bookmark/abc123#paragraph=5")
+        assert result.kind == "bookmark"
+        assert result.id == "abc123"
+        assert result.fragment == "paragraph=5"
+
+    def test_parse_uri_fragment_is_verbatim(self):
+        result = parse_uri("bookmark-memex://bookmark/x#section=intro&line=3")
+        assert result.fragment == "section=intro&line=3"
+
+    def test_parse_rejects_wrong_scheme(self):
+        with pytest.raises(InvalidUriError):
+            parse_uri("book-memex://book/abc")
+
+    def test_parse_rejects_unknown_scheme(self):
+        with pytest.raises(InvalidUriError):
+            parse_uri("llm-memex://conversation/abc")
+
+    def test_parse_rejects_unknown_kind(self):
+        with pytest.raises(InvalidUriError):
+            parse_uri("bookmark-memex://trail/abc")
+
+    def test_parse_rejects_empty_id(self):
+        with pytest.raises(InvalidUriError):
+            parse_uri("bookmark-memex://bookmark/")
+
+    def test_parse_rejects_non_uri_string(self):
+        with pytest.raises(InvalidUriError):
+            parse_uri("not-a-uri")
+
+    def test_parse_rejects_missing_scheme_separator(self):
+        with pytest.raises(InvalidUriError):
+            parse_uri("bookmark-memex/bookmark/abc")
+
+    def test_invalid_uri_error_is_value_error(self):
+        with pytest.raises(ValueError):
+            parse_uri("not-a-uri")
+
+
+class TestRoundtrip:
+    def test_bookmark_uri_roundtrip(self):
+        uid = "test-unique-id"
+        uri = build_bookmark_uri(uid)
+        parsed = parse_uri(uri)
+        assert parsed.scheme == SCHEME
+        assert parsed.kind == "bookmark"
+        assert parsed.id == uid
+        assert parsed.fragment is None
+
+    def test_annotation_uri_roundtrip(self):
+        uuid = "550e8400-e29b-41d4-a716-446655440000"
+        uri = build_annotation_uri(uuid)
+        parsed = parse_uri(uri)
+        assert parsed.kind == "annotation"
+        assert parsed.id == uuid
