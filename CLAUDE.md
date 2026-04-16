@@ -4,290 +4,175 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Bookmark Toolkit (btk) is a Python command-line tool for managing and analyzing bookmarks using a SQLite database. It provides:
+bookmark-memex is a personal bookmark archive satisfying the memex ecosystem contract. It provides:
 
-- Multi-format import/export (HTML, JSON, CSV, Markdown, HTML-app)
-- Hierarchical tag system
-- Content caching with full-text search
-- Auto-tagging via NLP/TF-IDF
-- Plugin system for extensibility
-- View DSL for composable bookmark queries
-- MCP server for LLM integration (fastmcp + aiosqlite)
-- Multi-database config (separate stores for bookmarks, history, etc.)
-- REST API server with web UI
+- SQLite + FTS5 backend with soft delete (`archived_at` timestamps)
+- MCP server with 6 tools (`execute_sql`, `get_schema`, `get_record`, `mutate`, `import_bookmarks`, `export_bookmarks`)
+- Thin admin CLI for import, export, and housekeeping (interactive query goes through MCP)
+- Import from HTML (Netscape), JSON, CSV, Markdown, text files
+- Export to JSON, CSV, Markdown, text, m3u, arkiv JSONL, html-app
+- Content caching with zlib compression and FTS5 full-text search
+- Media detector auto-discovery framework (YouTube, ArXiv, GitHub built-in)
+- Durable IDs: `sha256(normalize(url))[:16]`, stable across re-imports
+- URI scheme: `bookmark-memex://bookmark/<unique_id>`, `bookmark-memex://annotation/<uuid>`
+- Marginalia (annotations with orphan survival via `ON DELETE SET NULL`)
 
-**Current Version:** 0.9.1
-**Package Name:** bookmark-tk (PyPI)
-**Python:** >=3.8
+**Current Version:** 0.1.0
+**Package Name:** bookmark-memex (PyPI)
+**Python:** >=3.10
+
+This is a clean break from btk/bookmark-tk. The old `btk/` directory in this repo is frozen reference code.
 
 ## Build and Development Commands
 
 ```bash
-# Use the Makefile for all development tasks
-make help           # Show all available commands
-make venv           # Create virtual environment at .venv/
-make install-dev    # Install with dev dependencies (auto-creates venv)
+make help           # Show all commands
+make install-dev    # Install with dev deps (creates .venv/)
 make test           # Run all tests
-make test-coverage  # Run tests with coverage report
-make lint           # Run flake8 linting
-make format         # Format code with black
-make typecheck      # Run mypy type checking
-make check          # Run all quality checks (lint + format-check + typecheck)
-make build          # Build distribution packages
-make clean          # Clean build artifacts
+make test-coverage  # Tests with coverage report
+make lint           # flake8
+make format         # black (line-length 120)
+make typecheck      # mypy
+make check          # lint + typecheck
+make clean          # remove build artifacts
 
-# Useful shortcuts
-make quick-test     # Fast test run (-x --tb=short)
-make ci             # Full CI pipeline (install-dev, check, test-coverage)
-make test-file FILE=tests/test_mcp.py      # Run specific test file
-make test-match MATCH=test_import          # Run tests matching pattern
+# Run specific bookmark-memex tests (prefix: test_bm_*)
+pytest tests/test_bm_db.py -v
+pytest tests/test_bm_mcp.py -v
+pytest -k "test_bm_" -v          # all bookmark-memex tests
 ```
+
+## Architecture
+
+### Package layout
+
+```
+bookmark_memex/
+    __init__.py          # version
+    models.py            # SQLAlchemy ORM (7 tables)
+    db.py                # Database class: CRUD, tags, annotations, soft delete
+    config.py            # TOML config, XDG paths, BOOKMARK_MEMEX_* env vars
+    uri.py               # bookmark-memex:// URI builder/parser (no SQLAlchemy dep)
+    soft_delete.py       # filter_active, archive, restore, hard_delete helpers
+    fts.py               # FTS5 index: bookmarks_fts, content_fts, annotations_fts
+    mcp.py               # MCP server (fastmcp + aiosqlite), 6 tools
+    cli.py               # argparse CLI: import, export, db, sql, mcp, serve
+    content/
+        fetcher.py       # HTTP fetch with requests.Session
+        extractor.py     # HTML->markdown->text, zlib compression, PDF extraction
+    importers/
+        file_importers.py  # HTML, JSON, CSV, Markdown, text
+    exporters/
+        formats.py       # JSON, CSV, text, markdown, m3u
+        arkiv.py         # arkiv JSONL + schema.yaml for memex ecosystem
+    detectors/
+        __init__.py      # auto-discovery engine
+        youtube.py       # YouTube videos, playlists, channels
+        arxiv.py         # ArXiv papers
+        github.py        # repos, issues, PRs, gists
+```
+
+### Key design patterns
+
+- **Satellite table for provenance only**: `bookmark_sources` tracks where each bookmark was imported from (Chrome, Firefox, file, MCP). Multiple sources per bookmark.
+- **Flat media metadata**: the `media` JSON column on bookmarks (not a separate table) is populated by auto-discovered detectors.
+- **Soft delete everywhere**: `archived_at TIMESTAMP NULL` on bookmarks, content_cache, annotations. `filter_active()` helper. Default queries exclude archived rows.
+- **Orphan-surviving annotations**: `ON DELETE SET NULL` on `annotations.bookmark_id`. Deleting a bookmark preserves its notes.
+- **Durable IDs from URL**: `unique_id = sha256(normalize(url))[:16]`. Same URL always produces the same ID across re-imports.
+- **Reading queue via extra_data JSON**: not a separate table. `extra_data->>'queue_position' IS NOT NULL` identifies queued bookmarks.
+
+### MCP server tools
+
+| Tool | Access | Purpose |
+|------|--------|---------|
+| `execute_sql` | read-only | SQL queries (SELECT/WITH/EXPLAIN only) |
+| `get_schema` | read-only | DDL + row counts |
+| `get_record` | read-only | Resolve `bookmark-memex://` URI by kind + id |
+| `mutate` | write | Batched ops: add, update, delete, tag, annotate, restore |
+| `import_bookmarks` | write | Import from file |
+| `export_bookmarks` | write | Export to file |
+
+`_create_tools(db_path)` returns sync functions for testing without MCP. `create_server()` wraps them as async MCP tools.
+
+### CLI commands
+
+```
+bookmark-memex import <file> [--format ...]
+bookmark-memex export <path> [--format ...] [--single]
+bookmark-memex db info|schema|vacuum
+bookmark-memex sql "SELECT ..."  [-o table|json|csv]
+bookmark-memex mcp [--transport stdio|sse]
+bookmark-memex serve [--port 8080]      # not yet implemented
+bookmark-memex fetch/detect/check       # not yet implemented
+```
+
+## Database Schema
+
+7 tables + 3 FTS5 virtual tables:
+
+```
+bookmarks          Core record. unique_id (16-char hex), url (unique), title,
+                   bookmark_type, added, last_visited, visit_count, starred,
+                   pinned, reachable, last_checked, status_code, media (JSON),
+                   extra_data (JSON), archived_at
+
+bookmark_sources   Import provenance (1:N). source_type, source_name,
+                   folder_path, imported_at, raw_data (JSON)
+
+tags               Hierarchical via / separator. name (unique), color
+bookmark_tags      M2M junction
+
+content_cache      1:1 with bookmark. html_content (zlib blob),
+                   markdown_content, extracted_text, content_hash,
+                   fetched_at, archived_at
+
+annotations        Marginalia. Text PK (uuid hex), bookmark_id (SET NULL),
+                   text, created_at, updated_at, archived_at
+
+events             Audit log. event_type, entity_type, entity_id, event_data
+schema_version     Migration tracking (no Alembic)
+
+bookmarks_fts      FTS5 on url, title, description, tags
+content_fts        FTS5 on extracted_text
+annotations_fts    FTS5 on text
+```
+
+## Configuration
+
+```
+~/.config/bookmark-memex/config.toml       # user config
+~/.config/bookmark-memex/detectors/        # user media detectors
+~/.local/share/bookmark-memex/bookmarks.db # default database
+./bookmark-memex.toml                      # local override
+```
+
+Hierarchy (highest wins): CLI `--db` flag, `BOOKMARK_MEMEX_*` env vars, local TOML, user TOML, XDG defaults.
+
+## Media Detectors
+
+Auto-discovered `.py` files with a `detect(url, content=None)` function returning `dict | None`. Built-in: `youtube.py`, `arxiv.py`, `github.py`. User detectors in `~/.config/bookmark-memex/detectors/` override built-in on filename match.
+
+## Memex Ecosystem
+
+This archive is part of the `*-memex` ecosystem. See `../CLAUDE.md` for the workspace contract:
+- URI scheme: `bookmark-memex://bookmark/<id>`, `bookmark-memex://annotation/<uuid>`
+- Arkiv export: `records.jsonl` + `schema.yaml` with bookmark and annotation kinds
+- Cross-archive resolution via `get_record(kind, id)` MCP tool
 
 ## Testing
 
 ```bash
-# Run all tests (~1150+ tests)
-pytest
-
-# Run with coverage
-pytest --cov=btk --cov-report=term-missing
-
-# Test specific modules
-pytest tests/test_mcp.py -v
-pytest tests/test_views.py -v
-pytest tests/test_exporters.py -v
+pytest tests/test_bm_*.py -v              # all bookmark-memex tests (~350)
+pytest tests/test_bm_db.py -v             # database layer
+pytest tests/test_bm_mcp.py -v            # MCP server tools
+pytest tests/test_bm_exporters.py -v      # exporters including arkiv
 ```
 
-## Code Architecture
+Test fixtures in `tests/conftest.py`: `tmp_db_path` (temp database with cleanup).
 
-```
-btk/
-├── __init__.py          # Version
-├── cli.py               # Grouped argparse CLI (btk <group> <command>)
-├── mcp.py               # MCP server (fastmcp + aiosqlite)
-├── db.py                # SQLAlchemy database operations
-├── models.py            # ORM models (Bookmark, Tag, ContentCache, etc.)
-├── importers.py         # Import from HTML, JSON, CSV, Markdown, text
-├── exporters.py         # Export to various formats (incl. html-app)
-├── graph.py             # Bookmark relationship graphs
-├── tag_utils.py         # Hierarchical tag operations
-├── content_fetcher.py   # Web content fetching
-├── content_cache.py     # Content cache management (zlib compression)
-├── content_extractor.py # HTML/Markdown/PDF extraction
-├── auto_tag.py          # NLP-based auto-tagging
-├── dedup.py             # Deduplication strategies
-├── plugins.py           # Plugin system architecture
-├── archiver.py          # Web archive integration
-├── browser_import.py    # Chrome/Firefox bookmark import
-├── config.py            # Configuration management
-├── serve.py             # REST API server with web UI
-├── fts.py               # Full-text search index
-├── views/               # View DSL module
-│   ├── core.py          # View base class, ViewResult, ViewContext
-│   ├── predicates.py    # Predicate classes (Tags, Field, Domain, etc.)
-│   ├── primitives.py    # Primitive views (Select, Order, Limit, etc.)
-│   ├── composites.py    # Composite views (Union, Intersect, Pipeline)
-│   ├── parser.py        # YAML parser for view definitions
-│   └── registry.py      # ViewRegistry with built-in views
-└── utils.py             # Utility functions
-```
+## Follow-up Work (Not Yet Implemented)
 
-### Key Components
-
-- **mcp.py**: MCP server with 5 tools: `get_schema`, `query`, `mutate`, `import_bookmarks`, `export_bookmarks`
-  - `mutate` dispatches batched operations: add, update, delete, tag, merge
-  - Uses raw aiosqlite (not ORM) for mutations; ORM via run_in_executor for import/export
-
-- **views/**: Composable View DSL following SICP principles
-  - Views as functions: Database → ViewResult
-  - Algebraic operators: union (|), intersect (&), difference (-), pipeline (>>)
-  - YAML-based view definitions in `btk-views.yaml`
-
-- **exporters.py**: Export formats including interactive HTML-app with embedded views
-
-- **serve.py**: REST API server at `btk serve` with web UI for browsing bookmarks
-
-## Database Schema (SQLite)
-
-```
-bookmarks: id, unique_id, url, title, description, added, stars, visit_count,
-           last_visited, reachable, media_type, author_name, thumbnail_url
-tags: id, name, description, color
-bookmark_tags: bookmark_id, tag_id (many-to-many)
-content_cache: id, bookmark_id, html_content, markdown_content, content_hash, fetched_at
-bookmark_health: id, bookmark_id, status_code, checked_at, response_time
-collections: id, name, query, description
-```
-
-## Common CLI Commands
-
-```bash
-# Bookmark operations
-btk bookmark add https://example.com --title "Example" --tags web,tutorial
-btk bookmark list
-btk bookmark search "python"
-btk bookmark get 42 --details
-
-# Tag management
-btk tag list
-btk tag tree                    # Hierarchical view
-
-# Import/Export
-btk import html bookmarks.html
-btk export output.html html-app  # Interactive HTML app with views
-
-# Raw SQL queries
-btk sql -e "SELECT COUNT(*) FROM bookmarks"
-btk sql -e "SELECT t.name, COUNT(*) FROM tags t JOIN bookmark_tags bt ON t.id = bt.tag_id GROUP BY t.name ORDER BY 2 DESC LIMIT 10"
-btk sql -e "SELECT * FROM bookmarks WHERE url LIKE '%github.com%'" -o json
-
-# View management
-btk view list                   # List all views (built-in + custom)
-btk view eval arxiv --limit 10  # Evaluate a view
-btk view export starred output.html --format html-app
-
-# Database operations
-btk db info
-btk db vacuum
-btk serve                       # Start REST API + web UI
-btk mcp                         # Start MCP server (stdio)
-btk mcp --transport sse         # Start MCP server (SSE)
-
-# Multi-database (--db resolves named databases from config)
-btk bookmark list --db history  # Query the history database
-btk sql -e "SELECT COUNT(*) FROM bookmarks" --db history
-```
-
-## View DSL
-
-Views are composable bookmark queries defined in YAML. Place in `btk-views.yaml`:
-
-```yaml
-# Simple view
-arxiv:
-  description: "ArXiv papers"
-  select:
-    domain: arxiv.org
-  order: added desc
-
-# Composite view with multiple conditions
-ai_python:
-  description: "AI resources in Python"
-  select:
-    all:
-      - tags:
-          any: [ai, ai/machine-learning]
-      - tags:
-          any: [python, programming/python]
-  order: stars desc, added desc
-
-# View composition
-recent_ai:
-  extends: ai_python
-  select:
-    added:
-      within: "30 days"
-  limit: 50
-```
-
-Built-in views: `all`, `recent`, `starred`, `pinned`, `archived`, `unread`, `popular`, `broken`, `untagged`
-
-## Multi-Database Configuration
-
-btk uses XDG-compliant default paths and supports named databases via TOML config (`~/.config/btk/config.toml` or `./btk.toml`):
-
-```
-~/.config/btk/config.toml          # config
-~/.config/btk/plugins/             # plugins
-~/.config/btk/views.yaml           # view definitions
-~/.local/share/btk/bookmarks.db    # default curated bookmarks
-~/.local/share/btk/history.db      # browser history (pre-configured)
-```
-
-### Database Resolution Chain
-
-Database path is resolved in this priority (highest wins):
-
-1. CLI `--db` flag
-2. `BTK_DATABASE` environment variable
-3. Config file `database = "..."` (from `config.toml` or local `btk.toml`)
-4. Local `./btk.db` if it exists in the working directory (auto-discover for backward compat)
-5. XDG default: `~/.local/share/btk/bookmarks.db`
-
-### Named Databases
-
-The `history` database is pre-configured. Add more in TOML config:
-
-```toml
-# database = "~/.local/share/btk/bookmarks.db"  # default (usually omitted)
-
-[databases]
-# history is pre-configured, no need to declare it
-# tabs = "~/.local/share/btk/tabs.db"            # Future: open tabs
-```
-
-The `--db` flag accepts either a named database or a literal path:
-- `--db history` → resolves to configured path
-- `--db /path/to/other.db` → literal path
-
-## Dev Database Insights
-
-The dev database (`dev/btk.db`, ~790 MB) contains ~6,770 bookmarks with:
-
-**Top Tags:**
-- `imported/chrome` (2,574) - Chrome imports
-- `programming` (2,175) - General programming
-- `programming/php` (1,636), `programming/python` (405), `programming/cpp` (314)
-- `reference/wikipedia` (1,521) - Wikipedia articles
-- `ai` (448), `ai/machine-learning` (328), `ai/neural-networks` (156)
-- `framework/nextjs` (901), `framework/express` (275)
-- `content/video` (751), `video/youtube` (739)
-
-**Top Domains:**
-- wikipedia.org (1,856), youtube.com (918), arxiv.org (330), github.com (278)
-- huggingface.co (79), openai.com (60), boost.org (85)
-
-**Content Types:**
-- Videos: 776 (media_type=video)
-- PDFs: 502 (.pdf URLs)
-- Academic: 651 (.edu, arxiv, research sites)
-- With cached content: 3,917
-
-## Important Notes
-
-- **Database-first**: Uses SQLite via SQLAlchemy, not JSON files
-- **Multi-database**: Named databases in config for separating bookmarks from history
-- **Virtual environment**: Makefile auto-manages `.venv/` directory
-- **Hierarchical tags**: Use `/` separator (e.g., `programming/python/web`)
-- **Views file**: Place `btk-views.yaml` in working dir or `~/.config/btk/views.yaml`
-- **Testing**: Always run `make test` after changes
-
-## Release Process
-
-```bash
-# 1. Bump version in: pyproject.toml, btk/__init__.py
-# 2. Update docs/development/changelog.md
-# 3. Run tests
-make test-coverage
-
-# 4. Git commit and tag
-git add -A && git commit -m "Release vX.Y.Z: ..."
-git tag vX.Y.Z
-git push origin master --tags
-
-# 5. Build and publish to PyPI
-make build
-twine upload dist/*
-
-# 6. Deploy docs (if using mkdocs)
-mkdocs gh-deploy
-```
-
-## Project Structure
-
-```
-btk/                    # Main package (includes mcp.py)
-tests/                  # Test suite (~1150+ tests)
-dev/                    # Development database and views
-docs/                   # MkDocs documentation
-```
+- Web UI: Flask server with Jinja2 templates, visit tracking, queue management
+- HTML-app export: sql.js WASM single-file and directory modes
+- Browser import: Chrome/Firefox direct DB import
+- Content fetch/detect/check CLI commands
