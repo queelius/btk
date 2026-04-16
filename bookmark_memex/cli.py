@@ -69,6 +69,13 @@ def build_parser() -> ArgumentParser:
         default=None,
         help="Browser profile name",
     )
+    p_ib.add_argument(
+        "--list",
+        dest="list_profiles",
+        action="store_true",
+        default=False,
+        help="List detected browser profiles and exit",
+    )
 
     # ── export ───────────────────────────────────────────────────────────────
     p_export = sub.add_parser("export", help="Export bookmarks to a file")
@@ -171,6 +178,29 @@ def cmd_import(args: Namespace) -> None:
     db = Database(db_path)
     count = import_file(db, Path(args.file), format=args.format)
     print(f"Imported {count} bookmark(s) from {args.file}")
+
+
+def cmd_import_browser(args: Namespace) -> None:
+    """Import bookmarks from a browser profile."""
+    from bookmark_memex.importers.browser import import_browser_bookmarks, list_browser_profiles
+
+    if getattr(args, "list_profiles", False):
+        profiles = list_browser_profiles(getattr(args, "browser", None))
+        if not profiles:
+            print("No browser profiles detected.")
+        for p in profiles:
+            default_marker = " (default)" if p.get("is_default") else ""
+            print(f"  {p['browser']} / {p['name']}{default_marker}: {p['path']}")
+        return
+
+    db_path = _resolve_db(args)
+    from bookmark_memex.db import Database
+
+    db = Database(db_path)
+    browser = getattr(args, "browser", None) or "chrome"
+    profile = getattr(args, "profile", None)
+    count = import_browser_bookmarks(db, browser=browser, profile=profile)
+    print(f"Imported {count} bookmark(s) from {browser}")
 
 
 def cmd_export(args: Namespace) -> None:
@@ -293,6 +323,7 @@ def main() -> None:
 
     handlers = {
         "import": cmd_import,
+        "import-browser": cmd_import_browser,
         "export": cmd_export,
         "db": cmd_db,
         "sql": cmd_sql,
