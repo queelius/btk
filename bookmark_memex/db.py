@@ -116,6 +116,7 @@ class Database:
     """
 
     def __init__(self, path: str | Path) -> None:
+        self.path = str(path)
         engine = create_engine(
             f"sqlite:///{path}",
             connect_args={"check_same_thread": False},
