@@ -3,7 +3,7 @@
 Supports Chrome/Chromium-family and Firefox browsers.
 Provides two public functions:
 
-    import_browser_bookmarks(db, browser, profile) -> int
+    import_browser_bookmarks(db, browser, profile) -> ImportResult
     list_browser_profiles(browser)                  -> list[dict]
 
 The lower-level ChromeImporter and FirefoxImporter classes are also public
@@ -21,9 +21,9 @@ import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, NamedTuple, Optional
 
-from bookmark_memex.db import Database
+from bookmark_memex.db import Database, generate_unique_id
 from bookmark_memex.detectors import run_detectors
 
 logger = logging.getLogger(__name__)
@@ -42,6 +42,21 @@ class BrowserProfile:
     path: Path
     browser: str
     is_default: bool = False
+
+
+class ImportResult(NamedTuple):
+    """Counts from a single :func:`import_browser_bookmarks` call.
+
+    ``processed`` is the number of raw browser entries with an http(s) URL.
+    ``added`` is the number of new bookmark rows created. ``merged`` is the
+    number of existing bookmark rows that were touched (new source row,
+    extra tags, title backfill). ``processed == added + merged`` when every
+    raw entry had a valid URL.
+    """
+
+    processed: int
+    added: int
+    merged: int
 
 
 # ---------------------------------------------------------------------------
@@ -348,7 +363,7 @@ def import_browser_bookmarks(
     db: Database,
     browser: str = "chrome",
     profile: Optional[str] = None,
-) -> int:
+) -> ImportResult:
     """Import bookmarks from a browser into *db*.
 
     Args:
@@ -357,7 +372,10 @@ def import_browser_bookmarks(
         profile: Profile name to use; uses the default profile when omitted.
 
     Returns:
-        Number of bookmarks added or merged.
+        :class:`ImportResult` with ``processed``, ``added``, and ``merged``
+        counts. A raw entry is merged rather than added when a bookmark with
+        the same normalised URL already exists in the database (either from
+        a prior import or earlier in this same call).
     """
     browser_lc = browser.lower()
 
@@ -391,11 +409,20 @@ def import_browser_bookmarks(
     raw = importer.import_bookmarks(chosen.path)
     profile_name = f"{chosen.browser}/{chosen.name}"
 
-    count = 0
+    processed = 0
+    added = 0
+    merged = 0
+    seen_ids: set[str] = set()
+
     for entry in raw:
         url = entry.get("url", "")
         if not url or not _is_http(url):
             continue
+
+        processed += 1
+        uid = generate_unique_id(url)
+        is_new = uid not in seen_ids and db.get_by_unique_id(uid) is None
+        seen_ids.add(uid)
 
         tags = list(entry.get("tags") or [])
         folder_path = entry.get("folder_path")
@@ -409,14 +436,17 @@ def import_browser_bookmarks(
             folder_path=folder_path,
         )
 
+        if is_new:
+            added += 1
+        else:
+            merged += 1
+
         # Run detectors (YouTube, arXiv, GitHub, …) and store media metadata.
         result = run_detectors(url)
         if result is not None:
             db.update(bm.id, media=result)
 
-        count += 1
-
-    return count
+    return ImportResult(processed=processed, added=added, merged=merged)
 
 
 def list_browser_profiles(browser: Optional[str] = None) -> list[dict[str, Any]]:

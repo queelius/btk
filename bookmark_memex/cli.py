@@ -199,8 +199,11 @@ def cmd_import_browser(args: Namespace) -> None:
     db = Database(db_path)
     browser = getattr(args, "browser", None) or "chrome"
     profile = getattr(args, "profile", None)
-    count = import_browser_bookmarks(db, browser=browser, profile=profile)
-    print(f"Imported {count} bookmark(s) from {browser}")
+    result = import_browser_bookmarks(db, browser=browser, profile=profile)
+    print(
+        f"Imported from {browser}: processed {result.processed}, "
+        f"added {result.added}, merged {result.merged}"
+    )
 
 
 def cmd_export(args: Namespace) -> None:

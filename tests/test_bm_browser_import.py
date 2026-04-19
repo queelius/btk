@@ -185,9 +185,11 @@ class TestChromeImporterDatabase:
         )
 
         with patch.object(ChromeImporter, "find_profiles", return_value=[fake_profile]):
-            count = import_browser_bookmarks(db, browser="chrome")
+            result = import_browser_bookmarks(db, browser="chrome")
 
-        assert count == 1
+        assert result.processed == 1
+        assert result.added == 1
+        assert result.merged == 0
         bookmarks = db.list()
         assert len(bookmarks) == 1
         assert "test.example.com" in bookmarks[0].url
@@ -210,9 +212,12 @@ class TestChromeImporterDatabase:
         )
 
         with patch.object(ChromeImporter, "find_profiles", return_value=[fake_profile]):
-            count = import_browser_bookmarks(db, browser="chrome")
+            result = import_browser_bookmarks(db, browser="chrome")
 
-        # Importer counts each raw entry; DB deduplicates on unique_id
+        # Both raw entries are processed; first is added, second is merged.
+        assert result.processed == 2
+        assert result.added == 1
+        assert result.merged == 1
         assert len(db.list()) == 1
 
     def test_source_type_stored(self, tmp_db_path: str, tmp_path: Path) -> None:
