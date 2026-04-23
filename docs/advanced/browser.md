@@ -1,3 +1,0 @@
-# Browser
-
-Documentation coming soon...

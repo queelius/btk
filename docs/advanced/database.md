@@ -1,3 +1,0 @@
-# Database
-
-Documentation coming soon...

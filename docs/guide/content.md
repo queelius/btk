@@ -1,3 +1,0 @@
-# Content
-
-Documentation coming soon...

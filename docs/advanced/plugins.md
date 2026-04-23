@@ -1,3 +1,0 @@
-# Plugins
-
-Documentation coming soon...
