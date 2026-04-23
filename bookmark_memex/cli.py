@@ -50,9 +50,19 @@ def build_parser() -> ArgumentParser:
     p_import.add_argument("file", metavar="FILE", help="Path to the import file")
     p_import.add_argument(
         "--format",
-        choices=["html", "json", "csv", "markdown", "text"],
+        choices=["html", "json", "csv", "markdown", "text", "arkiv"],
         default=None,
         help="File format (auto-detected from extension when omitted)",
+    )
+    p_import.add_argument(
+        "--merge",
+        action="store_true",
+        default=False,
+        help=(
+            "For arkiv imports: merge into existing bookmarks without "
+            "clobbering local tags/notes. Default is also merge-friendly; "
+            "this flag is reserved for a future stricter-add mode."
+        ),
     )
 
     # ── import-browser ───────────────────────────────────────────────────────
@@ -176,7 +186,8 @@ def cmd_import(args: Namespace) -> None:
 
     db_path = _resolve_db(args)
     db = Database(db_path)
-    count = import_file(db, Path(args.file), format=args.format)
+    merge = bool(getattr(args, "merge", False))
+    count = import_file(db, Path(args.file), format=args.format, merge=merge)
     print(f"Imported {count} bookmark(s) from {args.file}")
 
 

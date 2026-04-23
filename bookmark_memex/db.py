@@ -377,6 +377,56 @@ class Database:
             s.refresh(ann)
             return ann
 
+    def merge_annotation(
+        self,
+        uuid: str,
+        bookmark_unique_id: Optional[str],
+        text: str,
+        *,
+        created_at: Optional[datetime] = None,
+        updated_at: Optional[datetime] = None,
+    ) -> bool:
+        """INSERT OR IGNORE an annotation keyed by its UUID.
+
+        Used by the arkiv importer to round-trip annotations without
+        duplicating them on repeated imports. If the UUID already exists,
+        the existing annotation is preserved unchanged and this method
+        returns ``False``. If the UUID is new, the annotation is created
+        and returns ``True``.
+
+        *bookmark_unique_id* may be ``None`` (for orphaned annotations
+        whose parent bookmark was deleted). If it is set but does not
+        match any live bookmark, the annotation is still created but
+        ``bookmark_id`` is left NULL (orphan) — this matches the
+        ``ON DELETE SET NULL`` orphan-survival contract.
+        """
+        now = _utcnow()
+        with self._session() as s:
+            existing = s.get(Annotation, uuid)
+            if existing is not None:
+                return False
+
+            bookmark_id: Optional[int] = None
+            if bookmark_unique_id is not None:
+                bm = s.execute(
+                    select(Bookmark).where(
+                        Bookmark.unique_id == bookmark_unique_id
+                    )
+                ).scalar_one_or_none()
+                if bm is not None:
+                    bookmark_id = bm.id
+
+            ann = Annotation(
+                id=uuid,
+                bookmark_id=bookmark_id,
+                text=text,
+                created_at=created_at or now,
+                updated_at=updated_at or created_at or now,
+            )
+            s.add(ann)
+            s.flush()
+            return True
+
     def get_annotations(self, bookmark_unique_id: str) -> list[Annotation]:
         """Return all annotations for the bookmark identified by *bookmark_unique_id*."""
         with self._session() as s:

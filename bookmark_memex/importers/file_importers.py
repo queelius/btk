@@ -11,7 +11,7 @@ import json
 import re
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from bookmark_memex.db import Database
 from bookmark_memex.detectors import run_detectors
@@ -31,18 +31,51 @@ _EXT_MAP: dict[str, str] = {
 }
 
 _IMPORTERS = {
-    "html": lambda db, path: import_html(db, path),
-    "json": lambda db, path: import_json(db, path),
-    "csv": lambda db, path: import_csv(db, path),
-    "markdown": lambda db, path: import_markdown(db, path),
-    "text": lambda db, path: import_text(db, path),
+    "html": lambda db, path, **kw: import_html(db, path),
+    "json": lambda db, path, **kw: import_json(db, path),
+    "csv": lambda db, path, **kw: import_csv(db, path),
+    "markdown": lambda db, path, **kw: import_markdown(db, path),
+    "text": lambda db, path, **kw: import_text(db, path),
+    "arkiv": lambda db, path, **kw: _import_arkiv(db, path, **kw),
 }
+
+
+def _detect_arkiv(path: Path) -> bool:
+    """Cheap extension check first, then delegate to arkiv detector."""
+    lower = str(path).lower()
+    looks_arkiv = (
+        path.is_dir()
+        or lower.endswith(".zip")
+        or lower.endswith(".tar.gz")
+        or lower.endswith(".tgz")
+        or lower.endswith(".jsonl")
+        or lower.endswith(".jsonl.gz")
+    )
+    if not looks_arkiv:
+        return False
+    from bookmark_memex.importers.arkiv import detect as arkiv_detect
+
+    return arkiv_detect(path)
+
+
+def _import_arkiv(db: Database, path: Path, **kwargs: Any) -> int:
+    """Bridge from the generic import_file dispatcher to the arkiv importer.
+
+    Returns the number of bookmarks added (annotations are side-effect work).
+    """
+    from bookmark_memex.importers.arkiv import import_arkiv
+
+    merge = bool(kwargs.get("merge", False))
+    source_name = kwargs.get("source_name")
+    stats = import_arkiv(db, path, merge=merge, source_name=source_name)
+    return stats["bookmarks_added"]
 
 
 def import_file(
     db: Database,
     path: Path,
     format: Optional[str] = None,
+    **kwargs: Any,
 ) -> int:
     """Import bookmarks from *path*.
 
@@ -52,13 +85,19 @@ def import_file(
     Raises ``ValueError`` for unknown format strings.
     """
     if format is None:
-        format = _EXT_MAP.get(Path(path).suffix.lower(), "html")
+        # Arkiv bundles are directories / zips / tarballs / .jsonl(.gz), none
+        # of which map by extension alone. Do a targeted detect() pass first
+        # so we don't misclassify them as html or text.
+        if _detect_arkiv(Path(path)):
+            format = "arkiv"
+        else:
+            format = _EXT_MAP.get(Path(path).suffix.lower(), "html")
 
     importer = _IMPORTERS.get(format)
     if importer is None:
         raise ValueError(f"Unknown format: {format!r}")
 
-    return importer(db, path)
+    return importer(db, path, **kwargs)
 
 
 # ---------------------------------------------------------------------------
