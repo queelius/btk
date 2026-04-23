@@ -1,18 +1,34 @@
 """Arkiv JSONL + schema.yaml exporter for bookmark-memex.
 
-Produces two files inside *out_path*:
-- ``records.jsonl``: one JSON line per active bookmark/annotation.
-- ``schema.yaml``: YAML document describing the exported data schema.
+Output can be a directory, a ``.zip`` archive, or a ``.tar.gz`` tarball;
+the choice is inferred from *out_path*'s extension. All three layouts
+contain the same files:
 
-Record URI scheme follows the cross-archive contract:
+- ``records.jsonl``: one JSON line per active bookmark/annotation.
+- ``schema.yaml``:   archive self-description + per-key metadata stats.
+- ``README.md``:     arkiv ECHO frontmatter + human-readable explanation.
+
+Record URI scheme follows the cross-archive contract::
+
     bookmark-memex://bookmark/<unique_id>
     bookmark-memex://annotation/<uuid>
+
+Compression choice prioritises longevity: ``.zip`` and ``.tar.gz`` are
+both ubiquitous on every OS and scripting language (30+ years of tooling).
+Modern compressors like ``zstd`` are deliberately avoided so the bundle
+still opens in 2050.
 """
 from __future__ import annotations
 
+import io
 import json
-from datetime import datetime, timezone
+import os
+import tarfile
+import tempfile
+import zipfile
+from datetime import date, datetime, timezone
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import yaml
 from sqlalchemy import select
@@ -66,41 +82,37 @@ SCHEMA: dict = {
 
 
 # ---------------------------------------------------------------------------
-# Main export function
+# Bundle format detection
 # ---------------------------------------------------------------------------
 
 
-def export_arkiv(db, out_path: Path) -> dict:
-    """Export active bookmarks and annotations as arkiv JSONL + schema.yaml.
+def _detect_compression(path: str) -> str:
+    """Infer output format from *path*'s extension.
 
-    Parameters
-    ----------
-    db:
-        A ``bookmark_memex.db.Database`` instance.
-    out_path:
-        Directory to create (or reuse).  Will contain ``records.jsonl`` and
-        ``schema.yaml``.
-
-    Returns
-    -------
-    dict
-        ``{"records_path": str, "schema_path": str, "counts": {"bookmark": N, "annotation": N}}``
+    Returns one of ``"zip"``, ``"tar.gz"``, ``"dir"``.
     """
-    out_path = Path(out_path)
-    out_path.mkdir(parents=True, exist_ok=True)
+    lower = str(path).lower()
+    if lower.endswith(".zip"):
+        return "zip"
+    if lower.endswith(".tar.gz") or lower.endswith(".tgz"):
+        return "tar.gz"
+    return "dir"
 
-    records_path = out_path / "records.jsonl"
-    schema_path = out_path / "schema.yaml"
 
-    bm_count = 0
-    ann_count = 0
+# ---------------------------------------------------------------------------
+# Record construction (single pass over the DB)
+# ---------------------------------------------------------------------------
+
+
+def _build_records(db) -> List[Dict[str, Any]]:
+    """Collect all active bookmark + annotation records from the DB.
+
+    Returns a list of dicts in the order: bookmarks first (by id asc),
+    then annotations (by created_at asc).
+    """
+    records: List[Dict[str, Any]] = []
 
     with db._session() as session:
-        # -----------------------------------------------------------------
-        # Build a mapping from bookmark_id → unique_id for annotation lookups.
-        # We use this to construct bookmark URIs for annotations without an
-        # extra per-annotation round-trip.
-        # -----------------------------------------------------------------
         bm_query = (
             select(Bookmark)
             .where(Bookmark.archived_at.is_(None))
@@ -108,14 +120,14 @@ def export_arkiv(db, out_path: Path) -> dict:
         )
         bookmarks = list(session.execute(bm_query).scalars())
 
-        id_to_unique: dict[int, str] = {bm.id: bm.unique_id for bm in bookmarks}
+        # Preload unique_ids so annotations can reference the parent URI
+        # without a second round-trip.
+        id_to_unique: Dict[int, str] = {bm.id: bm.unique_id for bm in bookmarks}
 
-        with open(records_path, "w", encoding="utf-8") as fh:
-            # --- Bookmarks ---
-            for bm in bookmarks:
-                # Ensure tags are loaded while session is still open.
-                tag_names = [t.name for t in bm.tags]
-                record = {
+        for bm in bookmarks:
+            tag_names = [t.name for t in bm.tags]
+            records.append(
+                {
                     "kind": "bookmark",
                     "uri": build_bookmark_uri(bm.unique_id),
                     "unique_id": bm.unique_id,
@@ -129,25 +141,22 @@ def export_arkiv(db, out_path: Path) -> dict:
                     "visit_count": bm.visit_count or 0,
                     "added": bm.added.isoformat() if bm.added else None,
                 }
-                fh.write(json.dumps(record, ensure_ascii=False) + "\n")
-                bm_count += 1
-
-            # --- Annotations ---
-            ann_query = (
-                select(Annotation)
-                .where(Annotation.archived_at.is_(None))
-                .order_by(Annotation.created_at)
             )
-            annotations = list(session.execute(ann_query).scalars())
 
-            for ann in annotations:
-                parent_uri: str | None = None
-                if ann.bookmark_id is not None:
-                    parent_unique = id_to_unique.get(ann.bookmark_id)
-                    if parent_unique is not None:
-                        parent_uri = build_bookmark_uri(parent_unique)
+        ann_query = (
+            select(Annotation)
+            .where(Annotation.archived_at.is_(None))
+            .order_by(Annotation.created_at)
+        )
+        for ann in session.execute(ann_query).scalars():
+            parent_uri: Optional[str] = None
+            if ann.bookmark_id is not None:
+                parent_unique = id_to_unique.get(ann.bookmark_id)
+                if parent_unique is not None:
+                    parent_uri = build_bookmark_uri(parent_unique)
 
-                record = {
+            records.append(
+                {
                     "kind": "annotation",
                     "uri": build_annotation_uri(ann.id),
                     "uuid": ann.id,
@@ -156,19 +165,188 @@ def export_arkiv(db, out_path: Path) -> dict:
                     "created_at": ann.created_at.isoformat() if ann.created_at else None,
                     "updated_at": ann.updated_at.isoformat() if ann.updated_at else None,
                 }
-                fh.write(json.dumps(record, ensure_ascii=False) + "\n")
-                ann_count += 1
+            )
 
-    # --- schema.yaml ---
-    schema_doc = {
+    return records
+
+
+# ---------------------------------------------------------------------------
+# File serialisation helpers
+# ---------------------------------------------------------------------------
+
+
+def _records_to_jsonl_bytes(records: List[Dict[str, Any]]) -> bytes:
+    buf = io.StringIO()
+    for rec in records:
+        buf.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    return buf.getvalue().encode("utf-8")
+
+
+def _schema_yaml_bytes(records: List[Dict[str, Any]]) -> bytes:
+    """Render schema.yaml with declared field docs + live per-kind counts."""
+    counts = {"bookmark": 0, "annotation": 0}
+    for rec in records:
+        kind = rec.get("kind")
+        if kind in counts:
+            counts[kind] += 1
+
+    doc = {
         "scheme": SCHEMA["scheme"],
         "exported_at": datetime.now(timezone.utc).isoformat(),
+        "counts": counts,
         "kinds": SCHEMA["kinds"],
     }
-    schema_path.write_text(yaml.safe_dump(schema_doc, allow_unicode=True), encoding="utf-8")
+    buf = io.StringIO()
+    buf.write("# Auto-generated by bookmark-memex. Edit freely.\n")
+    yaml.safe_dump(doc, buf, default_flow_style=False, sort_keys=False, allow_unicode=True)
+    return buf.getvalue().encode("utf-8")
+
+
+def _readme_bytes(num_bookmarks: int, num_annotations: int) -> bytes:
+    """Render README.md with ECHO frontmatter + usage notes."""
+    try:
+        from importlib.metadata import version as _pkg_version
+
+        version = _pkg_version("bookmark-memex")
+    except Exception:
+        version = "unknown"
+
+    today = date.today().isoformat()
+    lines = [
+        "---",
+        "name: bookmark-memex archive",
+        f'description: "{num_bookmarks} bookmarks + {num_annotations} annotations exported from bookmark-memex"',
+        f"datetime: {today}",
+        f"generator: bookmark-memex {version}",
+        "contents:",
+        "  - path: records.jsonl",
+        "    description: Bookmark and annotation records (arkiv JSONL format)",
+        "  - path: schema.yaml",
+        "    description: Record schema + per-kind counts",
+        "---",
+        "",
+        "# bookmark-memex Archive",
+        "",
+        f"This archive contains {num_bookmarks} bookmark(s) and {num_annotations} annotation(s)",
+        "exported from bookmark-memex in [arkiv](https://github.com/alonzo-church/arkiv) format.",
+        "",
+        "Each line in `records.jsonl` is one record. Records are typed by `kind`:",
+        "",
+        "- `bookmark`: a saved URL with title, description, tags, and media metadata.",
+        "- `annotation`: a free-form note attached (by URI) to a bookmark.",
+        "",
+        "URIs follow the cross-archive `bookmark-memex://` scheme and stay stable",
+        "across re-imports, so annotations survive their parent bookmark being",
+        "re-imported or round-tripped through another archive.",
+        "",
+        "## Importing back into bookmark-memex",
+        "",
+        "```bash",
+        "# Replace local state (default): duplicates skipped by unique_id",
+        "bookmark-memex import <this bundle> --format arkiv",
+        "",
+        "# Merge into existing bookmarks without clobbering local tags/notes",
+        "bookmark-memex import <this bundle> --format arkiv --merge",
+        "```",
+        "",
+    ]
+    return "\n".join(lines).encode("utf-8")
+
+
+def _write_file(path: str, data: bytes) -> None:
+    with open(path, "wb") as f:
+        f.write(data)
+
+
+def _write_zip(path: str, jsonl: bytes, schema_yaml: bytes, readme: bytes) -> None:
+    """Write the three bundle files into a single .zip archive."""
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("records.jsonl", jsonl)
+        zf.writestr("schema.yaml", schema_yaml)
+        zf.writestr("README.md", readme)
+
+
+def _write_tar_gz(path: str, jsonl: bytes, schema_yaml: bytes, readme: bytes) -> None:
+    """Write the three bundle files into a single .tar.gz archive."""
+    with tarfile.open(path, "w:gz") as tf:
+        for name, data in (
+            ("records.jsonl", jsonl),
+            ("schema.yaml", schema_yaml),
+            ("README.md", readme),
+        ):
+            info = tarfile.TarInfo(name=name)
+            info.size = len(data)
+            tf.addfile(info, io.BytesIO(data))
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+
+def export_arkiv(db, out_path) -> dict:
+    """Export active bookmarks and annotations as an arkiv bundle.
+
+    Output format is inferred from *out_path*'s extension:
+
+    - ``path.zip``            → single zip file
+    - ``path.tar.gz``/`.tgz`  → single gzip-compressed tarball
+    - any other path          → directory containing records.jsonl,
+                                schema.yaml, and README.md
+
+    Parameters
+    ----------
+    db:
+        A ``bookmark_memex.db.Database`` instance.
+    out_path:
+        Destination path. Extension determines bundle format.
+
+    Returns
+    -------
+    dict
+        ``{"path": str, "format": "dir"|"zip"|"tar.gz",
+           "counts": {"bookmark": N, "annotation": N}}``
+    """
+    out_path_str = str(out_path)
+    records = _build_records(db)
+    counts = {"bookmark": 0, "annotation": 0}
+    for rec in records:
+        kind = rec.get("kind")
+        if kind in counts:
+            counts[kind] += 1
+
+    jsonl_bytes = _records_to_jsonl_bytes(records)
+    schema_bytes = _schema_yaml_bytes(records)
+    readme_bytes = _readme_bytes(counts["bookmark"], counts["annotation"])
+
+    fmt = _detect_compression(out_path_str)
+    if fmt == "zip":
+        # Ensure parent directory exists before opening the zipfile.
+        Path(out_path_str).parent.mkdir(parents=True, exist_ok=True)
+        _write_zip(out_path_str, jsonl_bytes, schema_bytes, readme_bytes)
+    elif fmt == "tar.gz":
+        Path(out_path_str).parent.mkdir(parents=True, exist_ok=True)
+        _write_tar_gz(out_path_str, jsonl_bytes, schema_bytes, readme_bytes)
+    else:
+        out_dir = Path(out_path_str)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        _write_file(str(out_dir / "records.jsonl"), jsonl_bytes)
+        _write_file(str(out_dir / "schema.yaml"), schema_bytes)
+        _write_file(str(out_dir / "README.md"), readme_bytes)
 
     return {
-        "records_path": str(records_path),
-        "schema_path": str(schema_path),
-        "counts": {"bookmark": bm_count, "annotation": ann_count},
+        "path": out_path_str,
+        "format": fmt,
+        "counts": counts,
+        # Backcompat shape for existing callers that read these two keys.
+        "records_path": (
+            out_path_str
+            if fmt != "dir"
+            else str(Path(out_path_str) / "records.jsonl")
+        ),
+        "schema_path": (
+            out_path_str
+            if fmt != "dir"
+            else str(Path(out_path_str) / "schema.yaml")
+        ),
     }

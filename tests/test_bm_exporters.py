@@ -363,3 +363,89 @@ def test_arkiv_excludes_archived_annotations(db, tmp_path):
     out = tmp_path / "arkiv"
     result = export_arkiv(db, out)
     assert result["counts"]["annotation"] >= 1
+
+
+# ───────────────────────────────────────────────────────────────────
+# arkiv bundles: directory + .zip + .tar.gz (C5a)
+# ───────────────────────────────────────────────────────────────────
+
+
+def test_arkiv_directory_includes_readme(db, tmp_path):
+    out = tmp_path / "arkiv"
+    export_arkiv(db, out)
+    readme = out / "README.md"
+    assert readme.exists()
+    text = readme.read_text()
+    # YAML frontmatter + "arkiv" + usage example.
+    assert text.startswith("---")
+    assert "generator: bookmark-memex" in text
+    assert "--format arkiv" in text
+
+
+def test_arkiv_zip_bundle(db, tmp_path):
+    import zipfile
+
+    out = tmp_path / "archive.zip"
+    result = export_arkiv(db, out)
+    assert result["format"] == "zip"
+    assert out.exists()
+    with zipfile.ZipFile(out) as zf:
+        names = set(zf.namelist())
+        assert {"records.jsonl", "schema.yaml", "README.md"}.issubset(names)
+        # Records are valid JSONL inside the zip.
+        with zf.open("records.jsonl") as f:
+            lines = [json.loads(ln) for ln in f.read().decode("utf-8").splitlines() if ln.strip()]
+    kinds = {r["kind"] for r in lines}
+    assert "bookmark" in kinds
+    assert result["counts"]["bookmark"] == 2
+
+
+def test_arkiv_tar_gz_bundle(db, tmp_path):
+    import tarfile
+
+    out = tmp_path / "archive.tar.gz"
+    result = export_arkiv(db, out)
+    assert result["format"] == "tar.gz"
+    assert out.exists()
+    with tarfile.open(out, "r:gz") as tf:
+        names = set(tf.getnames())
+        assert {"records.jsonl", "schema.yaml", "README.md"}.issubset(names)
+        extracted = tf.extractfile("records.jsonl")
+        assert extracted is not None
+        lines = [json.loads(ln) for ln in extracted.read().decode("utf-8").splitlines() if ln.strip()]
+    assert any(r["kind"] == "annotation" for r in lines)
+
+
+def test_arkiv_tgz_extension(db, tmp_path):
+    """The .tgz extension is accepted as a synonym for .tar.gz."""
+    import tarfile
+
+    out = tmp_path / "archive.tgz"
+    result = export_arkiv(db, out)
+    assert result["format"] == "tar.gz"
+    with tarfile.open(out, "r:gz") as tf:
+        assert "records.jsonl" in tf.getnames()
+
+
+def test_arkiv_bundle_counts_match_directory(db, tmp_path):
+    """The three bundle formats should contain the exact same records."""
+    dir_out = tmp_path / "dir"
+    zip_out = tmp_path / "bundle.zip"
+    tar_out = tmp_path / "bundle.tar.gz"
+
+    r_dir = export_arkiv(db, dir_out)
+    r_zip = export_arkiv(db, zip_out)
+    r_tar = export_arkiv(db, tar_out)
+
+    assert r_dir["counts"] == r_zip["counts"] == r_tar["counts"]
+
+
+def test_arkiv_detect_compression():
+    from bookmark_memex.exporters.arkiv import _detect_compression
+
+    assert _detect_compression("out") == "dir"
+    assert _detect_compression("/tmp/out.zip") == "zip"
+    assert _detect_compression("foo.tar.gz") == "tar.gz"
+    assert _detect_compression("foo.TAR.GZ") == "tar.gz"
+    assert _detect_compression("foo.tgz") == "tar.gz"
+    assert _detect_compression("foo.TGZ") == "tar.gz"
