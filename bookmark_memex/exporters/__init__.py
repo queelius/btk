@@ -19,6 +19,7 @@ from bookmark_memex.exporters.formats import (
     export_text,
 )
 from bookmark_memex.exporters.arkiv import export_arkiv
+from bookmark_memex.exporters.html_app import export_html_app
 
 _DISPATCHERS = {
     "json": export_json,
@@ -27,6 +28,8 @@ _DISPATCHERS = {
     "markdown": export_markdown,
     "m3u": export_m3u,
 }
+
+_SUPPORTED_FORMATS = sorted(list(_DISPATCHERS) + ["arkiv", "html-app"])
 
 
 def export_file(
@@ -43,12 +46,15 @@ def export_file(
     db:
         A ``bookmark_memex.db.Database`` instance.
     path:
-        Destination file path (or directory for ``arkiv``).
+        Destination file path. For ``arkiv`` a directory or bundle
+        (``.zip``/``.tar.gz``); for ``html-app`` a directory.
     format:
-        One of ``json``, ``csv``, ``text``, ``markdown``, ``m3u``, ``arkiv``.
+        One of ``json``, ``csv``, ``text``, ``markdown``, ``m3u``,
+        ``arkiv``, ``html-app``.
     bookmark_ids:
         Optional list of primary-key IDs to restrict the export.
-        Not applicable to ``arkiv`` (which always exports all active records).
+        Not applicable to ``arkiv`` or ``html-app`` (which always
+        include all active records).
     **kwargs:
         Forwarded to the format-specific function.
 
@@ -63,10 +69,14 @@ def export_file(
         export_arkiv(db, path, **kwargs)
         return
 
+    if format == "html-app":
+        export_html_app(db, path, **kwargs)
+        return
+
     fn = _DISPATCHERS.get(format)
     if fn is None:
         raise ValueError(
-            f"unknown format {format!r}. Choose from: {', '.join(sorted(_DISPATCHERS) + ['arkiv'])}"
+            f"unknown format {format!r}. Choose from: {', '.join(_SUPPORTED_FORMATS)}"
         )
 
     fn(db, path, bookmark_ids=bookmark_ids, **kwargs)

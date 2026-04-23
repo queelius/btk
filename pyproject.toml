@@ -40,6 +40,12 @@ bookmark-memex = "bookmark_memex.cli:main"
 where = ["."]
 include = ["bookmark_memex", "bookmark_memex.*"]
 
+[tool.setuptools.package-data]
+# Ship vendored sql.js (no CDN dependency for the HTML SPA export) and the
+# SPA HTML template alongside the Python sources.
+"bookmark_memex.exporters.vendored" = ["*.js", "*.wasm"]
+"bookmark_memex.exporters.templates" = ["*.html"]
+
 [tool.black]
 line-length = 120
 target-version = ['py310', 'py311', 'py312']
