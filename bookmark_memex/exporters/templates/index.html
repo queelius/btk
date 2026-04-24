@@ -1,155 +1,272 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="auto">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>bookmark-memex</title>
 <style>
+/* -- palette (dark default; light via data-theme attribute) ---------- */
 :root {
-  --bg: #ffffff;
-  --bg-elev: #f6f7f9;
-  --fg: #1a1a1a;
-  --fg-muted: #5a5a5a;
-  --border: #e4e6ea;
-  --accent: #2563eb;
-  --accent-muted: #dbeafe;
-  --tag-bg: #eef2ff;
-  --tag-fg: #3730a3;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-               "Helvetica Neue", Arial, sans-serif;
+  /* dark theme (walnut + amber) */
+  --bg: #1a1714;
+  --bg-surface: #221e1a;
+  --bg-overlay: #2b2620;
+  --bg-elevated: #322c25;
+  --text: #e8e1d3;
+  --text-muted: #938c7e;
+  --text-subtle: #6e685c;
+  --text-strong: #f7f1e4;
+  --text-accent: #d4a46a;
+  --border: #3a342c;
+  --border-strong: #4a4238;
+  --border-accent: #d4a46a;
+  --badge-bg: rgba(212, 164, 106, 0.14);
+  --badge-text: #e8c088;
+  --selection: rgba(212, 164, 106, 0.18);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 14px rgba(0,0,0,0.35);
+  /* layout + typography */
+  --header-height: 56px;
+  --content-max-width: 780px;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino", "Georgia", serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", ui-monospace, Menlo, monospace;
+  --font-size: 14px;
+  --font-size-sm: 12px;
+  --font-size-lg: 15px;
+  --font-size-xl: 18px;
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --gap: 10px;
+  --gap-sm: 6px;
+  --gap-lg: 18px;
+  --gap-xl: 28px;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1419;
-    --bg-elev: #161b22;
-    --fg: #e6e6e6;
-    --fg-muted: #8b949e;
-    --border: #30363d;
-    --accent: #58a6ff;
-    --accent-muted: #1f2d3d;
-    --tag-bg: #1e2a3a;
-    --tag-fg: #79b8ff;
-  }
+
+:root[data-theme="light"] {
+  /* light theme (cream + bronze) */
+  --bg: #faf7f0;
+  --bg-surface: #f2ede2;
+  --bg-overlay: #ffffff;
+  --bg-elevated: #ffffff;
+  --text: #2e2820;
+  --text-muted: #7a7162;
+  --text-subtle: #a39a8a;
+  --text-strong: #1a1610;
+  --text-accent: #8a5a2b;
+  --border: #e4ddce;
+  --border-strong: #cfc6b2;
+  --border-accent: #8a5a2b;
+  --badge-bg: #f3e6d0;
+  --badge-text: #6e4520;
+  --selection: rgba(138, 90, 43, 0.14);
+  --shadow-sm: 0 1px 2px rgba(60, 42, 20, 0.08);
+  --shadow-md: 0 4px 14px rgba(60, 42, 20, 0.10);
 }
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
-body {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  font-size: 15px;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size);
   line-height: 1.5;
 }
-header {
+
+::selection { background: var(--selection); }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+body { display: flex; flex-direction: column; }
+
+/* -- header ---------------------------------------------------------- */
+header#top {
   position: sticky;
   top: 0;
-  background: var(--bg);
+  height: var(--header-height);
+  background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
-  padding: 10px 16px;
+  padding: 0 var(--gap-lg);
   display: flex;
-  gap: 12px;
+  gap: var(--gap);
   align-items: center;
   z-index: 10;
 }
-header h1 {
-  margin: 0;
-  font-size: 1.05rem;
+
+#brand {
+  color: var(--text-strong);
+  font-family: var(--font-serif);
+  font-size: var(--font-size-xl);
   font-weight: 600;
-  letter-spacing: 0.2px;
-}
-header a {
-  color: inherit;
+  letter-spacing: 0.3px;
   text-decoration: none;
+  flex-shrink: 0;
 }
+
 #search {
   flex: 1;
-  padding: 7px 10px;
+  padding: 8px 12px;
   border: 1px solid var(--border);
-  background: var(--bg-elev);
-  color: var(--fg);
-  border-radius: 6px;
-  font-size: 14px;
+  background: var(--bg-overlay);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--font-size);
+  border-radius: var(--radius-sm);
+  min-width: 120px;
 }
-#search:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-#status { font-size: 12px; color: var(--fg-muted); }
+#search:focus {
+  outline: none;
+  border-color: var(--border-accent);
+  box-shadow: 0 0 0 3px var(--badge-bg);
+}
+
+#status { font-size: var(--font-size-sm); color: var(--text-muted); }
+
+.btn.icon-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--font-size-lg);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.btn.icon-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--text-strong);
+  border-color: var(--border-strong);
+}
+
+/* -- main ------------------------------------------------------------ */
 main {
   flex: 1;
-  padding: 16px;
-  max-width: 960px;
+  padding: var(--gap-lg);
+  max-width: var(--content-max-width);
   margin: 0 auto;
   width: 100%;
 }
-.bookmark {
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-bottom: 10px;
-  background: var(--bg-elev);
-}
-.bookmark h3 {
-  margin: 0 0 4px 0;
-  font-size: 1rem;
+
+.section-head {
+  color: var(--text-subtle);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: var(--gap-lg) 0 var(--gap) 0;
   font-weight: 600;
 }
-.bookmark h3 a { color: var(--accent); text-decoration: none; }
-.bookmark h3 a:hover { text-decoration: underline; }
-.bookmark .url { font-size: 12px; color: var(--fg-muted); word-break: break-all; }
-.bookmark .desc { margin: 6px 0 0; color: var(--fg-muted); font-size: 13px; }
-.bookmark .tags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+
+.breadcrumb {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--gap);
+}
+.breadcrumb a { color: var(--text-accent); text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+
+/* -- bookmark cards -------------------------------------------------- */
+.bookmark {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--gap) var(--gap-lg);
+  margin-bottom: var(--gap);
+  box-shadow: var(--shadow-sm);
+}
+
+.bookmark h3 {
+  font-family: var(--font-serif);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.bookmark h3 a {
+  color: var(--text-strong);
+  text-decoration: none;
+}
+.bookmark h3 a:hover { color: var(--text-accent); }
+
+.bookmark .url {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text-subtle);
+  word-break: break-all;
+}
+
+.bookmark .desc {
+  margin-top: var(--gap-sm);
+  color: var(--text-muted);
+  font-size: var(--font-size);
+}
+
+.bookmark .tags {
+  margin-top: var(--gap-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 .tag {
   display: inline-block;
-  padding: 2px 8px;
-  background: var(--tag-bg);
-  color: var(--tag-fg);
-  border-radius: 12px;
-  font-size: 11px;
+  padding: 2px 10px;
+  background: var(--badge-bg);
+  color: var(--badge-text);
+  border-radius: 999px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   text-decoration: none;
-  cursor: pointer;
+  line-height: 1.5;
 }
-.tag:hover { filter: brightness(0.95); }
+.tag:hover { filter: brightness(1.1); }
+
+/* -- annotation notes ------------------------------------------------ */
+.annotation {
+  border-left: 3px solid var(--border-accent);
+  padding: var(--gap-sm) var(--gap);
+  margin: var(--gap-sm) 0;
+  color: var(--text);
+  font-size: var(--font-size);
+  font-family: var(--font-serif);
+  background: var(--bg-surface);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* -- empty state ----------------------------------------------------- */
 .empty {
   text-align: center;
-  color: var(--fg-muted);
-  padding: 48px 16px;
-  font-size: 14px;
+  color: var(--text-muted);
+  padding: var(--gap-xl) var(--gap-lg);
+  font-size: var(--font-size);
+  font-family: var(--font-serif);
 }
-.section-head {
-  color: var(--fg-muted);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 18px 0 8px;
-}
-.annotation {
-  border-left: 3px solid var(--accent-muted);
-  padding: 6px 10px;
-  margin: 8px 0;
-  color: var(--fg-muted);
-  font-size: 13px;
-  background: var(--bg-elev);
-  border-radius: 0 4px 4px 0;
-}
-.breadcrumb {
-  color: var(--fg-muted);
-  font-size: 13px;
-  margin-bottom: 10px;
-}
-.breadcrumb a { color: var(--accent); text-decoration: none; }
+
+/* -- footer ---------------------------------------------------------- */
 footer {
-  padding: 16px;
+  padding: var(--gap-lg);
   text-align: center;
-  color: var(--fg-muted);
-  font-size: 11px;
+  color: var(--text-subtle);
+  font-size: var(--font-size-sm);
   border-top: 1px solid var(--border);
 }
 </style>
 </head>
 <body>
-<header>
-  <h1><a href="#/">bookmark-memex</a></h1>
+<header id="top">
+  <a id="brand" href="#/">bookmark-memex</a>
   <input id="search" placeholder="Search title, url, description, or tag..." autofocus />
-  <span id="status">Loading...</span>
+  <span id="status">loading…</span>
+  <button class="btn icon-btn" id="theme-toggle" title="toggle light/dark mode">&#9790;</button>
 </header>
 <main id="view"></main>
 <footer>
@@ -173,30 +290,44 @@ footer {
   const view = document.getElementById("view");
   const searchEl = document.getElementById("search");
   const statusEl = document.getElementById("status");
+  const themeBtn = document.getElementById("theme-toggle");
 
-  // ── Inline-asset helpers (single-file mode) ──────────────────────────────
-  function readInlineBase64(id) {
-    const el = document.getElementById(id);
-    if (!el) return "";
-    const txt = el.textContent || "";
-    return txt.trim();
+  // ── Theme (dark default; persisted; OS fallback) ─────────────────────────
+  const THEME_KEY = "bookmark_memex_theme";
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    if (themeBtn) themeBtn.textContent = theme === "dark" ? "☾" : "☀";
   }
 
-  function base64ToBytes(b64) {
-    const bin = atob(b64.replace(/\s/g, ""));
-    const out = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-    return out;
+  function initTheme() {
+    const saved = localStorage.getItem(THEME_KEY);
+    let theme;
+    if (saved === "light" || saved === "dark") {
+      theme = saved;
+    } else {
+      theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    }
+    applyTheme(theme);
   }
 
-  // ── DOM helpers (all output uses textContent; no string-composed HTML) ───
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute("data-theme") || "dark";
+    const next = current === "dark" ? "light" : "dark";
+    applyTheme(next);
+    localStorage.setItem(THEME_KEY, next);
+  }
+
+  initTheme();
+  themeBtn.addEventListener("click", toggleTheme);
+
+  // ── DOM helpers (textContent only; no string-composed HTML) ──────────────
   function el(tag, attrs, ...children) {
     const node = document.createElement(tag);
     if (attrs) {
       for (const k of Object.keys(attrs)) {
         if (k === "class") node.className = attrs[k];
         else if (k === "text") node.textContent = attrs[k];
-        else if (k.startsWith("data-")) node.setAttribute(k, attrs[k]);
         else node.setAttribute(k, attrs[k]);
       }
     }
@@ -210,6 +341,21 @@ footer {
 
   function clear(node) {
     while (node.firstChild) node.removeChild(node.firstChild);
+  }
+
+  // ── Inline-asset helpers (single-file mode) ──────────────────────────────
+  function readInlineBase64(id) {
+    const node = document.getElementById(id);
+    if (!node) return "";
+    const txt = node.textContent || "";
+    return txt.trim();
+  }
+
+  function base64ToBytes(b64) {
+    const bin = atob(b64.replace(/\s/g, ""));
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
   }
 
   // ── Decompression helper (used by both inline and sibling DB sources) ────
@@ -228,7 +374,7 @@ footer {
       const wasmBinary = base64ToBytes(wasmB64);
       return initSqlJs({
         wasmBinary,
-        locateFile: () => "data:application/wasm;base64,", // never used when wasmBinary set
+        locateFile: () => "data:application/wasm;base64,",
       });
     }
     return initSqlJs({ locateFile: f => f });
@@ -245,7 +391,6 @@ footer {
       return new SQL.Database(raw);
     }
 
-    // Directory mode: try gzipped, fall back to raw.
     try {
       const resp = await fetch("bookmarks.db.gz");
       if (!resp.ok) throw new Error("no .db.gz");
@@ -525,7 +670,7 @@ footer {
   // ── Boot ──────────────────────────────────────────────────────────────────
   try {
     const db = await loadDb();
-    statusEl.textContent = "Ready";
+    statusEl.textContent = "ready";
     render(db);
     window.addEventListener("hashchange", () => render(db));
 
@@ -548,7 +693,7 @@ footer {
     p.className = "empty";
     p.textContent = "Could not load database: " + (err.message || String(err));
     view.appendChild(p);
-    statusEl.textContent = "Error";
+    statusEl.textContent = "error";
   }
 })();
 </script>
