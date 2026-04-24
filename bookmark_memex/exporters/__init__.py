@@ -66,6 +66,8 @@ def export_file(
     path = Path(path)
 
     if format == "arkiv":
+        # arkiv exporter doesn't accept html-app kwargs.
+        kwargs.pop("single_file", None)
         export_arkiv(db, path, **kwargs)
         return
 
@@ -79,4 +81,6 @@ def export_file(
             f"unknown format {format!r}. Choose from: {', '.join(_SUPPORTED_FORMATS)}"
         )
 
+    # Flat-file formats don't take html-app options.
+    kwargs.pop("single_file", None)
     fn(db, path, bookmark_ids=bookmark_ids, **kwargs)

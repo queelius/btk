@@ -1,42 +1,45 @@
 """HTML SPA exporter for bookmark-memex.
 
-Produces a self-contained browsable directory (the C6 contract from the
-workspace CLAUDE.md):
+Two output modes, both sharing the same template:
 
-- ``index.html``                      — single-page app
-- ``sql-wasm.js``, ``sql-wasm.wasm``  — vendored sql.js (no CDN dependency)
-- ``bookmarks.db.gz``                 — gzipped copy of the source DB with
-  FTS5 shadow tables dropped and journal_mode set to DELETE so no
-  ``.db-wal``/``.db-shm`` sidecars travel with it.
+**single-file** (default) — one portable ``.html`` with sql-wasm.js
+inlined as an inline ``<script>`` and sql-wasm.wasm + the gzipped
+database embedded as base64 inside two ``<script type="application/base64">``
+tags. The template decodes them client-side via ``atob`` +
+``DecompressionStream('gzip')``. Produces exactly one file suitable
+for email attachments, Dropbox, Netlify drop, etc.
 
-The SPA fetches the ``.db.gz`` and decompresses transparently via the
-browser's ``DecompressionStream('gzip')``, then uses sql.js to query it.
-Search uses ``LIKE`` (sql.js cannot execute FTS5 MATCH); that limitation
-is why we ship the DB without the FTS5 virtual tables — they are about
-half of a typical archive's bytes on disk.
+**directory** (opt-in via ``single_file=False``) — a folder:
 
-The exported bundle is *genuinely* offline: no CDN, no default API
-endpoint, no authentication on the author's behalf. Any chat/LLM features
-added later must stay behind an explicit user-configured Settings gate.
+  - ``index.html``                      the same template, but with
+    empty base64 script tags so the loader falls back to fetching
+  - ``sql-wasm.js``, ``sql-wasm.wasm``  vendored sql.js
+  - ``bookmarks.db.gz``                 gzipped copy of the source DB
 
-Hash routing keeps the URL bookmarkable:
+Both modes honour the C6 workspace contract: no CDN dependency, FTS5
+shadow tables stripped, ``journal_mode=DELETE`` on the shipped DB,
+gzip compression for the DB, hash routing, no default API endpoint.
 
-- ``#/``                → home (recent bookmarks)
-- ``#/search/<q>``      → full-library LIKE search
-- ``#/tag/<name>``      → bookmarks with a given tag
-- ``#/bookmark/<uid>``  → detail view for a specific bookmark
+Why single-file is the default: the other single-archive-scope siblings
+(mail-memex, book-memex, photo-memex) all emit single-file HTML. Only
+llm-memex uses the directory form, and only because it has to ship a
+sibling ``assets/`` directory for media blocks. Bookmarks have no peer
+assets, so single-file is the natural fit.
 """
 from __future__ import annotations
 
+import base64
 import gzip
 import shutil
 import sqlite3
+import tempfile
 from pathlib import Path
 
 
 _VENDORED_DIR = Path(__file__).parent / "vendored"
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
-_SQL_JS_FILES = ("sql-wasm.js", "sql-wasm.wasm")
+_SQL_JS_FILE = "sql-wasm.js"
+_SQL_WASM_FILE = "sql-wasm.wasm"
 
 # FTS5 virtual tables in bookmark-memex. Listed explicitly rather than
 # discovered so we don't accidentally drop something else that happens
@@ -48,16 +51,7 @@ _DB_GZIP_LEVEL = 6
 
 
 def _strip_fts5_and_vacuum(db_path: Path) -> None:
-    """Drop FTS5 virtual tables, set journal_mode=DELETE, and VACUUM.
-
-    sql.js (used by the HTML SPA) is not compiled with FTS5. The shadow
-    tables are roughly half of a typical DB's bytes, so dropping them
-    before export substantially shrinks the transferred gzip.
-
-    Setting journal_mode=DELETE ensures no ``.db-wal`` or ``.db-shm``
-    sidecar files are left next to the exported DB if the process is
-    interrupted. VACUUM produces a fully-packed file.
-    """
+    """Drop FTS5 virtual tables, set journal_mode=DELETE, and VACUUM."""
     with sqlite3.connect(str(db_path)) as conn:
         conn.execute("PRAGMA journal_mode=DELETE")
         for fts in _FTS5_TABLES:
@@ -68,10 +62,7 @@ def _strip_fts5_and_vacuum(db_path: Path) -> None:
 
 
 def _gzip_file(src: Path, dst: Path, level: int = _DB_GZIP_LEVEL) -> None:
-    """Stream src → gzip → dst, then delete src.
-
-    Chunked to avoid loading the whole DB into memory for big archives.
-    """
+    """Stream src → gzip → dst, then delete src."""
     with open(src, "rb") as fin, gzip.open(
         str(dst), "wb", compresslevel=level
     ) as fout:
@@ -79,49 +70,168 @@ def _gzip_file(src: Path, dst: Path, level: int = _DB_GZIP_LEVEL) -> None:
     src.unlink()
 
 
+def _gzip_bytes(data: bytes, level: int = _DB_GZIP_LEVEL) -> bytes:
+    """Return gzip-compressed *data* as bytes (for single-file base64)."""
+    return gzip.compress(data, compresslevel=level)
+
+
 def _read_template() -> str:
-    """Return the SPA HTML template bundled with the package."""
-    path = _TEMPLATES_DIR / "index.html"
-    return path.read_text(encoding="utf-8")
+    return (_TEMPLATES_DIR / "index.html").read_text(encoding="utf-8")
 
 
-def export_html_app(db, out_path, *, compress_db: bool = True) -> dict:
-    """Export the archive as a self-contained HTML SPA directory.
+def _read_vendor(name: str) -> bytes:
+    return (_VENDORED_DIR / name).read_bytes()
+
+
+def _prepare_db_bytes(src_db_path: Path) -> bytes:
+    """Return the bytes of a stripped-and-vacuumed copy of the source DB.
+
+    Works in a temp file so we can run VACUUM (which operates only on
+    on-disk databases) without disturbing the live library.
+    """
+    with tempfile.TemporaryDirectory(prefix="bm_html_app_") as tmp:
+        tmp_db = Path(tmp) / "copy.db"
+        shutil.copy2(src_db_path, tmp_db)
+        _strip_fts5_and_vacuum(tmp_db)
+        return tmp_db.read_bytes()
+
+
+def _inline_script_src(html: str, filename: str, body: str) -> str:
+    """Replace ``<script src="<filename>"></script>`` with inline JS."""
+    marker = f'<script src="{filename}"></script>'
+    # Guard: only one occurrence expected in the template.
+    if marker not in html:
+        raise RuntimeError(
+            f"SPA template missing expected '{marker}'; template drift?"
+        )
+    # The closing </script> in the replacement must not be misread by the
+    # HTML parser if `body` itself contains "</script>" — but sql-wasm.js
+    # does not, and we control the template. Still, escape defensively.
+    safe = body.replace("</script>", "<\\/script>")
+    inline = f"<script>\n{safe}\n</script>"
+    return html.replace(marker, inline, 1)
+
+
+def _fill_base64_script(html: str, element_id: str, data: bytes) -> str:
+    """Fill ``<script id="<id>" type="application/base64"></script>``."""
+    marker = f'<script id="{element_id}" type="application/base64"></script>'
+    if marker not in html:
+        raise RuntimeError(
+            f"SPA template missing expected '{marker}'; template drift?"
+        )
+    b64 = base64.b64encode(data).decode("ascii")
+    replacement = (
+        f'<script id="{element_id}" type="application/base64">\n{b64}\n</script>'
+    )
+    return html.replace(marker, replacement, 1)
+
+
+def export_html_app(
+    db,
+    out_path,
+    *,
+    single_file: bool = True,
+    compress_db: bool = True,
+) -> dict:
+    """Export the archive as a self-contained HTML SPA.
 
     Parameters
     ----------
     db:
-        A ``bookmark_memex.db.Database`` instance. ``db.path`` is used
-        to locate the source SQLite file.
+        A ``bookmark_memex.db.Database`` instance.
     out_path:
-        Destination directory. Created if it does not exist.
+        Target path. In ``single_file`` mode, a ``.html`` filename
+        (``.html`` auto-appended if missing). In directory mode, a
+        directory path to populate.
+    single_file:
+        ``True`` (default) → emit one portable ``index.html`` with
+        sql.js and the DB base64-embedded. ``False`` → emit a directory
+        with sibling assets.
     compress_db:
-        Gzip the exported DB (default True). Set to False if you want
-        the raw ``bookmarks.db`` next to ``index.html`` (e.g. for
-        tooling that cannot handle ``DecompressionStream``).
+        Gzip the DB (default ``True``). Only relevant for directory mode;
+        single-file mode always gzips before base64-encoding because the
+        transfer-size win is the whole point.
 
     Returns
     -------
     dict
-        ``{"path": <out_dir>, "db_file": <db filename>, "compressed": bool,
-           "original_db_bytes": int, "shipped_db_bytes": int}``
+        For single-file mode::
+
+            {"mode": "single-file", "path": <file path>,
+             "html_bytes": int, "original_db_bytes": int,
+             "embedded_db_bytes": int}
+
+        For directory mode::
+
+            {"mode": "dir", "path": <dir path>,
+             "db_file": <filename>, "compressed": bool,
+             "original_db_bytes": int, "shipped_db_bytes": int}
     """
+    return (
+        _export_single_file(db, out_path)
+        if single_file
+        else _export_directory(db, out_path, compress_db=compress_db)
+    )
+
+
+def _export_single_file(db, out_path) -> dict:
+    """Emit a single self-contained HTML file."""
+    out = Path(out_path)
+    # Auto-append .html so `bookmark-memex export my_archive` does the
+    # obvious thing rather than producing a file with no extension.
+    if not out.suffix:
+        out = out.with_suffix(".html")
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    src_db_path = Path(db.path)
+    original_size = src_db_path.stat().st_size if src_db_path.exists() else 0
+
+    template = _read_template()
+
+    # 1) inline sql-wasm.js
+    sqljs_src = _read_vendor(_SQL_JS_FILE).decode("utf-8")
+    html = _inline_script_src(template, _SQL_JS_FILE, sqljs_src)
+
+    # 2) base64-inline sql-wasm.wasm
+    wasm_bytes = _read_vendor(_SQL_WASM_FILE)
+    html = _fill_base64_script(html, "bm-wasm-b64", wasm_bytes)
+
+    # 3) prep + gzip + base64-inline the DB
+    db_raw = _prepare_db_bytes(src_db_path)
+    db_gz = _gzip_bytes(db_raw)
+    html = _fill_base64_script(html, "bm-db-b64", db_gz)
+
+    out.write_text(html, encoding="utf-8")
+
+    return {
+        "mode": "single-file",
+        "path": str(out),
+        "html_bytes": out.stat().st_size,
+        "original_db_bytes": original_size,
+        "embedded_db_bytes": len(db_gz),
+    }
+
+
+def _export_directory(db, out_path, *, compress_db: bool) -> dict:
+    """Emit a directory with the SPA and sibling asset files."""
     out_dir = Path(out_path)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     src_db_path = Path(db.path)
     original_size = src_db_path.stat().st_size if src_db_path.exists() else 0
 
-    # 1) Write index.html from the bundled template
+    # 1) index.html (template verbatim — the placeholder <script src=...>
+    #    stays, and the base64 script elements are left empty so the
+    #    runtime loader falls back to fetching sibling files).
     (out_dir / "index.html").write_text(_read_template(), encoding="utf-8")
 
-    # 2) Vendor sql.js (copy, don't link — must survive being zipped up)
-    for filename in _SQL_JS_FILES:
+    # 2) vendored sql.js (sibling files)
+    for filename in (_SQL_JS_FILE, _SQL_WASM_FILE):
         src = _VENDORED_DIR / filename
         if src.exists():
             shutil.copy2(src, out_dir / filename)
 
-    # 3) Copy DB, strip FTS5, optionally gzip
+    # 3) DB copy + strip + optionally gzip
     dest_db = out_dir / "bookmarks.db"
     shutil.copy2(src_db_path, dest_db)
     _strip_fts5_and_vacuum(dest_db)
@@ -136,6 +246,7 @@ def export_html_app(db, out_path, *, compress_db: bool = True) -> dict:
         db_filename = "bookmarks.db"
 
     return {
+        "mode": "dir",
         "path": str(out_dir),
         "db_file": db_filename,
         "compressed": compress_db,

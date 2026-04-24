@@ -12,6 +12,7 @@ import csv
 import json
 import sqlite3
 import sys
+import argparse
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Optional
@@ -97,10 +98,24 @@ def build_parser() -> ArgumentParser:
         help="Export format (inferred from extension when omitted)",
     )
     p_export.add_argument(
+        "--dir",
+        dest="as_dir",
+        action="store_true",
+        default=False,
+        help=(
+            "html-app only: emit a directory (index.html + sql-wasm.* + "
+            "bookmarks.db.gz) instead of a single self-contained .html. "
+            "Useful for very large archives where embedding the DB as "
+            "base64 would bloat the HTML beyond practical memory."
+        ),
+    )
+    # Legacy flag: --single was the old opt-in; it's now the default. Accept
+    # it for backwards compatibility so existing scripts don't break.
+    p_export.add_argument(
         "--single",
         action="store_true",
         default=False,
-        help="Export to a single self-contained file (html-app only)",
+        help=argparse.SUPPRESS,
     )
 
     # ── fetch ────────────────────────────────────────────────────────────────
@@ -235,10 +250,16 @@ def cmd_export(args: Namespace) -> None:
             ".md": "markdown",
             ".txt": "text",
             ".m3u": "m3u",
+            ".html": "html-app",
         }
         fmt = ext_map.get(ext, "json")
 
-    export_file(db, Path(args.path), format=fmt, single=args.single)
+    # Pass --dir (or its absence) to html-app; ignored by other formats.
+    kwargs = {}
+    if fmt == "html-app":
+        kwargs["single_file"] = not bool(getattr(args, "as_dir", False))
+
+    export_file(db, Path(args.path), format=fmt, **kwargs)
     print(f"Exported to {args.path} (format: {fmt})")
 
 
