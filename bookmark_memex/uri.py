@@ -3,8 +3,10 @@
 Public URI kinds:
     bookmark-memex://bookmark/<unique_id>
     bookmark-memex://marginalia/<uuid>
+    bookmark-memex://history-url/<unique_id>
+    bookmark-memex://visit/<uuid>
 
-Fragment support (positions inside a bookmark record):
+Fragment support (positions inside a record):
     bookmark-memex://bookmark/<unique_id>#paragraph=5
     bookmark-memex://bookmark/<unique_id>#section=intro
 
@@ -26,7 +28,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 SCHEME = "bookmark-memex"
-KINDS: frozenset[str] = frozenset({"bookmark", "marginalia"})
+KINDS: frozenset[str] = frozenset({"bookmark", "marginalia", "history-url", "visit"})
 # Legacy kinds accepted by parse_uri and normalised to a canonical kind.
 _LEGACY_KIND_ALIASES: dict[str, str] = {"annotation": "marginalia"}
 
@@ -55,6 +57,16 @@ def build_bookmark_uri(unique_id: str) -> str:
 def build_marginalia_uri(uuid: str) -> str:
     """Return ``bookmark-memex://marginalia/<uuid>``."""
     return _build("marginalia", uuid)
+
+
+def build_history_url_uri(unique_id: str) -> str:
+    """Return ``bookmark-memex://history-url/<unique_id>``."""
+    return _build("history-url", unique_id)
+
+
+def build_visit_uri(uuid: str) -> str:
+    """Return ``bookmark-memex://visit/<uuid>``."""
+    return _build("visit", uuid)
 
 
 # Backwards-compat alias. New code should use build_marginalia_uri().

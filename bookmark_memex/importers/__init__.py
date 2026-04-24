@@ -5,6 +5,11 @@ from bookmark_memex.importers.browser import (
     import_browser_bookmarks,
     list_browser_profiles,
 )
+from bookmark_memex.importers.browser_history import (
+    HistoryImportResult,
+    import_history,
+    list_history_profiles,
+)
 
 __all__ = [
     "import_file",
@@ -12,4 +17,7 @@ __all__ = [
     "import_browser_bookmarks",
     "list_browser_profiles",
     "ImportResult",
+    "import_history",
+    "list_history_profiles",
+    "HistoryImportResult",
 ]

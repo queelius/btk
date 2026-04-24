@@ -428,8 +428,9 @@ def test_create_server_has_required_tools(tmp_db_path):
     import asyncio
     from bookmark_memex.mcp import create_server
     server = create_server(tmp_db_path)
-    # FastMCP 2.x: get_tools() returns a dict keyed by name.
-    tools = asyncio.run(server.get_tools())
-    tool_names = set(tools.keys())
+    # FastMCP 3.x renamed the introspection method to list_tools()
+    # which returns a list of FunctionTool objects, not a dict.
+    tools = asyncio.run(server.list_tools())
+    tool_names = {t.name for t in tools}
     required = {"get_schema", "execute_sql", "get_record", "mutate", "import_bookmarks", "export_bookmarks"}
     assert required.issubset(tool_names)

@@ -36,7 +36,12 @@ from sqlalchemy.orm import (
     relationship,
 )
 
-from bookmark_memex.uri import build_bookmark_uri, build_marginalia_uri
+from bookmark_memex.uri import (
+    build_bookmark_uri,
+    build_history_url_uri,
+    build_marginalia_uri,
+    build_visit_uri,
+)
 
 
 def _utcnow() -> datetime:
@@ -298,23 +303,41 @@ class ContentCache(Base):
 
 
 class Marginalia(Base):
-    """A free-form note attachable to any bookmark.
+    """A free-form note attachable to any record kind (bookmark, history_url, visit).
 
-    Uses ``ON DELETE SET NULL`` on ``bookmark_id`` so marginalia survive
-    bookmark deletion (orphan survival per the ecosystem contract).
+    Uses ``ON DELETE SET NULL`` on all FK columns so marginalia survive
+    record deletion (orphan survival per the ecosystem contract).
 
-    Called "marginalia" across the ``*-memex`` ecosystem — the metaphor
-    is handwritten notes in the margin of a book, generalised to
+    At most one of ``bookmark_id``, ``history_url_id``, ``history_visit_id``
+    should be non-NULL for any given row. The constraint is enforced in
+    :class:`bookmark_memex.db.Database` at insert time; SQLite does not
+    support multi-column CHECK constraints on ALTER TABLE, so there is no
+    DDL-level enforcement.
+
+    Called "marginalia" across the ``*-memex`` ecosystem. The metaphor is
+    handwritten notes in the margin of a book, generalised to
     notes-on-anything.
     """
 
     __tablename__ = "marginalia"
 
-    # UUID hex string — durable, survives re-imports
+    # UUID hex string, durable, survives re-imports
     id: Mapped[str] = mapped_column(Text, primary_key=True)
     bookmark_id: Mapped[Optional[int]] = mapped_column(
         Integer,
         ForeignKey("bookmarks.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    history_url_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("history_urls.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    history_visit_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("history_visits.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
@@ -332,6 +355,16 @@ class Marginalia(Base):
         back_populates="marginalia",
         foreign_keys=[bookmark_id],
     )
+    history_url: Mapped[Optional["HistoryUrl"]] = relationship(
+        "HistoryUrl",
+        back_populates="marginalia",
+        foreign_keys=[history_url_id],
+    )
+    history_visit: Mapped[Optional["HistoryVisit"]] = relationship(
+        "HistoryVisit",
+        back_populates="marginalia",
+        foreign_keys=[history_visit_id],
+    )
 
     @hybrid_property
     def uri(self) -> str:
@@ -339,7 +372,160 @@ class Marginalia(Base):
 
     def __repr__(self) -> str:
         return (
-            f"<Marginalia id={self.id!r} bookmark_id={self.bookmark_id!r}>"
+            f"<Marginalia id={self.id!r} bookmark_id={self.bookmark_id!r}"
+            f" history_url_id={self.history_url_id!r}"
+            f" history_visit_id={self.history_visit_id!r}>"
+        )
+
+
+# ---------------------------------------------------------------------------
+# HistoryUrl / HistoryVisit
+# ---------------------------------------------------------------------------
+
+
+class HistoryUrl(Base):
+    """Aggregate row per unique URL observed in browser history.
+
+    Distinct from :class:`Bookmark`: bookmarks are curation, history is
+    observation. The two tables share the :func:`normalize_url` contract
+    so ``unique_id`` joins across them, but otherwise they carry different
+    lifecycle semantics and never implicitly cross-query.
+
+    ``visit_count``, ``first_visited`` and ``last_visited`` are maintained
+    by SQL triggers on :class:`HistoryVisit`, not by application code.
+    """
+
+    __tablename__ = "history_urls"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    unique_id: Mapped[str] = mapped_column(
+        String(16), unique=True, nullable=False, index=True
+    )
+    url: Mapped[str] = mapped_column(
+        String(2048), unique=True, nullable=False, index=True
+    )
+    title: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+
+    first_visited: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True, index=True
+    )
+    last_visited: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True, index=True
+    )
+    visit_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    typed_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    media: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    extra_data: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
+    archived_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True, index=True
+    )
+
+    visits: Mapped[List["HistoryVisit"]] = relationship(
+        "HistoryVisit",
+        back_populates="history_url",
+        cascade="all, delete-orphan",
+        order_by="HistoryVisit.visited_at.desc()",
+    )
+    marginalia: Mapped[List["Marginalia"]] = relationship(
+        "Marginalia",
+        back_populates="history_url",
+        foreign_keys="Marginalia.history_url_id",
+    )
+
+    __table_args__ = (
+        Index("ix_history_urls_visit_count_desc", "visit_count"),
+    )
+
+    @hybrid_property
+    def uri(self) -> str:
+        return build_history_url_uri(self.unique_id)
+
+    @hybrid_property
+    def domain(self) -> str:
+        return urlparse(self.url).netloc
+
+    def __repr__(self) -> str:
+        return (
+            f"<HistoryUrl id={self.id!r} visit_count={self.visit_count!r}"
+            f" url={self.url!r}>"
+        )
+
+
+class HistoryVisit(Base):
+    """A single visit event in browser history.
+
+    Dedup contract: ``UNIQUE(url_id, visited_at, source_type, source_name)``.
+    Re-importing the same browser profile is idempotent via
+    ``INSERT OR IGNORE`` on this tuple.
+
+    ``from_visit_id`` preserves the referrer chain. It stays NULL when the
+    referrer visit has been pruned from the browser's own DB before the
+    memex capture.
+    """
+
+    __tablename__ = "history_visits"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    unique_id: Mapped[str] = mapped_column(
+        Text, unique=True, nullable=False, index=True
+    )
+    url_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("history_urls.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    visited_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
+    duration_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    transition: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
+    from_visit_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("history_visits.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    source_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    source_name: Mapped[str] = mapped_column(String(256), nullable=False)
+    imported_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=_utcnow
+    )
+    archived_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True, index=True
+    )
+
+    history_url: Mapped["HistoryUrl"] = relationship(
+        "HistoryUrl",
+        back_populates="visits",
+        foreign_keys=[url_id],
+    )
+    marginalia: Mapped[List["Marginalia"]] = relationship(
+        "Marginalia",
+        back_populates="history_visit",
+        foreign_keys="Marginalia.history_visit_id",
+    )
+
+    __table_args__ = (
+        Index(
+            "uq_history_visits_dedup",
+            "url_id",
+            "visited_at",
+            "source_type",
+            "source_name",
+            unique=True,
+        ),
+        Index("ix_history_visits_url_id_visited_at", "url_id", "visited_at"),
+        Index("ix_history_visits_source", "source_type", "source_name"),
+    )
+
+    @hybrid_property
+    def uri(self) -> str:
+        return build_visit_uri(self.unique_id)
+
+    def __repr__(self) -> str:
+        return (
+            f"<HistoryVisit id={self.id!r} url_id={self.url_id!r}"
+            f" visited_at={self.visited_at!r} transition={self.transition!r}>"
         )
 
 

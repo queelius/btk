@@ -90,6 +90,25 @@ def _read_vendor(name: str) -> bytes:
     return (_VENDORED_DIR / name).read_bytes()
 
 
+def _snapshot_db(src_db_path: Path, dst_db_path: Path) -> None:
+    """Snapshot the live DB to *dst_db_path* without mutating the source.
+
+    Uses SQLite's backup API rather than a raw file copy. The live DB
+    runs with ``journal_mode=WAL`` for import performance, so recent
+    writes may still be in ``<db>-wal`` and missing from the main file.
+    ``connection.backup()`` transparently reads both the main file and
+    the WAL, producing a self-contained snapshot without needing a
+    checkpoint on the source.
+    """
+    src = sqlite3.connect(str(src_db_path))
+    dst = sqlite3.connect(str(dst_db_path))
+    try:
+        src.backup(dst)
+    finally:
+        dst.close()
+        src.close()
+
+
 def _prepare_db_bytes(src_db_path: Path) -> bytes:
     """Return the bytes of a stripped-and-vacuumed copy of the source DB.
 
@@ -98,7 +117,7 @@ def _prepare_db_bytes(src_db_path: Path) -> bytes:
     """
     with tempfile.TemporaryDirectory(prefix="bm_html_app_") as tmp:
         tmp_db = Path(tmp) / "copy.db"
-        shutil.copy2(src_db_path, tmp_db)
+        _snapshot_db(src_db_path, tmp_db)
         _strip_fts5_and_vacuum(tmp_db)
         return tmp_db.read_bytes()
 
@@ -238,9 +257,10 @@ def _export_directory(db, out_path, *, compress_db: bool) -> dict:
         if src.exists():
             shutil.copy2(src, out_dir / filename)
 
-    # 3) DB copy + strip + optionally gzip
+    # 3) DB snapshot (WAL-aware, read-only against source) + strip +
+    #    optionally gzip.
     dest_db = out_dir / "bookmarks.db"
-    shutil.copy2(src_db_path, dest_db)
+    _snapshot_db(src_db_path, dest_db)
     _strip_fts5_and_vacuum(dest_db)
 
     if compress_db:

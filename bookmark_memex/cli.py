@@ -14,6 +14,7 @@ import sqlite3
 import sys
 import argparse
 from argparse import ArgumentParser, Namespace
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -81,6 +82,41 @@ def build_parser() -> ArgumentParser:
         help="Browser profile name",
     )
     p_ib.add_argument(
+        "--list",
+        dest="list_profiles",
+        action="store_true",
+        default=False,
+        help="List detected browser profiles and exit",
+    )
+
+    # ── import-history ───────────────────────────────────────────────────────
+    p_ih = sub.add_parser(
+        "import-history",
+        help="Import browser history (separate from curated bookmarks)",
+    )
+    p_ih.add_argument(
+        "--browser",
+        choices=["chrome", "firefox"],
+        default=None,
+        help="Browser to import history from",
+    )
+    p_ih.add_argument(
+        "--profile",
+        metavar="NAME",
+        default=None,
+        help="Browser profile name",
+    )
+    p_ih.add_argument(
+        "--since",
+        metavar="ISO_DATE",
+        default=None,
+        help=(
+            "Only import visits after this ISO-8601 datetime "
+            "(e.g. 2026-04-01 or 2026-04-01T12:00:00). "
+            "Optimisation only; re-imports are idempotent regardless."
+        ),
+    )
+    p_ih.add_argument(
         "--list",
         dest="list_profiles",
         action="store_true",
@@ -232,6 +268,46 @@ def cmd_import_browser(args: Namespace) -> None:
     )
 
 
+def cmd_import_history(args: Namespace) -> None:
+    """Import browser history (distinct from curated bookmarks)."""
+    from bookmark_memex.importers.browser_history import (
+        import_history,
+        list_history_profiles,
+    )
+
+    if getattr(args, "list_profiles", False):
+        profiles = list_history_profiles(getattr(args, "browser", None))
+        if not profiles:
+            print("No browser profiles detected.")
+        for p in profiles:
+            default_marker = " (default)" if p.get("is_default") else ""
+            print(f"  {p['browser']} / {p['name']}{default_marker}: {p['path']}")
+        return
+
+    since: Optional[datetime] = None
+    raw_since = getattr(args, "since", None)
+    if raw_since:
+        try:
+            since = datetime.fromisoformat(raw_since)
+        except ValueError as exc:
+            raise SystemExit(f"invalid --since value {raw_since!r}: {exc}")
+
+    db_path = _resolve_db(args)
+    from bookmark_memex.db import Database
+
+    db = Database(db_path)
+    browser = getattr(args, "browser", None) or "chrome"
+    profile = getattr(args, "profile", None)
+    result = import_history(db, browser=browser, profile=profile, since=since)
+    print(
+        f"Imported history from {browser}: "
+        f"urls seen {result.urls_seen}, added {result.urls_added}, "
+        f"updated {result.urls_updated}; "
+        f"visits seen {result.visits_seen}, added {result.visits_added}, "
+        f"skipped {result.visits_skipped}"
+    )
+
+
 def cmd_export(args: Namespace) -> None:
     """Export bookmarks to a file."""
     from bookmark_memex.db import Database
@@ -359,6 +435,7 @@ def main() -> None:
     handlers = {
         "import": cmd_import,
         "import-browser": cmd_import_browser,
+        "import-history": cmd_import_history,
         "export": cmd_export,
         "db": cmd_db,
         "sql": cmd_sql,

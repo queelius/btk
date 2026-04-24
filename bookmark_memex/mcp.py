@@ -110,10 +110,14 @@ def _create_tools(db_path: str) -> dict[str, Any]:
     def get_record(kind: str, id: str) -> dict:
         """Return a single record by kind and identifier.
 
-        kind='bookmark'   : look up by unique_id; include marginalia.
-        kind='marginalia' : look up by UUID; include parent bookmark_uri
-                            if the note has a bookmark_id.
-        kind='annotation' : legacy alias for 'marginalia'.
+        kind='bookmark'    : look up by unique_id; include marginalia.
+        kind='marginalia'  : look up by UUID; include parent URI if
+                             the note is attached to a bookmark, history
+                             URL, or visit.
+        kind='history-url' : look up a history_urls row by unique_id;
+                             include recent visits.
+        kind='visit'       : look up a history_visits row by unique_id.
+        kind='annotation'  : legacy alias for 'marginalia'.
 
         Raises ValueError if the record is not found or kind is unknown.
         """
@@ -158,9 +162,13 @@ def _create_tools(db_path: str) -> dict[str, Any]:
                 row = conn.execute(
                     "SELECT m.id, m.text, m.created_at, m.updated_at, "
                     "       m.archived_at, "
-                    "       m.bookmark_id, b.unique_id AS bookmark_unique_id "
+                    "       m.bookmark_id, b.unique_id AS bookmark_unique_id, "
+                    "       m.history_url_id, hu.unique_id AS history_url_unique_id, "
+                    "       m.history_visit_id, hv.unique_id AS history_visit_unique_id "
                     "FROM marginalia m "
-                    "LEFT JOIN bookmarks b ON m.bookmark_id = b.id "
+                    "LEFT JOIN bookmarks      b  ON m.bookmark_id = b.id "
+                    "LEFT JOIN history_urls   hu ON m.history_url_id = hu.id "
+                    "LEFT JOIN history_visits hv ON m.history_visit_id = hv.id "
                     "WHERE m.id = ?",
                     [id],
                 ).fetchone()
@@ -172,11 +180,90 @@ def _create_tools(db_path: str) -> dict[str, Any]:
                 result["bookmark_uri"] = (
                     f"bookmark-memex://bookmark/{row['bookmark_unique_id']}"
                 )
+            if row["history_url_unique_id"]:
+                result["history_url_uri"] = (
+                    f"bookmark-memex://history-url/{row['history_url_unique_id']}"
+                )
+            if row["history_visit_unique_id"]:
+                result["visit_uri"] = (
+                    f"bookmark-memex://visit/{row['history_visit_unique_id']}"
+                )
             return result
 
+        if kind == "history-url":
+            row = db.get_history_url_by_unique_id(id)
+            if row is None:
+                raise ValueError(
+                    f"history-url with unique_id={id!r} not found"
+                )
+            # Pull the 20 most recent visits inline for convenience.
+            with sqlite3.connect(db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                visits = [
+                    {
+                        "unique_id": r["unique_id"],
+                        "uri": f"bookmark-memex://visit/{r['unique_id']}",
+                        "visited_at": r["visited_at"],
+                        "transition": r["transition"],
+                        "duration_ms": r["duration_ms"],
+                        "source_type": r["source_type"],
+                        "source_name": r["source_name"],
+                    }
+                    for r in conn.execute(
+                        "SELECT unique_id, visited_at, transition, "
+                        "       duration_ms, source_type, source_name "
+                        "FROM history_visits "
+                        "WHERE url_id = ? AND archived_at IS NULL "
+                        "ORDER BY visited_at DESC LIMIT 20",
+                        [row.id],
+                    ).fetchall()
+                ]
+            return {
+                "unique_id": row.unique_id,
+                "uri": row.uri,
+                "url": row.url,
+                "title": row.title,
+                "first_visited": (
+                    row.first_visited.isoformat() if row.first_visited else None
+                ),
+                "last_visited": (
+                    row.last_visited.isoformat() if row.last_visited else None
+                ),
+                "visit_count": row.visit_count,
+                "typed_count": row.typed_count,
+                "media": row.media,
+                "recent_visits": visits,
+            }
+
+        if kind == "visit":
+            row = db.get_history_visit_by_unique_id(id)
+            if row is None:
+                raise ValueError(
+                    f"visit with unique_id={id!r} not found"
+                )
+            # Resolve the parent history_url for context.
+            parent = db.get_history_url(row.url_id)
+            return {
+                "unique_id": row.unique_id,
+                "uri": row.uri,
+                "url_id": row.url_id,
+                "history_url_uri": parent.uri if parent else None,
+                "url": parent.url if parent else None,
+                "title": parent.title if parent else None,
+                "visited_at": row.visited_at.isoformat(),
+                "transition": row.transition,
+                "duration_ms": row.duration_ms,
+                "from_visit_id": row.from_visit_id,
+                "source_type": row.source_type,
+                "source_name": row.source_name,
+                "imported_at": (
+                    row.imported_at.isoformat() if row.imported_at else None
+                ),
+            }
+
         raise ValueError(
-            f"Unknown record kind {kind!r}. "
-            "Supported: 'bookmark', 'marginalia' (alias 'annotation')."
+            f"Unknown record kind {kind!r}. Supported: 'bookmark', "
+            "'marginalia' (alias 'annotation'), 'history-url', 'visit'."
         )
 
     # ------------------------------------------------------------------
