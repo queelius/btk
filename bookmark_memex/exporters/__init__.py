@@ -72,6 +72,8 @@ def export_file(
         return
 
     if format == "html-app":
+        # html-app exporter doesn't accept arkiv kwargs.
+        kwargs.pop("include_history", None)
         export_html_app(db, path, **kwargs)
         return
 
@@ -81,6 +83,7 @@ def export_file(
             f"unknown format {format!r}. Choose from: {', '.join(_SUPPORTED_FORMATS)}"
         )
 
-    # Flat-file formats don't take html-app options.
+    # Flat-file formats don't take format-specific options.
     kwargs.pop("single_file", None)
+    kwargs.pop("include_history", None)
     fn(db, path, bookmark_ids=bookmark_ids, **kwargs)

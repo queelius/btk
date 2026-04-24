@@ -153,6 +153,17 @@ def build_parser() -> ArgumentParser:
         default=False,
         help=argparse.SUPPRESS,
     )
+    p_export.add_argument(
+        "--include-history",
+        dest="include_history",
+        action="store_true",
+        default=False,
+        help=(
+            "arkiv only: also emit browser history records "
+            "(history-url + visit kinds). Off by default because "
+            "history is large and more sensitive than bookmarks."
+        ),
+    )
 
     # ── fetch ────────────────────────────────────────────────────────────────
     p_fetch = sub.add_parser("fetch", help="Fetch/cache web content for bookmarks")
@@ -330,10 +341,12 @@ def cmd_export(args: Namespace) -> None:
         }
         fmt = ext_map.get(ext, "json")
 
-    # Pass --dir (or its absence) to html-app; ignored by other formats.
+    # Pass format-specific kwargs; unused ones are dropped by export_file.
     kwargs = {}
     if fmt == "html-app":
         kwargs["single_file"] = not bool(getattr(args, "as_dir", False))
+    if fmt == "arkiv":
+        kwargs["include_history"] = bool(getattr(args, "include_history", False))
 
     export_file(db, Path(args.path), format=fmt, **kwargs)
     print(f"Exported to {args.path} (format: {fmt})")
