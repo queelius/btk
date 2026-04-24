@@ -4,14 +4,14 @@ Output can be a directory, a ``.zip`` archive, or a ``.tar.gz`` tarball;
 the choice is inferred from *out_path*'s extension. All three layouts
 contain the same files:
 
-- ``records.jsonl``: one JSON line per active bookmark/annotation.
+- ``records.jsonl``: one JSON line per active bookmark/marginalia entry.
 - ``schema.yaml``:   archive self-description + per-key metadata stats.
 - ``README.md``:     arkiv ECHO frontmatter + human-readable explanation.
 
 Record URI scheme follows the cross-archive contract::
 
     bookmark-memex://bookmark/<unique_id>
-    bookmark-memex://annotation/<uuid>
+    bookmark-memex://marginalia/<uuid>
 
 Compression choice prioritises longevity: ``.zip`` and ``.tar.gz`` are
 both ubiquitous on every OS and scripting language (30+ years of tooling).
@@ -33,8 +33,8 @@ from typing import Any, Dict, List, Optional
 import yaml
 from sqlalchemy import select
 
-from bookmark_memex.models import Annotation, Bookmark
-from bookmark_memex.uri import build_annotation_uri, build_bookmark_uri
+from bookmark_memex.models import Bookmark, Marginalia
+from bookmark_memex.uri import build_bookmark_uri, build_marginalia_uri
 
 
 # ---------------------------------------------------------------------------
@@ -62,19 +62,19 @@ SCHEMA: dict = {
                 "added": "ISO-8601 UTC datetime when the bookmark was added.",
             },
         },
-        "annotation": {
-            "description": "A note attached to a bookmark (marginalia).",
-            "uri": "bookmark-memex://annotation/<uuid>",
+        "marginalia": {
+            "description": "A free-form note attached to a bookmark.",
+            "uri": "bookmark-memex://marginalia/<uuid>",
             "fields": {
-                "kind": "Always 'annotation'.",
-                "uri": "Canonical bookmark-memex URI for this annotation.",
-                "uuid": "UUID hex string — durable annotation identifier.",
+                "kind": "Always 'marginalia'.",
+                "uri": "Canonical bookmark-memex URI for this note.",
+                "uuid": "UUID hex string — durable note identifier.",
                 "bookmark_uri": (
                     "URI of the parent bookmark, or null if the parent was deleted."
                 ),
-                "text": "Free-form annotation text.",
-                "created_at": "ISO-8601 UTC datetime when the annotation was created.",
-                "updated_at": "ISO-8601 UTC datetime when the annotation was last updated.",
+                "text": "Free-form note text.",
+                "created_at": "ISO-8601 UTC datetime when the note was created.",
+                "updated_at": "ISO-8601 UTC datetime when the note was last updated.",
             },
         },
     },
@@ -105,10 +105,10 @@ def _detect_compression(path: str) -> str:
 
 
 def _build_records(db) -> List[Dict[str, Any]]:
-    """Collect all active bookmark + annotation records from the DB.
+    """Collect all active bookmark + marginalia records from the DB.
 
     Returns a list of dicts in the order: bookmarks first (by id asc),
-    then annotations (by created_at asc).
+    then marginalia (by created_at asc).
     """
     records: List[Dict[str, Any]] = []
 
@@ -120,7 +120,7 @@ def _build_records(db) -> List[Dict[str, Any]]:
         )
         bookmarks = list(session.execute(bm_query).scalars())
 
-        # Preload unique_ids so annotations can reference the parent URI
+        # Preload unique_ids so marginalia can reference the parent URI
         # without a second round-trip.
         id_to_unique: Dict[int, str] = {bm.id: bm.unique_id for bm in bookmarks}
 
@@ -143,27 +143,27 @@ def _build_records(db) -> List[Dict[str, Any]]:
                 }
             )
 
-        ann_query = (
-            select(Annotation)
-            .where(Annotation.archived_at.is_(None))
-            .order_by(Annotation.created_at)
+        note_query = (
+            select(Marginalia)
+            .where(Marginalia.archived_at.is_(None))
+            .order_by(Marginalia.created_at)
         )
-        for ann in session.execute(ann_query).scalars():
+        for note in session.execute(note_query).scalars():
             parent_uri: Optional[str] = None
-            if ann.bookmark_id is not None:
-                parent_unique = id_to_unique.get(ann.bookmark_id)
+            if note.bookmark_id is not None:
+                parent_unique = id_to_unique.get(note.bookmark_id)
                 if parent_unique is not None:
                     parent_uri = build_bookmark_uri(parent_unique)
 
             records.append(
                 {
-                    "kind": "annotation",
-                    "uri": build_annotation_uri(ann.id),
-                    "uuid": ann.id,
+                    "kind": "marginalia",
+                    "uri": build_marginalia_uri(note.id),
+                    "uuid": note.id,
                     "bookmark_uri": parent_uri,
-                    "text": ann.text,
-                    "created_at": ann.created_at.isoformat() if ann.created_at else None,
-                    "updated_at": ann.updated_at.isoformat() if ann.updated_at else None,
+                    "text": note.text,
+                    "created_at": note.created_at.isoformat() if note.created_at else None,
+                    "updated_at": note.updated_at.isoformat() if note.updated_at else None,
                 }
             )
 
@@ -184,7 +184,7 @@ def _records_to_jsonl_bytes(records: List[Dict[str, Any]]) -> bytes:
 
 def _schema_yaml_bytes(records: List[Dict[str, Any]]) -> bytes:
     """Render schema.yaml with declared field docs + live per-kind counts."""
-    counts = {"bookmark": 0, "annotation": 0}
+    counts = {"bookmark": 0, "marginalia": 0}
     for rec in records:
         kind = rec.get("kind")
         if kind in counts:
@@ -202,7 +202,7 @@ def _schema_yaml_bytes(records: List[Dict[str, Any]]) -> bytes:
     return buf.getvalue().encode("utf-8")
 
 
-def _readme_bytes(num_bookmarks: int, num_annotations: int) -> bytes:
+def _readme_bytes(num_bookmarks: int, num_marginalia: int) -> bytes:
     """Render README.md with ECHO frontmatter + usage notes."""
     try:
         from importlib.metadata import version as _pkg_version
@@ -215,28 +215,29 @@ def _readme_bytes(num_bookmarks: int, num_annotations: int) -> bytes:
     lines = [
         "---",
         "name: bookmark-memex archive",
-        f'description: "{num_bookmarks} bookmarks + {num_annotations} annotations exported from bookmark-memex"',
+        f'description: "{num_bookmarks} bookmarks + {num_marginalia} marginalia exported from bookmark-memex"',
         f"datetime: {today}",
         f"generator: bookmark-memex {version}",
         "contents:",
         "  - path: records.jsonl",
-        "    description: Bookmark and annotation records (arkiv JSONL format)",
+        "    description: Bookmark and marginalia records (arkiv JSONL format)",
         "  - path: schema.yaml",
         "    description: Record schema + per-kind counts",
         "---",
         "",
         "# bookmark-memex Archive",
         "",
-        f"This archive contains {num_bookmarks} bookmark(s) and {num_annotations} annotation(s)",
+        f"This archive contains {num_bookmarks} bookmark(s) and {num_marginalia} "
+        "note(s) (marginalia)",
         "exported from bookmark-memex in [arkiv](https://github.com/alonzo-church/arkiv) format.",
         "",
         "Each line in `records.jsonl` is one record. Records are typed by `kind`:",
         "",
         "- `bookmark`: a saved URL with title, description, tags, and media metadata.",
-        "- `annotation`: a free-form note attached (by URI) to a bookmark.",
+        "- `marginalia`: a free-form note attached (by URI) to a bookmark.",
         "",
         "URIs follow the cross-archive `bookmark-memex://` scheme and stay stable",
-        "across re-imports, so annotations survive their parent bookmark being",
+        "across re-imports, so marginalia survive their parent bookmark being",
         "re-imported or round-tripped through another archive.",
         "",
         "## Importing back into bookmark-memex",
@@ -285,7 +286,7 @@ def _write_tar_gz(path: str, jsonl: bytes, schema_yaml: bytes, readme: bytes) ->
 
 
 def export_arkiv(db, out_path) -> dict:
-    """Export active bookmarks and annotations as an arkiv bundle.
+    """Export active bookmarks and marginalia as an arkiv bundle.
 
     Output format is inferred from *out_path*'s extension:
 
@@ -305,11 +306,14 @@ def export_arkiv(db, out_path) -> dict:
     -------
     dict
         ``{"path": str, "format": "dir"|"zip"|"tar.gz",
-           "counts": {"bookmark": N, "annotation": N}}``
+           "counts": {"bookmark": N, "marginalia": N, "annotation": N}}``
+
+        The ``annotation`` key is a backwards-compat alias for
+        ``marginalia`` so callers that read the old key still work.
     """
     out_path_str = str(out_path)
     records = _build_records(db)
-    counts = {"bookmark": 0, "annotation": 0}
+    counts = {"bookmark": 0, "marginalia": 0}
     for rec in records:
         kind = rec.get("kind")
         if kind in counts:
@@ -317,7 +321,7 @@ def export_arkiv(db, out_path) -> dict:
 
     jsonl_bytes = _records_to_jsonl_bytes(records)
     schema_bytes = _schema_yaml_bytes(records)
-    readme_bytes = _readme_bytes(counts["bookmark"], counts["annotation"])
+    readme_bytes = _readme_bytes(counts["bookmark"], counts["marginalia"])
 
     fmt = _detect_compression(out_path_str)
     if fmt == "zip":
@@ -334,10 +338,15 @@ def export_arkiv(db, out_path) -> dict:
         _write_file(str(out_dir / "schema.yaml"), schema_bytes)
         _write_file(str(out_dir / "README.md"), readme_bytes)
 
+    # Mirror marginalia count as "annotation" for any caller still reading
+    # the pre-rename shape.
+    counts_with_alias = dict(counts)
+    counts_with_alias["annotation"] = counts["marginalia"]
+
     return {
         "path": out_path_str,
         "format": fmt,
-        "counts": counts,
+        "counts": counts_with_alias,
         # Backcompat shape for existing callers that read these two keys.
         "records_path": (
             out_path_str

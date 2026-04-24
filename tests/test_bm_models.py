@@ -12,17 +12,22 @@ from sqlalchemy import create_engine, select, text
 from sqlalchemy.orm import Session
 
 from bookmark_memex.models import (
-    Annotation,
+    Annotation,  # legacy alias of Marginalia; both still importable
     Base,
     Bookmark,
     BookmarkSource,
     ContentCache,
     Event,
+    Marginalia,
     SchemaVersion,
     Tag,
     bookmark_tags,
 )
-from bookmark_memex.uri import build_annotation_uri, build_bookmark_uri
+from bookmark_memex.uri import (
+    build_annotation_uri,  # legacy alias (kept for backward-compat test)
+    build_bookmark_uri,
+    build_marginalia_uri,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -228,12 +233,12 @@ class TestBookmarkMediaField:
 
 
 # ---------------------------------------------------------------------------
-# Annotation
+# Marginalia
 # ---------------------------------------------------------------------------
 
 
-class TestAnnotation:
-    def test_create_annotation_with_bookmark(self, session):
+class TestMarginalia:
+    def test_create_marginalia_with_bookmark(self, session):
         bm = Bookmark(
             unique_id="aa01bb02cc03dd04",
             url="https://annot.example.com",
@@ -242,17 +247,17 @@ class TestAnnotation:
         session.add(bm)
         session.flush()
 
-        ann_id = uuid.uuid4().hex
-        ann = Annotation(id=ann_id, bookmark_id=bm.id, text="Interesting point")
-        session.add(ann)
+        note_id = uuid.uuid4().hex
+        note = Marginalia(id=note_id, bookmark_id=bm.id, text="Interesting point")
+        session.add(note)
         session.flush()
 
-        assert ann.id == ann_id
-        assert ann.bookmark_id == bm.id
-        assert ann.text == "Interesting point"
+        assert note.id == note_id
+        assert note.bookmark_id == bm.id
+        assert note.text == "Interesting point"
 
-    def test_annotation_uri_property(self, session):
-        ann_id = uuid.uuid4().hex
+    def test_marginalia_uri_property(self, session):
+        note_id = uuid.uuid4().hex
         bm = Bookmark(
             unique_id="bb02cc03dd04ee05",
             url="https://annot-uri.example.com",
@@ -261,15 +266,19 @@ class TestAnnotation:
         session.add(bm)
         session.flush()
 
-        ann = Annotation(id=ann_id, bookmark_id=bm.id, text="Note")
-        session.add(ann)
+        note = Marginalia(id=note_id, bookmark_id=bm.id, text="Note")
+        session.add(note)
         session.flush()
 
-        assert ann.uri == build_annotation_uri(ann_id)
-        assert ann.uri == f"bookmark-memex://annotation/{ann_id}"
+        assert note.uri == build_marginalia_uri(note_id)
+        assert note.uri == f"bookmark-memex://marginalia/{note_id}"
+
+    def test_annotation_alias_still_resolves_to_marginalia(self, session):
+        """The legacy ``Annotation`` import must be an alias of Marginalia."""
+        assert Annotation is Marginalia
 
     def test_orphan_survival_on_bookmark_delete(self, session):
-        """Deleting a bookmark sets annotation.bookmark_id to NULL, not deletes it."""
+        """Deleting a bookmark sets marginalia.bookmark_id to NULL, not deletes it."""
         bm = Bookmark(
             unique_id="cc03dd04ee05ff06",
             url="https://orphan.example.com",
@@ -279,21 +288,21 @@ class TestAnnotation:
         session.flush()
         bm_id = bm.id
 
-        ann_id = uuid.uuid4().hex
-        ann = Annotation(id=ann_id, bookmark_id=bm_id, text="Orphan note")
-        session.add(ann)
+        note_id = uuid.uuid4().hex
+        note = Marginalia(id=note_id, bookmark_id=bm_id, text="Orphan note")
+        session.add(note)
         session.flush()
 
         # Delete bookmark
         session.delete(bm)
         session.flush()
 
-        # Annotation should still exist with bookmark_id = None
+        # Marginalia should still exist with bookmark_id = None.
         result = session.execute(
-            select(Annotation).where(Annotation.id == ann_id)
+            select(Marginalia).where(Marginalia.id == note_id)
         ).scalar_one_or_none()
 
-        assert result is not None, "Annotation must survive bookmark deletion"
+        assert result is not None, "Marginalia must survive bookmark deletion"
         assert result.bookmark_id is None, "bookmark_id should be NULL after parent delete"
 
 

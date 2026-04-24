@@ -43,8 +43,15 @@ _SQL_WASM_FILE = "sql-wasm.wasm"
 
 # FTS5 virtual tables in bookmark-memex. Listed explicitly rather than
 # discovered so we don't accidentally drop something else that happens
-# to be named like an FTS5 shadow table.
-_FTS5_TABLES = ("bookmarks_fts", "content_fts", "annotations_fts")
+# to be named like an FTS5 shadow table. Includes the legacy
+# "annotations_fts" name in case we're shipping a database that was
+# migrated but hasn't rebuilt its FTS index yet.
+_FTS5_TABLES = (
+    "bookmarks_fts",
+    "content_fts",
+    "marginalia_fts",
+    "annotations_fts",
+)
 
 # gzip level 6 is the sweet spot: near-maximum ratio, modest CPU.
 _DB_GZIP_LEVEL = 6

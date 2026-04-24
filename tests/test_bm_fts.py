@@ -68,9 +68,9 @@ def test_create_indexes_makes_bookmarks_fts_exist(fts):
     assert stats["bookmarks_fts"]["exists"] is True
 
 
-def test_create_indexes_makes_annotations_fts_exist(fts):
+def test_create_indexes_makes_marginalia_fts_exist(fts):
     stats = fts.get_stats()
-    assert stats["annotations_fts"]["exists"] is True
+    assert stats["marginalia_fts"]["exists"] is True
 
 
 def test_create_indexes_makes_content_fts_exist(fts):
@@ -88,7 +88,7 @@ def test_create_indexes_idempotent(db):
 def test_get_stats_document_counts_start_at_zero(fts):
     stats = fts.get_stats()
     assert stats["bookmarks_fts"]["documents"] == 0
-    assert stats["annotations_fts"]["documents"] == 0
+    assert stats["marginalia_fts"]["documents"] == 0
     assert stats["content_fts"]["documents"] == 0
 
 
@@ -130,21 +130,29 @@ def test_rebuild_bookmarks_index_updates_stats(db, fts):
 
 
 # ---------------------------------------------------------------------------
-# rebuild_annotations_index
+# rebuild_marginalia_index
 # ---------------------------------------------------------------------------
 
 
-def test_rebuild_annotations_index_returns_correct_count(db, fts):
+def test_rebuild_marginalia_index_returns_correct_count(db, fts):
     bm = db.add("https://example.com", title="Example")
-    db.annotate(bm.unique_id, "First annotation")
-    db.annotate(bm.unique_id, "Second annotation")
-    count = fts.rebuild_annotations_index()
+    db.add_marginalia(bm.unique_id, "First note")
+    db.add_marginalia(bm.unique_id, "Second note")
+    count = fts.rebuild_marginalia_index()
     assert count == 2
 
 
-def test_rebuild_annotations_index_zero_when_empty(db, fts):
-    count = fts.rebuild_annotations_index()
+def test_rebuild_marginalia_index_zero_when_empty(db, fts):
+    count = fts.rebuild_marginalia_index()
     assert count == 0
+
+
+def test_rebuild_annotations_alias_still_works(db, fts):
+    """Legacy name must continue to function for backward compatibility."""
+    bm = db.add("https://example.com", title="Example")
+    db.annotate(bm.unique_id, "Legacy-name call")
+    count = fts.rebuild_annotations_index()
+    assert count == 1
 
 
 # ---------------------------------------------------------------------------

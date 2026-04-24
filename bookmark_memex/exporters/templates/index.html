@@ -230,8 +230,8 @@ main {
 }
 .tag:hover { filter: brightness(1.1); }
 
-/* -- annotation notes ------------------------------------------------ */
-.annotation {
+/* -- marginalia (notes attached to bookmarks) ------------------------ */
+.marginalia {
   border-left: 3px solid var(--border-accent);
   padding: var(--gap-sm) var(--gap);
   margin: var(--gap-sm) 0;
@@ -469,9 +469,9 @@ footer {
     ).map(r => r.name);
   }
 
-  function fetchAnnotationsFor(db, bookmarkId) {
+  function fetchMarginaliaFor(db, bookmarkId) {
     return all(db,
-      "SELECT id, text, created_at, updated_at FROM annotations " +
+      "SELECT id, text, created_at, updated_at FROM marginalia " +
       "WHERE bookmark_id = ? AND archived_at IS NULL " +
       "ORDER BY created_at DESC",
       [bookmarkId]
@@ -582,13 +582,13 @@ footer {
     }
     frag.appendChild(card);
 
-    const anns = fetchAnnotationsFor(db, bm.id);
+    const anns = fetchMarginaliaFor(db, bm.id);
     if (anns.length) {
       const head = el("div", { class: "section-head" });
-      head.textContent = "Annotations (" + anns.length + ")";
+      head.textContent = "Marginalia (" + anns.length + ")";
       frag.appendChild(head);
       for (const a of anns) {
-        const n = el("div", { class: "annotation" });
+        const n = el("div", { class: "marginalia" });
         n.textContent = a.text;
         frag.appendChild(n);
       }

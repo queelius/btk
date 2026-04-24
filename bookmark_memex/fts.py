@@ -1,9 +1,9 @@
 """Full-text search (FTS5) index for bookmark-memex.
 
 Manages three independent FTS5 virtual tables:
-  - bookmarks_fts  : url, title, description, tags
-  - content_fts    : extracted_text from content_cache
-  - annotations_fts: annotation text
+  - bookmarks_fts : url, title, description, tags
+  - content_fts   : extracted_text from content_cache
+  - marginalia_fts: marginalia text (notes attached to bookmarks)
 
 All operations use raw sqlite3 connections (not SQLAlchemy) so that FTS5
 virtual-table DDL and the snippet()/bm25() auxiliary functions are accessible
@@ -56,9 +56,9 @@ _FTS_TABLES: Dict[str, str] = {
             tokenize='porter unicode61'
         )
     """,
-    "annotations_fts": """
-        CREATE VIRTUAL TABLE IF NOT EXISTS annotations_fts USING fts5(
-            annotation_id UNINDEXED,
+    "marginalia_fts": """
+        CREATE VIRTUAL TABLE IF NOT EXISTS marginalia_fts USING fts5(
+            marginalia_id UNINDEXED,
             text,
             tokenize='porter unicode61'
         )
@@ -192,8 +192,8 @@ class FTSIndex:
         finally:
             conn.close()
 
-    def rebuild_annotations_index(self) -> int:
-        """Repopulate annotations_fts from active annotations.
+    def rebuild_marginalia_index(self) -> int:
+        """Repopulate marginalia_fts from active marginalia.
 
         Returns:
             Number of rows inserted.
@@ -201,21 +201,21 @@ class FTSIndex:
         conn = self._connect()
         try:
             cur = conn.cursor()
-            cur.execute("DELETE FROM annotations_fts")
+            cur.execute("DELETE FROM marginalia_fts")
 
             cur.execute(
                 """
                 SELECT id, text
-                FROM annotations
+                FROM marginalia
                 WHERE archived_at IS NULL
                 """
             )
             rows = cur.fetchall()
 
-            for ann_id, text in rows:
+            for note_id, text in rows:
                 cur.execute(
-                    "INSERT INTO annotations_fts(annotation_id, text) VALUES (?, ?)",
-                    (ann_id, text or ""),
+                    "INSERT INTO marginalia_fts(marginalia_id, text) VALUES (?, ?)",
+                    (note_id, text or ""),
                 )
 
             conn.commit()
@@ -225,6 +225,9 @@ class FTSIndex:
             raise
         finally:
             conn.close()
+
+    # Deprecated alias kept for backward compatibility.
+    rebuild_annotations_index = rebuild_marginalia_index
 
     # ------------------------------------------------------------------
     # Search
@@ -347,7 +350,7 @@ class FTSIndex:
             {
                 "bookmarks_fts":  {"exists": True,  "documents": 42},
                 "content_fts":    {"exists": False, "documents": 0},
-                "annotations_fts": {"exists": True, "documents": 7},
+                "marginalia_fts": {"exists": True, "documents": 7},
             }
         """
         conn = self._connect()

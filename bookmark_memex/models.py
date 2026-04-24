@@ -3,8 +3,8 @@
 Uses SQLAlchemy 2.0 declarative style (Mapped / mapped_column).
 
 Key design decisions:
-- Soft delete on Bookmark, ContentCache, and Annotation via ``archived_at``.
-- Annotation.bookmark_id uses ON DELETE SET NULL so annotations survive
+- Soft delete on Bookmark, ContentCache, and Marginalia via ``archived_at``.
+- Marginalia.bookmark_id uses ON DELETE SET NULL so marginalia survive
   bookmark deletion (orphan survival).
 - bookmark_tags junction cascades DELETE on both FK sides.
 - Bookmark.tags loaded with ``lazy="selectin"`` for efficient retrieval.
@@ -36,7 +36,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 
-from bookmark_memex.uri import build_annotation_uri, build_bookmark_uri
+from bookmark_memex.uri import build_bookmark_uri, build_marginalia_uri
 
 
 def _utcnow() -> datetime:
@@ -140,11 +140,11 @@ class Bookmark(Base):
         cascade="all, delete-orphan",
         uselist=False,
     )
-    annotations: Mapped[List["Annotation"]] = relationship(
-        "Annotation",
+    marginalia: Mapped[List["Marginalia"]] = relationship(
+        "Marginalia",
         back_populates="bookmark",
-        foreign_keys="Annotation.bookmark_id",
-        # No cascade delete — annotations survive via ON DELETE SET NULL.
+        foreign_keys="Marginalia.bookmark_id",
+        # No cascade delete — marginalia survive via ON DELETE SET NULL.
     )
 
     __table_args__ = (
@@ -293,18 +293,22 @@ class ContentCache(Base):
 
 
 # ---------------------------------------------------------------------------
-# Annotation
+# Marginalia
 # ---------------------------------------------------------------------------
 
 
-class Annotation(Base):
+class Marginalia(Base):
     """A free-form note attachable to any bookmark.
 
-    Uses ``ON DELETE SET NULL`` on ``bookmark_id`` so annotations survive
+    Uses ``ON DELETE SET NULL`` on ``bookmark_id`` so marginalia survive
     bookmark deletion (orphan survival per the ecosystem contract).
+
+    Called "marginalia" across the ``*-memex`` ecosystem — the metaphor
+    is handwritten notes in the margin of a book, generalised to
+    notes-on-anything.
     """
 
-    __tablename__ = "annotations"
+    __tablename__ = "marginalia"
 
     # UUID hex string — durable, survives re-imports
     id: Mapped[str] = mapped_column(Text, primary_key=True)
@@ -325,18 +329,23 @@ class Annotation(Base):
 
     bookmark: Mapped[Optional["Bookmark"]] = relationship(
         "Bookmark",
-        back_populates="annotations",
+        back_populates="marginalia",
         foreign_keys=[bookmark_id],
     )
 
     @hybrid_property
     def uri(self) -> str:
-        return build_annotation_uri(self.id)
+        return build_marginalia_uri(self.id)
 
     def __repr__(self) -> str:
         return (
-            f"<Annotation id={self.id!r} bookmark_id={self.bookmark_id!r}>"
+            f"<Marginalia id={self.id!r} bookmark_id={self.bookmark_id!r}>"
         )
+
+
+# Backwards-compat alias for callers that still import ``Annotation``.
+# Deprecated; will be removed once the ecosystem has fully migrated.
+Annotation = Marginalia
 
 
 # ---------------------------------------------------------------------------

@@ -11,12 +11,17 @@ Supported input layouts (all auto-detected):
 - ``.tar.gz`` / ``.tgz`` file containing those files
 - bare ``.jsonl`` file of arkiv records (no README/schema needed)
 - ``.jsonl.gz`` file of gzipped arkiv records — the format the browser
-  SPA emits for round-tripping annotations back to the primary DB
+  SPA emits for round-tripping marginalia back to the primary DB
 
 This is intentionally forgiving: if ``README.md`` or ``schema.yaml`` is
 missing but ``records.jsonl`` is present, we still import. The bundle's
 "identity as a bookmark-memex arkiv" is a soft claim; the JSONL records
 are what we actually need.
+
+Record kinds handled:
+    - ``bookmark``   — canonical
+    - ``marginalia`` — canonical (post-2026-04 rename)
+    - ``annotation`` — legacy, transparently imported as marginalia
 
 Round-trip fidelity:
 
@@ -24,8 +29,8 @@ Round-trip fidelity:
   Re-importing the same bundle is safe — duplicates are merged into the
   existing row via :meth:`Database.add`, which preserves local tags,
   title, starred/pinned flags, and description.
-- Annotations: identified by UUID. Uses ``INSERT OR IGNORE`` semantics
-  via :meth:`Database.merge_annotation`, so re-importing the same
+- Marginalia: identified by UUID. Uses ``INSERT OR IGNORE`` semantics
+  via :meth:`Database.merge_marginalia`, so re-importing the same
   bundle does not create duplicate notes.
 
 ``--merge`` vs default: bookmark-memex's :meth:`Database.add` is already
@@ -69,26 +74,30 @@ def _jsonl_peek_first_record(reader) -> Optional[Dict[str, Any]]:
     return None
 
 
+_MARGINALIA_KINDS = ("marginalia", "annotation")  # annotation = legacy alias
+
+
 def _is_bookmark_memex_arkiv_record(rec: Dict[str, Any]) -> bool:
     """Heuristic: is this record from bookmark-memex?
 
     A record from bookmark-memex arkiv export has ``kind`` in
-    {"bookmark", "annotation"} and either a ``uri`` that starts with
+    {"bookmark", "marginalia"} — or the pre-rename alias "annotation"
+    for legacy bundles — and either a ``uri`` that starts with
     ``bookmark-memex://`` (strict) or a recognisable shape.
     """
     if not isinstance(rec, dict):
         return False
     kind = rec.get("kind")
-    if kind not in ("bookmark", "annotation"):
+    if kind not in ("bookmark",) + _MARGINALIA_KINDS:
         return False
     uri = rec.get("uri", "")
     if isinstance(uri, str) and uri.startswith("bookmark-memex://"):
         return True
     # Permissive fallback: accept anything with a recognisable kind and
-    # a required identifier (URL for bookmarks, UUID for annotations).
+    # a required identifier (URL for bookmarks, UUID for marginalia).
     if kind == "bookmark" and ("url" in rec or "unique_id" in rec):
         return True
-    if kind == "annotation" and ("uuid" in rec or "text" in rec):
+    if kind in _MARGINALIA_KINDS and ("uuid" in rec or "text" in rec):
         return True
     return False
 
@@ -276,19 +285,25 @@ def import_arkiv(
     -------
     dict
         ``{"bookmarks_added": N, "bookmarks_seen": N,
+           "marginalia_added": N, "marginalia_seen": N,
+           "marginalia_skipped_existing": N,
            "annotations_added": N, "annotations_seen": N,
            "annotations_skipped_existing": N}``
+
+        The ``annotations_*`` keys are backwards-compat aliases of the
+        ``marginalia_*`` keys (same integer value). Existing callers do
+        not need to change.
     """
-    stats = {
+    stats_core = {
         "bookmarks_added": 0,
         "bookmarks_seen": 0,
-        "annotations_added": 0,
-        "annotations_seen": 0,
-        "annotations_skipped_existing": 0,
+        "marginalia_added": 0,
+        "marginalia_seen": 0,
+        "marginalia_skipped_existing": 0,
     }
     src_name = source_name or str(path)
 
-    # Two-pass: bookmarks first so annotations can find their parent.
+    # Two-pass: bookmarks first so marginalia can find their parent.
     records = list(_open_jsonl(path))
 
     for rec in records:
@@ -296,7 +311,7 @@ def import_arkiv(
             continue
         if rec.get("kind") != "bookmark":
             continue
-        stats["bookmarks_seen"] += 1
+        stats_core["bookmarks_seen"] += 1
 
         url = rec.get("url")
         if not url:
@@ -318,14 +333,15 @@ def import_arkiv(
         )
 
         if existing is None:
-            stats["bookmarks_added"] += 1
+            stats_core["bookmarks_added"] += 1
 
     for rec in records:
         if not isinstance(rec, dict):
             continue
-        if rec.get("kind") != "annotation":
+        # Accept both canonical "marginalia" and legacy "annotation".
+        if rec.get("kind") not in _MARGINALIA_KINDS:
             continue
-        stats["annotations_seen"] += 1
+        stats_core["marginalia_seen"] += 1
 
         uuid = rec.get("uuid")
         text = rec.get("text") or ""
@@ -336,7 +352,7 @@ def import_arkiv(
         created = _parse_timestamp(rec.get("created_at"))
         updated = _parse_timestamp(rec.get("updated_at"))
 
-        inserted = db.merge_annotation(
+        inserted = db.merge_marginalia(
             uuid=uuid,
             bookmark_unique_id=parent_uid,
             text=text,
@@ -344,8 +360,14 @@ def import_arkiv(
             updated_at=updated,
         )
         if inserted:
-            stats["annotations_added"] += 1
+            stats_core["marginalia_added"] += 1
         else:
-            stats["annotations_skipped_existing"] += 1
+            stats_core["marginalia_skipped_existing"] += 1
 
-    return stats
+    # Emit backwards-compat aliases so existing callers continue to work.
+    return {
+        **stats_core,
+        "annotations_added": stats_core["marginalia_added"],
+        "annotations_seen": stats_core["marginalia_seen"],
+        "annotations_skipped_existing": stats_core["marginalia_skipped_existing"],
+    }

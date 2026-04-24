@@ -3,7 +3,8 @@ import pytest
 
 from bookmark_memex.uri import (
     build_bookmark_uri,
-    build_annotation_uri,
+    build_marginalia_uri,
+    build_annotation_uri,  # legacy alias for build_marginalia_uri
     parse_uri,
     ParsedUri,
     InvalidUriError,
@@ -18,15 +19,25 @@ class TestConstants:
 
     def test_kinds(self):
         assert "bookmark" in KINDS
-        assert "annotation" in KINDS
+        assert "marginalia" in KINDS
+        # Legacy 'annotation' was renamed to 'marginalia' and is accepted
+        # by the parser but is NOT part of the canonical KINDS frozenset.
+        assert "annotation" not in KINDS
 
 
 class TestBuilders:
     def test_build_bookmark_uri(self):
         assert build_bookmark_uri("abc123") == "bookmark-memex://bookmark/abc123"
 
-    def test_build_annotation_uri(self):
-        assert build_annotation_uri("uuid-val") == "bookmark-memex://annotation/uuid-val"
+    def test_build_marginalia_uri(self):
+        assert (
+            build_marginalia_uri("uuid-val")
+            == "bookmark-memex://marginalia/uuid-val"
+        )
+
+    def test_build_annotation_uri_is_alias(self):
+        """Legacy alias emits the canonical marginalia form."""
+        assert build_annotation_uri("uuid-val") == build_marginalia_uri("uuid-val")
 
     def test_build_bookmark_uri_preserves_id(self):
         uid = "sha256:deadbeef01234567"
@@ -36,9 +47,9 @@ class TestBuilders:
         with pytest.raises(ValueError):
             build_bookmark_uri("")
 
-    def test_build_annotation_uri_rejects_empty_id(self):
+    def test_build_marginalia_uri_rejects_empty_id(self):
         with pytest.raises(ValueError):
-            build_annotation_uri("")
+            build_marginalia_uri("")
 
 
 class TestParser:
@@ -46,11 +57,17 @@ class TestParser:
         result = parse_uri("bookmark-memex://bookmark/abc123")
         assert result == ParsedUri(scheme=SCHEME, kind="bookmark", id="abc123", fragment=None)
 
-    def test_parse_annotation_uri(self):
-        result = parse_uri("bookmark-memex://annotation/uuid-xyz")
-        assert result.kind == "annotation"
+    def test_parse_marginalia_uri(self):
+        result = parse_uri("bookmark-memex://marginalia/uuid-xyz")
+        assert result.kind == "marginalia"
         assert result.id == "uuid-xyz"
         assert result.fragment is None
+
+    def test_parse_legacy_annotation_uri_normalises_to_marginalia(self):
+        """Old arkiv bundles used 'annotation'; parser transparently upgrades."""
+        result = parse_uri("bookmark-memex://annotation/uuid-xyz")
+        assert result.kind == "marginalia"
+        assert result.id == "uuid-xyz"
 
     def test_parse_uri_with_fragment(self):
         result = parse_uri("bookmark-memex://bookmark/abc123#paragraph=5")
@@ -101,9 +118,9 @@ class TestRoundtrip:
         assert parsed.id == uid
         assert parsed.fragment is None
 
-    def test_annotation_uri_roundtrip(self):
+    def test_marginalia_uri_roundtrip(self):
         uuid = "550e8400-e29b-41d4-a716-446655440000"
-        uri = build_annotation_uri(uuid)
+        uri = build_marginalia_uri(uuid)
         parsed = parse_uri(uri)
-        assert parsed.kind == "annotation"
+        assert parsed.kind == "marginalia"
         assert parsed.id == uuid

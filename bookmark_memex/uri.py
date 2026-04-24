@@ -2,13 +2,19 @@
 
 Public URI kinds:
     bookmark-memex://bookmark/<unique_id>
-    bookmark-memex://annotation/<uuid>
+    bookmark-memex://marginalia/<uuid>
 
 Fragment support (positions inside a bookmark record):
     bookmark-memex://bookmark/<unique_id>#paragraph=5
     bookmark-memex://bookmark/<unique_id>#section=intro
 
 The fragment is anything after the first ``#`` and is returned verbatim.
+
+Legacy compatibility:
+    ``bookmark-memex://annotation/<uuid>`` is accepted by the parser and
+    normalised to ``marginalia``. This preserves any arkiv bundles, notes,
+    or cross-archive references produced before the 2026-04 rename.
+    Builders emit only the canonical ``marginalia`` form.
 
 This module intentionally has no SQLAlchemy dependency so it can be used by
 both archive internals and external consumers.
@@ -20,7 +26,9 @@ from dataclasses import dataclass
 from typing import Optional
 
 SCHEME = "bookmark-memex"
-KINDS: frozenset[str] = frozenset({"bookmark", "annotation"})
+KINDS: frozenset[str] = frozenset({"bookmark", "marginalia"})
+# Legacy kinds accepted by parse_uri and normalised to a canonical kind.
+_LEGACY_KIND_ALIASES: dict[str, str] = {"annotation": "marginalia"}
 
 
 class InvalidUriError(ValueError):
@@ -44,9 +52,13 @@ def build_bookmark_uri(unique_id: str) -> str:
     return _build("bookmark", unique_id)
 
 
-def build_annotation_uri(uuid: str) -> str:
-    """Return ``bookmark-memex://annotation/<uuid>``."""
-    return _build("annotation", uuid)
+def build_marginalia_uri(uuid: str) -> str:
+    """Return ``bookmark-memex://marginalia/<uuid>``."""
+    return _build("marginalia", uuid)
+
+
+# Backwards-compat alias. New code should use build_marginalia_uri().
+build_annotation_uri = build_marginalia_uri
 
 
 # ---------------------------------------------------------------------------
@@ -55,6 +67,8 @@ def build_annotation_uri(uuid: str) -> str:
 
 def parse_uri(uri: str) -> ParsedUri:
     """Parse a bookmark-memex URI into its components.
+
+    Legacy ``annotation`` kinds are normalised to ``marginalia``.
 
     Raises :class:`InvalidUriError` on any structural problem.
     """
@@ -68,6 +82,7 @@ def parse_uri(uri: str) -> ParsedUri:
         )
 
     kind, _, tail = rest.partition("/")
+    kind = _LEGACY_KIND_ALIASES.get(kind, kind)
     if kind not in KINDS:
         raise InvalidUriError(f"unknown kind {kind!r} in {uri!r}")
 

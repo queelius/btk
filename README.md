@@ -453,7 +453,7 @@ pytest tests/test_db.py -v
 ### Planned Features 🎯
 
 - **Enhanced Domain Organization** - Improved domain-based browsing and filtering
-- **Bookmark Notes/Annotations** - Rich text notes and annotations on bookmarks
+- **Bookmark Marginalia** - Rich text notes (marginalia) attached to bookmarks with orphan survival
 - **User-Defined Collections** - Custom smart collections via configuration
 - Browser extensions (Chrome, Firefox)
 - MCP integration for AI-powered queries

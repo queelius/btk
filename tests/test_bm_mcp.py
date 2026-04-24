@@ -130,15 +130,15 @@ def test_get_record_bookmark_returns_dict(tools, db_with_data):
     assert result["url"] == bm.url
 
 
-def test_get_record_bookmark_includes_annotations(tools, db_with_data):
+def test_get_record_bookmark_includes_marginalia(tools, db_with_data):
     db, _ = db_with_data
-    # The annotation was added to the first-added bookmark (example.com)
+    # The note was added to the first-added bookmark (example.com)
     bm = db.list()[1]  # desc order, so [1] = example.com
     result = tools["get_record"]("bookmark", bm.unique_id)
-    assert "annotations" in result
-    assert isinstance(result["annotations"], list)
-    assert len(result["annotations"]) >= 1
-    assert any("A test note" in a.get("text", "") for a in result["annotations"])
+    assert "marginalia" in result
+    assert isinstance(result["marginalia"], list)
+    assert len(result["marginalia"]) >= 1
+    assert any("A test note" in m.get("text", "") for m in result["marginalia"])
 
 
 def test_get_record_bookmark_not_found_raises(tools):
@@ -151,20 +151,31 @@ def test_get_record_unknown_kind_raises(tools):
         tools["get_record"]("photo", "some-id")
 
 
-def test_get_record_annotation_returns_dict(tools, db_with_data):
+def test_get_record_marginalia_returns_dict(tools, db_with_data):
     db, _ = db_with_data
     first_bm = db.list()[1]  # example.com (first added, last in desc list)
-    anns = db.get_annotations(first_bm.unique_id)
-    assert len(anns) == 1
-    ann = anns[0]
-    result = tools["get_record"]("annotation", ann.id)
+    notes = db.list_marginalia(first_bm.unique_id)
+    assert len(notes) == 1
+    note = notes[0]
+    result = tools["get_record"]("marginalia", note.id)
     assert isinstance(result, dict)
     assert result["text"] == "A test note"
 
 
-def test_get_record_annotation_not_found_raises(tools):
+def test_get_record_legacy_annotation_kind_still_works(tools, db_with_data):
+    """Existing external callers using kind='annotation' must continue to work."""
+    db, _ = db_with_data
+    first_bm = db.list()[1]
+    notes = db.list_marginalia(first_bm.unique_id)
+    note = notes[0]
+    result = tools["get_record"]("annotation", note.id)
+    assert isinstance(result, dict)
+    assert result["text"] == "A test note"
+
+
+def test_get_record_marginalia_not_found_raises(tools):
     with pytest.raises(ValueError):
-        tools["get_record"]("annotation", "00000000000000000000000000000000")
+        tools["get_record"]("marginalia", "00000000000000000000000000000000")
 
 
 # ---------------------------------------------------------------------------
@@ -284,21 +295,80 @@ def test_mutate_tag_remove(tools, db_with_data):
 
 
 # ---------------------------------------------------------------------------
-# mutate – annotate
+# mutate – marginalia CRUD
 # ---------------------------------------------------------------------------
 
 
-def test_mutate_annotate_creates_annotation(tools, db_with_data):
+def test_mutate_add_marginalia_creates_note(tools, db_with_data):
     db, _ = db_with_data
     bm = db.list()[0]
 
     result = tools["mutate"]([
-        {"op": "annotate", "bookmark_unique_id": bm.unique_id, "text": "MCP note"}
+        {"op": "add_marginalia", "bookmark_unique_id": bm.unique_id, "text": "MCP note"}
     ])
     assert result["succeeded"] == 1
 
-    anns = db.get_annotations(bm.unique_id)
-    assert any(a.text == "MCP note" for a in anns)
+    notes = db.list_marginalia(bm.unique_id)
+    assert any(n.text == "MCP note" for n in notes)
+
+
+def test_mutate_annotate_legacy_alias_still_works(tools, db_with_data):
+    """The pre-rename 'annotate' op must keep working for old callers."""
+    db, _ = db_with_data
+    bm = db.list()[0]
+
+    result = tools["mutate"]([
+        {"op": "annotate", "bookmark_unique_id": bm.unique_id, "text": "Legacy call"}
+    ])
+    assert result["succeeded"] == 1
+
+    notes = db.list_marginalia(bm.unique_id)
+    assert any(n.text == "Legacy call" for n in notes)
+
+
+def test_mutate_update_marginalia_rewrites_text(tools, db_with_data):
+    db, _ = db_with_data
+    bm = db.list()[0]
+    note = db.add_marginalia(bm.unique_id, "original")
+
+    result = tools["mutate"]([
+        {"op": "update_marginalia", "id": note.id, "text": "revised"}
+    ])
+    assert result["succeeded"] == 1
+
+    refreshed = db.list_marginalia(bm.unique_id)
+    assert any(n.id == note.id and n.text == "revised" for n in refreshed)
+
+
+def test_mutate_delete_marginalia_soft_deletes(tools, db_with_data):
+    db, _ = db_with_data
+    bm = db.list()[0]
+    note = db.add_marginalia(bm.unique_id, "to remove")
+
+    result = tools["mutate"]([
+        {"op": "delete_marginalia", "id": note.id}
+    ])
+    assert result["succeeded"] == 1
+
+    active = db.list_marginalia(bm.unique_id)
+    assert not any(n.id == note.id for n in active)
+    all_notes = db.list_marginalia(bm.unique_id, include_archived=True)
+    assert any(n.id == note.id and n.archived_at is not None for n in all_notes)
+
+
+def test_mutate_restore_marginalia_reactivates(tools, db_with_data):
+    db, _ = db_with_data
+    bm = db.list()[0]
+    note = db.add_marginalia(bm.unique_id, "to restore")
+    db.delete_marginalia(note.id)
+
+    result = tools["mutate"]([
+        {"op": "restore_marginalia", "id": note.id}
+    ])
+    assert result["succeeded"] == 1
+
+    active = db.list_marginalia(bm.unique_id)
+    assert any(n.id == note.id for n in active)
 
 
 # ---------------------------------------------------------------------------

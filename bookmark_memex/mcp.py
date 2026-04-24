@@ -110,9 +110,10 @@ def _create_tools(db_path: str) -> dict[str, Any]:
     def get_record(kind: str, id: str) -> dict:
         """Return a single record by kind and identifier.
 
-        kind='bookmark': look up by unique_id; include annotations.
-        kind='annotation': look up by UUID; include parent bookmark_uri
-            if the annotation has a bookmark_id.
+        kind='bookmark'   : look up by unique_id; include marginalia.
+        kind='marginalia' : look up by UUID; include parent bookmark_uri
+                            if the note has a bookmark_id.
+        kind='annotation' : legacy alias for 'marginalia'.
 
         Raises ValueError if the record is not found or kind is unknown.
         """
@@ -124,7 +125,7 @@ def _create_tools(db_path: str) -> dict[str, Any]:
                 raise ValueError(
                     f"bookmark with unique_id={id!r} not found"
                 )
-            annotations = db.get_annotations(id)
+            notes = db.list_marginalia(id)
             return {
                 "unique_id": bm.unique_id,
                 "uri": bm.uri,
@@ -138,31 +139,35 @@ def _create_tools(db_path: str) -> dict[str, Any]:
                 "last_visited": bm.last_visited.isoformat() if bm.last_visited else None,
                 "visit_count": bm.visit_count,
                 "tags": [t.name for t in bm.tags],
-                "annotations": [
+                "marginalia": [
                     {
-                        "id": a.id,
-                        "text": a.text,
-                        "created_at": a.created_at.isoformat() if a.created_at else None,
+                        "id": n.id,
+                        "uri": n.uri,
+                        "text": n.text,
+                        "created_at": n.created_at.isoformat() if n.created_at else None,
+                        "updated_at": n.updated_at.isoformat() if n.updated_at else None,
                     }
-                    for a in annotations
+                    for n in notes
                 ],
             }
 
-        if kind == "annotation":
-            # Fetch via raw SQL to avoid needing a separate lookup method
+        if kind in ("marginalia", "annotation"):
+            # Fetch via raw SQL to avoid needing a separate lookup method.
             with sqlite3.connect(db_path) as conn:
                 conn.row_factory = sqlite3.Row
                 row = conn.execute(
-                    "SELECT a.id, a.text, a.created_at, a.updated_at, "
-                    "       a.bookmark_id, b.unique_id AS bookmark_unique_id "
-                    "FROM annotations a "
-                    "LEFT JOIN bookmarks b ON a.bookmark_id = b.id "
-                    "WHERE a.id = ?",
+                    "SELECT m.id, m.text, m.created_at, m.updated_at, "
+                    "       m.archived_at, "
+                    "       m.bookmark_id, b.unique_id AS bookmark_unique_id "
+                    "FROM marginalia m "
+                    "LEFT JOIN bookmarks b ON m.bookmark_id = b.id "
+                    "WHERE m.id = ?",
                     [id],
                 ).fetchone()
             if row is None:
-                raise ValueError(f"annotation with id={id!r} not found")
+                raise ValueError(f"marginalia with id={id!r} not found")
             result: dict = dict(row)
+            result["uri"] = f"bookmark-memex://marginalia/{row['id']}"
             if row["bookmark_unique_id"]:
                 result["bookmark_uri"] = (
                     f"bookmark-memex://bookmark/{row['bookmark_unique_id']}"
@@ -171,7 +176,7 @@ def _create_tools(db_path: str) -> dict[str, Any]:
 
         raise ValueError(
             f"Unknown record kind {kind!r}. "
-            "Supported: 'bookmark', 'annotation'."
+            "Supported: 'bookmark', 'marginalia' (alias 'annotation')."
         )
 
     # ------------------------------------------------------------------
@@ -181,8 +186,16 @@ def _create_tools(db_path: str) -> dict[str, Any]:
     def mutate(operations: list[dict]) -> dict:
         """Execute a batch of write operations.
 
-        Each operation dict must have an "op" key.  Supported ops:
-          add, update, delete, tag, annotate, restore
+        Each operation dict must have an "op" key. Supported ops:
+
+          Bookmark lifecycle:
+            add, update, delete, restore, tag
+          Marginalia (notes) lifecycle:
+            add_marginalia, update_marginalia,
+            delete_marginalia, restore_marginalia
+
+          Legacy alias:
+            annotate — equivalent to add_marginalia
 
         Returns {"total": N, "succeeded": N, "results": [...]}.
         Individual failures do not abort the remaining batch.
@@ -259,9 +272,29 @@ def _dispatch_op(db: Database, op_type: str, op: dict) -> dict:
             )
         return {"ids": op.get("ids", [])}
 
-    if op_type == "annotate":
-        ann = db.annotate(op["bookmark_unique_id"], op["text"])
-        return {"id": ann.id}
+    if op_type in ("add_marginalia", "annotate"):
+        note = db.add_marginalia(op["bookmark_unique_id"], op["text"])
+        return {"id": note.id, "uri": note.uri}
+
+    if op_type == "update_marginalia":
+        note = db.update_marginalia(op["id"], op["text"])
+        if note is None:
+            raise ValueError(
+                f"marginalia id={op['id']!r} not found (or archived)"
+            )
+        return {"id": note.id, "uri": note.uri}
+
+    if op_type == "delete_marginalia":
+        if not db.delete_marginalia(op["id"], hard=op.get("hard", False)):
+            raise ValueError(f"marginalia id={op['id']!r} not found")
+        return {"id": op["id"]}
+
+    if op_type == "restore_marginalia":
+        if not db.restore_marginalia(op["id"]):
+            raise ValueError(
+                f"marginalia id={op['id']!r} not found or already active"
+            )
+        return {"id": op["id"]}
 
     if op_type == "restore":
         for bm_id in op.get("ids", []):
@@ -324,10 +357,10 @@ def create_server(db_path: Optional[str] = None):
 
     @mcp.tool(annotations={"readOnlyHint": True})
     async def get_record(kind: str, id: str) -> str:
-        """Return a single bookmark or annotation record as JSON.
+        """Return a single bookmark or marginalia record as JSON.
 
-        kind: 'bookmark' or 'annotation'
-        id: unique_id (bookmark) or annotation UUID
+        kind: 'bookmark' or 'marginalia' (legacy alias: 'annotation')
+        id:   unique_id (bookmark) or note UUID
         """
         loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(

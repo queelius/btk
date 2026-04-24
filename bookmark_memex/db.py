@@ -21,7 +21,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, selectinload, sessionmaker
 
 from bookmark_memex.models import (
-    Annotation,
+    Marginalia,
     Base,
     Bookmark,
     BookmarkSource,
@@ -30,6 +30,44 @@ from bookmark_memex.models import (
     bookmark_tags,
 )
 from bookmark_memex.soft_delete import archive, hard_delete, restore, filter_active
+
+
+# ---------------------------------------------------------------------------
+# Pre-create migrations
+# ---------------------------------------------------------------------------
+
+
+def _apply_rename_annotations_to_marginalia(engine) -> None:
+    """Rename legacy ``annotations`` / ``annotations_fts`` tables in place.
+
+    Run once on first open of a pre-rename database. Idempotent: safe to
+    re-run, and a fresh database (no legacy tables) is a no-op.
+
+    Schema is otherwise identical — same columns, indexes, and FK targets —
+    so ``ALTER TABLE ... RENAME TO`` preserves data and indexes intact.
+    The FTS5 shadow table is dropped and will be recreated by the FTS
+    bootstrap on first use (it is a derived index, not a source of truth).
+    """
+    with engine.begin() as conn:
+        from sqlalchemy import text
+
+        names = {
+            r[0] for r in conn.execute(
+                text(
+                    "SELECT name FROM sqlite_master WHERE type='table' "
+                    "AND name IN ('annotations', 'marginalia', "
+                    "             'annotations_fts', 'marginalia_fts')"
+                )
+            )
+        }
+
+        if "annotations" in names and "marginalia" not in names:
+            conn.execute(text("ALTER TABLE annotations RENAME TO marginalia"))
+
+        # Legacy FTS5 shadow: drop if it exists; the FTS bootstrap will
+        # recreate a fresh one under the new name the next time it runs.
+        if "annotations_fts" in names:
+            conn.execute(text("DROP TABLE IF EXISTS annotations_fts"))
 
 
 # ---------------------------------------------------------------------------
@@ -88,7 +126,7 @@ def _eager_load_bookmark(session: Session, bm: Bookmark) -> Bookmark:
     """
     _ = bm.tags
     _ = bm.sources
-    _ = bm.annotations
+    _ = bm.marginalia
     _ = bm.content_cache
     return bm
 
@@ -121,6 +159,10 @@ class Database:
             f"sqlite:///{path}",
             connect_args={"check_same_thread": False},
         )
+        # Run pre-create migrations *before* metadata.create_all so the
+        # ORM doesn't try to create a new marginalia table alongside the
+        # still-present legacy annotations table.
+        _apply_rename_annotations_to_marginalia(engine)
         Base.metadata.create_all(engine)
         self._Session = sessionmaker(bind=engine, expire_on_commit=False)
 
@@ -354,30 +396,84 @@ class Database:
             return list(s.execute(select(Tag).order_by(Tag.name)).scalars().all())
 
     # ------------------------------------------------------------------
-    # Annotations
+    # Marginalia (free-form notes on bookmarks)
     # ------------------------------------------------------------------
 
-    def annotate(self, bookmark_unique_id: str, text: str) -> Annotation:
-        """Create and return an Annotation linked to the bookmark with *bookmark_unique_id*."""
+    def add_marginalia(self, bookmark_unique_id: str, text: str) -> Marginalia:
+        """Create a note attached to the bookmark with *bookmark_unique_id*.
+
+        Returns the new :class:`Marginalia` row. If the bookmark does not
+        exist, the note is still created but orphaned (bookmark_id is NULL).
+        """
         with self._session() as s:
             bm = s.execute(
                 select(Bookmark).where(Bookmark.unique_id == bookmark_unique_id)
             ).scalar_one_or_none()
 
             bookmark_id = bm.id if bm is not None else None
-            ann = Annotation(
+            note = Marginalia(
                 id=uuid.uuid4().hex,
                 bookmark_id=bookmark_id,
                 text=text,
                 created_at=_utcnow(),
                 updated_at=_utcnow(),
             )
-            s.add(ann)
+            s.add(note)
             s.flush()
-            s.refresh(ann)
-            return ann
+            s.refresh(note)
+            return note
 
-    def merge_annotation(
+    def update_marginalia(
+        self, uuid: str, text: str
+    ) -> Optional[Marginalia]:
+        """Update the note's text and bump ``updated_at``.
+
+        Returns the updated row, or ``None`` if no note with that UUID
+        exists (including if it is soft-deleted).
+        """
+        with self._session() as s:
+            note = s.get(Marginalia, uuid)
+            if note is None or note.archived_at is not None:
+                return None
+            note.text = text
+            note.updated_at = _utcnow()
+            s.flush()
+            s.refresh(note)
+            return note
+
+    def delete_marginalia(self, uuid: str, *, hard: bool = False) -> bool:
+        """Delete a note.
+
+        Soft-deletes by default (sets ``archived_at``); hard-deletes when
+        ``hard=True``. Returns ``True`` if the note existed.
+        """
+        with self._session() as s:
+            note = s.get(Marginalia, uuid)
+            if note is None:
+                return False
+            if hard:
+                s.delete(note)
+            else:
+                note.archived_at = _utcnow()
+            s.flush()
+            return True
+
+    def restore_marginalia(self, uuid: str) -> bool:
+        """Clear ``archived_at`` on a soft-deleted note.
+
+        Returns ``True`` if a note was restored, ``False`` if no matching
+        note existed or the note was already active.
+        """
+        with self._session() as s:
+            note = s.get(Marginalia, uuid)
+            if note is None or note.archived_at is None:
+                return False
+            note.archived_at = None
+            note.updated_at = _utcnow()
+            s.flush()
+            return True
+
+    def merge_marginalia(
         self,
         uuid: str,
         bookmark_unique_id: Optional[str],
@@ -386,23 +482,22 @@ class Database:
         created_at: Optional[datetime] = None,
         updated_at: Optional[datetime] = None,
     ) -> bool:
-        """INSERT OR IGNORE an annotation keyed by its UUID.
+        """INSERT OR IGNORE a note keyed by its UUID.
 
-        Used by the arkiv importer to round-trip annotations without
-        duplicating them on repeated imports. If the UUID already exists,
-        the existing annotation is preserved unchanged and this method
-        returns ``False``. If the UUID is new, the annotation is created
-        and returns ``True``.
+        Used by the arkiv importer to round-trip notes without duplicating
+        them on repeated imports. If the UUID already exists, the existing
+        note is preserved unchanged and this method returns ``False``. If
+        the UUID is new, the note is created and returns ``True``.
 
-        *bookmark_unique_id* may be ``None`` (for orphaned annotations
-        whose parent bookmark was deleted). If it is set but does not
-        match any live bookmark, the annotation is still created but
-        ``bookmark_id`` is left NULL (orphan) — this matches the
-        ``ON DELETE SET NULL`` orphan-survival contract.
+        *bookmark_unique_id* may be ``None`` (for orphaned notes whose
+        parent bookmark was deleted). If it is set but does not match any
+        live bookmark, the note is still created but ``bookmark_id`` is
+        left NULL — matching the ``ON DELETE SET NULL`` orphan-survival
+        contract.
         """
         now = _utcnow()
         with self._session() as s:
-            existing = s.get(Annotation, uuid)
+            existing = s.get(Marginalia, uuid)
             if existing is not None:
                 return False
 
@@ -416,31 +511,58 @@ class Database:
                 if bm is not None:
                     bookmark_id = bm.id
 
-            ann = Annotation(
+            note = Marginalia(
                 id=uuid,
                 bookmark_id=bookmark_id,
                 text=text,
                 created_at=created_at or now,
                 updated_at=updated_at or created_at or now,
             )
-            s.add(ann)
+            s.add(note)
             s.flush()
             return True
 
-    def get_annotations(self, bookmark_unique_id: str) -> list[Annotation]:
-        """Return all annotations for the bookmark identified by *bookmark_unique_id*."""
+    def list_marginalia(
+        self,
+        bookmark_unique_id: Optional[str] = None,
+        *,
+        include_archived: bool = False,
+    ) -> list[Marginalia]:
+        """Return active notes.
+
+        If *bookmark_unique_id* is given, restrict to notes on that
+        bookmark. Otherwise return every active note (orphans included).
+        Pass ``include_archived=True`` to include soft-deleted rows.
+        """
         with self._session() as s:
-            bm = s.execute(
-                select(Bookmark).where(Bookmark.unique_id == bookmark_unique_id)
-            ).scalar_one_or_none()
-            if bm is None:
-                return []
-            anns = s.execute(
-                select(Annotation)
-                .where(Annotation.bookmark_id == bm.id)
-                .order_by(Annotation.created_at)
-            ).scalars().all()
-            return list(anns)
+            q = select(Marginalia)
+            if bookmark_unique_id is not None:
+                bm = s.execute(
+                    select(Bookmark).where(
+                        Bookmark.unique_id == bookmark_unique_id
+                    )
+                ).scalar_one_or_none()
+                if bm is None:
+                    return []
+                q = q.where(Marginalia.bookmark_id == bm.id)
+            if not include_archived:
+                q = q.where(Marginalia.archived_at.is_(None))
+            q = q.order_by(Marginalia.created_at)
+            return list(s.execute(q).scalars().all())
+
+    # -- Backwards-compat aliases (deprecated; callers should migrate) -----
+
+    def annotate(self, bookmark_unique_id: str, text: str) -> Marginalia:
+        """Deprecated alias for :meth:`add_marginalia`."""
+        return self.add_marginalia(bookmark_unique_id, text)
+
+    def merge_annotation(self, *args, **kwargs) -> bool:
+        """Deprecated alias for :meth:`merge_marginalia`."""
+        return self.merge_marginalia(*args, **kwargs)
+
+    def get_annotations(self, bookmark_unique_id: str) -> list[Marginalia]:
+        """Deprecated alias for :meth:`list_marginalia`."""
+        return self.list_marginalia(bookmark_unique_id)
 
     # ------------------------------------------------------------------
     # Events

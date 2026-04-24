@@ -252,7 +252,7 @@ def test_export_file_unknown_format_raises(db, tmp_path):
 def test_arkiv_schema_has_kinds():
     assert "kinds" in SCHEMA
     assert "bookmark" in SCHEMA["kinds"]
-    assert "annotation" in SCHEMA["kinds"]
+    assert "marginalia" in SCHEMA["kinds"]
 
 
 def test_arkiv_schema_bookmark_has_uri_template():
@@ -261,10 +261,10 @@ def test_arkiv_schema_bookmark_has_uri_template():
     assert "bookmark-memex://bookmark/" in bm_kind["uri"]
 
 
-def test_arkiv_schema_annotation_has_uri_template():
-    ann_kind = SCHEMA["kinds"]["annotation"]
-    assert "uri" in ann_kind
-    assert "bookmark-memex://annotation/" in ann_kind["uri"]
+def test_arkiv_schema_marginalia_has_uri_template():
+    m_kind = SCHEMA["kinds"]["marginalia"]
+    assert "uri" in m_kind
+    assert "bookmark-memex://marginalia/" in m_kind["uri"]
 
 
 def test_arkiv_schema_has_scheme():
@@ -287,6 +287,8 @@ def test_arkiv_returns_counts(db, tmp_path):
     out = tmp_path / "arkiv"
     result = export_arkiv(db, out)
     assert result["counts"]["bookmark"] == 2
+    assert result["counts"]["marginalia"] == 1
+    # Legacy alias still available for old callers.
     assert result["counts"]["annotation"] == 1
 
 
@@ -307,7 +309,7 @@ def test_arkiv_records_kinds(db, tmp_path):
     records = [json.loads(line) for line in records_path.read_text().splitlines() if line.strip()]
     kinds = {r["kind"] for r in records}
     assert "bookmark" in kinds
-    assert "annotation" in kinds
+    assert "marginalia" in kinds
 
 
 def test_arkiv_bookmark_record_fields(db, tmp_path):
@@ -322,16 +324,16 @@ def test_arkiv_bookmark_record_fields(db, tmp_path):
             assert field in r, f"Missing field {field!r} in bookmark record"
 
 
-def test_arkiv_annotation_has_bookmark_uri(db, tmp_path):
+def test_arkiv_marginalia_has_bookmark_uri(db, tmp_path):
     out = tmp_path / "arkiv"
     export_arkiv(db, out)
     records_path = out / "records.jsonl"
     records = [json.loads(line) for line in records_path.read_text().splitlines() if line.strip()]
-    ann_records = [r for r in records if r["kind"] == "annotation"]
-    assert len(ann_records) == 1
-    ann = ann_records[0]
-    assert "bookmark_uri" in ann
-    assert ann["bookmark_uri"].startswith("bookmark-memex://bookmark/")
+    m_records = [r for r in records if r["kind"] == "marginalia"]
+    assert len(m_records) == 1
+    m = m_records[0]
+    assert "bookmark_uri" in m
+    assert m["bookmark_uri"].startswith("bookmark-memex://bookmark/")
 
 
 def test_arkiv_schema_yaml_parseable(db, tmp_path):
@@ -354,15 +356,15 @@ def test_arkiv_excludes_archived_bookmarks(db, tmp_path):
     assert result["counts"]["bookmark"] == 1
 
 
-def test_arkiv_excludes_archived_annotations(db, tmp_path):
-    """Annotations on a soft-deleted bookmark are NOT archived themselves
-    (ON DELETE SET NULL), but we only export active annotations.
-    This test verifies annotation_count reflects only active annotations.
+def test_arkiv_excludes_archived_marginalia(db, tmp_path):
+    """Marginalia on a soft-deleted bookmark are NOT archived themselves
+    (ON DELETE SET NULL), but we only export active marginalia.
+    This test verifies the marginalia count reflects only active rows.
     """
-    # The single annotation is active; verify it shows up
+    # The single note is active; verify it shows up.
     out = tmp_path / "arkiv"
     result = export_arkiv(db, out)
-    assert result["counts"]["annotation"] >= 1
+    assert result["counts"]["marginalia"] >= 1
 
 
 # ───────────────────────────────────────────────────────────────────
@@ -413,7 +415,7 @@ def test_arkiv_tar_gz_bundle(db, tmp_path):
         extracted = tf.extractfile("records.jsonl")
         assert extracted is not None
         lines = [json.loads(ln) for ln in extracted.read().decode("utf-8").splitlines() if ln.strip()]
-    assert any(r["kind"] == "annotation" for r in lines)
+    assert any(r["kind"] == "marginalia" for r in lines)
 
 
 def test_arkiv_tgz_extension(db, tmp_path):

@@ -14,14 +14,16 @@ bookmark-memex is a personal bookmark archive satisfying the memex ecosystem con
 - Content caching with zlib compression and FTS5 full-text search
 - Media detector auto-discovery framework (YouTube, ArXiv, GitHub built-in)
 - Durable IDs: `sha256(normalize(url))[:16]`, stable across re-imports
-- URI scheme: `bookmark-memex://bookmark/<unique_id>`, `bookmark-memex://annotation/<uuid>`
-- Marginalia (annotations with orphan survival via `ON DELETE SET NULL`)
+- URI scheme: `bookmark-memex://bookmark/<unique_id>`, `bookmark-memex://marginalia/<uuid>`
+- Marginalia (free-form notes) with orphan survival via `ON DELETE SET NULL`.
+  The pre-2026-04 name was "annotation"; the parser and import pipeline
+  still accept the legacy kind and normalise it to "marginalia".
 
 **Current Version:** 0.1.0
 **Package Name:** bookmark-memex (PyPI)
 **Python:** >=3.10
 
-This is a clean break from btk/bookmark-tk. The old `btk/` directory in this repo is frozen reference code.
+This is a clean break from btk/bookmark-tk.
 
 ## Build and Development Commands
 
@@ -50,11 +52,11 @@ pytest -k "test_bm_" -v          # all bookmark-memex tests
 bookmark_memex/
     __init__.py          # version
     models.py            # SQLAlchemy ORM (7 tables)
-    db.py                # Database class: CRUD, tags, annotations, soft delete
+    db.py                # Database class: CRUD, tags, marginalia, soft delete
     config.py            # TOML config, XDG paths, BOOKMARK_MEMEX_* env vars
     uri.py               # bookmark-memex:// URI builder/parser (no SQLAlchemy dep)
     soft_delete.py       # filter_active, archive, restore, hard_delete helpers
-    fts.py               # FTS5 index: bookmarks_fts, content_fts, annotations_fts
+    fts.py               # FTS5 index: bookmarks_fts, content_fts, marginalia_fts
     mcp.py               # MCP server (fastmcp + aiosqlite), 6 tools
     cli.py               # argparse CLI: import, export, db, sql, mcp, serve
     content/
@@ -76,8 +78,8 @@ bookmark_memex/
 
 - **Satellite table for provenance only**: `bookmark_sources` tracks where each bookmark was imported from (Chrome, Firefox, file, MCP). Multiple sources per bookmark.
 - **Flat media metadata**: the `media` JSON column on bookmarks (not a separate table) is populated by auto-discovered detectors.
-- **Soft delete everywhere**: `archived_at TIMESTAMP NULL` on bookmarks, content_cache, annotations. `filter_active()` helper. Default queries exclude archived rows.
-- **Orphan-surviving annotations**: `ON DELETE SET NULL` on `annotations.bookmark_id`. Deleting a bookmark preserves its notes.
+- **Soft delete everywhere**: `archived_at TIMESTAMP NULL` on bookmarks, content_cache, marginalia. `filter_active()` helper. Default queries exclude archived rows.
+- **Orphan-surviving marginalia**: `ON DELETE SET NULL` on `marginalia.bookmark_id`. Deleting a bookmark preserves its notes.
 - **Durable IDs from URL**: `unique_id = sha256(normalize(url))[:16]`. Same URL always produces the same ID across re-imports.
 - **Reading queue via extra_data JSON**: not a separate table. `extra_data->>'queue_position' IS NOT NULL` identifies queued bookmarks.
 
@@ -88,7 +90,7 @@ bookmark_memex/
 | `execute_sql` | read-only | SQL queries (SELECT/WITH/EXPLAIN only) |
 | `get_schema` | read-only | DDL + row counts |
 | `get_record` | read-only | Resolve `bookmark-memex://` URI by kind + id |
-| `mutate` | write | Batched ops: add, update, delete, tag, annotate, restore |
+| `mutate` | write | Batched ops: add, update, delete, restore, tag; add_marginalia, update_marginalia, delete_marginalia, restore_marginalia (legacy alias: annotate → add_marginalia) |
 | `import_bookmarks` | write | Import from file |
 | `export_bookmarks` | write | Export to file |
 
@@ -126,16 +128,26 @@ content_cache      1:1 with bookmark. html_content (zlib blob),
                    markdown_content, extracted_text, content_hash,
                    fetched_at, archived_at
 
-annotations        Marginalia. Text PK (uuid hex), bookmark_id (SET NULL),
-                   text, created_at, updated_at, archived_at
+marginalia         Free-form notes. Text PK (uuid hex), bookmark_id (SET NULL),
+                   text, created_at, updated_at, archived_at.
+                   Pre-2026-04 name: ``annotations``; see migration below.
 
 events             Audit log. event_type, entity_type, entity_id, event_data
 schema_version     Migration tracking (no Alembic)
 
 bookmarks_fts      FTS5 on url, title, description, tags
 content_fts        FTS5 on extracted_text
-annotations_fts    FTS5 on text
+marginalia_fts     FTS5 on text
 ```
+
+## Migrations
+
+`Database.__init__` runs pre-create migrations before
+`Base.metadata.create_all`. Current migrations:
+
+- ``annotations`` → ``marginalia`` table rename (2026-04). Drops the
+  legacy ``annotations_fts`` shadow; the FTS bootstrap rebuilds it under
+  the new name. Idempotent; no-op on fresh DBs.
 
 ## Configuration
 
@@ -155,8 +167,9 @@ Auto-discovered `.py` files with a `detect(url, content=None)` function returnin
 ## Memex Ecosystem
 
 This archive is part of the `*-memex` ecosystem. See `../CLAUDE.md` for the workspace contract:
-- URI scheme: `bookmark-memex://bookmark/<id>`, `bookmark-memex://annotation/<uuid>`
-- Arkiv export: `records.jsonl` + `schema.yaml` with bookmark and annotation kinds
+- URI scheme: `bookmark-memex://bookmark/<id>`, `bookmark-memex://marginalia/<uuid>`
+  (legacy `annotation` kind still parsed and normalised to `marginalia`)
+- Arkiv export: `records.jsonl` + `schema.yaml` with `bookmark` and `marginalia` kinds
 - Cross-archive resolution via `get_record(kind, id)` MCP tool
 
 ## Testing
