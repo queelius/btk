@@ -684,11 +684,13 @@ class Database:
     def merge_marginalia(
         self,
         uuid: str,
-        bookmark_unique_id: Optional[str],
-        text: str,
+        bookmark_unique_id: Optional[str] = None,
+        text: str = "",
         *,
         created_at: Optional[datetime] = None,
         updated_at: Optional[datetime] = None,
+        history_url_unique_id: Optional[str] = None,
+        history_visit_unique_id: Optional[str] = None,
     ) -> bool:
         """INSERT OR IGNORE a note keyed by its UUID.
 
@@ -697,11 +699,12 @@ class Database:
         note is preserved unchanged and this method returns ``False``. If
         the UUID is new, the note is created and returns ``True``.
 
-        *bookmark_unique_id* may be ``None`` (for orphaned notes whose
-        parent bookmark was deleted). If it is set but does not match any
-        live bookmark, the note is still created but ``bookmark_id`` is
-        left NULL — matching the ``ON DELETE SET NULL`` orphan-survival
-        contract.
+        At most one of *bookmark_unique_id*, *history_url_unique_id*,
+        *history_visit_unique_id* should be non-None. Any of the three
+        may be None (for orphaned notes whose parent was deleted). If a
+        unique_id is set but does not match any live record, the note is
+        still created but the FK is left NULL, per the
+        ``ON DELETE SET NULL`` orphan-survival contract.
         """
         now = _utcnow()
         with self._session() as s:
@@ -719,9 +722,31 @@ class Database:
                 if bm is not None:
                     bookmark_id = bm.id
 
+            history_url_id: Optional[int] = None
+            if history_url_unique_id is not None:
+                hu = s.execute(
+                    select(HistoryUrl).where(
+                        HistoryUrl.unique_id == history_url_unique_id
+                    )
+                ).scalar_one_or_none()
+                if hu is not None:
+                    history_url_id = hu.id
+
+            history_visit_id: Optional[int] = None
+            if history_visit_unique_id is not None:
+                hv = s.execute(
+                    select(HistoryVisit).where(
+                        HistoryVisit.unique_id == history_visit_unique_id
+                    )
+                ).scalar_one_or_none()
+                if hv is not None:
+                    history_visit_id = hv.id
+
             note = Marginalia(
                 id=uuid,
                 bookmark_id=bookmark_id,
+                history_url_id=history_url_id,
+                history_visit_id=history_visit_id,
                 text=text,
                 created_at=created_at or now,
                 updated_at=updated_at or created_at or now,
@@ -975,6 +1000,54 @@ class Database:
                 select(HistoryUrl).where(HistoryUrl.unique_id == unique_id)
             ).scalar_one_or_none()
 
+    def merge_history_url(
+        self,
+        *,
+        unique_id: str,
+        url: str,
+        title: Optional[str] = None,
+        typed_count: int = 0,
+        media: Optional[dict] = None,
+    ) -> tuple[int, bool]:
+        """INSERT OR UPDATE a history_url keyed by *unique_id*.
+
+        Used by the arkiv importer to round-trip records without
+        recomputing the source-side unique_id. If the unique_id already
+        exists, the row is touched (title backfilled when empty,
+        typed_count bumped to max, media filled when null) and the
+        returned tuple is ``(id, False)``. Otherwise the row is created
+        and the tuple is ``(id, True)``.
+
+        ``visit_count``, ``first_visited`` and ``last_visited`` are not
+        set here: they are trigger-maintained from :class:`HistoryVisit`
+        inserts, so an import that also includes visit records will see
+        the correct aggregates without explicit backfill.
+        """
+        with self._session() as s:
+            existing = s.execute(
+                select(HistoryUrl).where(HistoryUrl.unique_id == unique_id)
+            ).scalar_one_or_none()
+            if existing is not None:
+                if title and not existing.title:
+                    existing.title = title
+                if typed_count and typed_count > (existing.typed_count or 0):
+                    existing.typed_count = typed_count
+                if media and not existing.media:
+                    existing.media = media
+                s.flush()
+                return existing.id, False
+
+            row = HistoryUrl(
+                unique_id=unique_id,
+                url=url,
+                title=title,
+                typed_count=int(typed_count or 0),
+                media=media,
+            )
+            s.add(row)
+            s.flush()
+            return row.id, True
+
     # ------------------------------------------------------------------
     # History: Visits
     # ------------------------------------------------------------------
@@ -1048,6 +1121,91 @@ class Database:
             return s.execute(
                 select(HistoryVisit).where(HistoryVisit.unique_id == unique_id)
             ).scalar_one_or_none()
+
+    def merge_history_visit(
+        self,
+        *,
+        unique_id: str,
+        url_unique_id: str,
+        visited_at: datetime,
+        source_type: str,
+        source_name: str,
+        transition: Optional[str] = None,
+        duration_ms: Optional[int] = None,
+        from_visit_unique_id: Optional[str] = None,
+    ) -> tuple[Optional[int], bool]:
+        """INSERT OR IGNORE a history_visit keyed by *unique_id*.
+
+        Used by the arkiv importer to round-trip visit events. Dedup
+        happens in two stages:
+
+        1. ``unique_id``: if this UUID already exists, return ``(id, False)``
+           without modifying the row. This makes re-importing the same
+           bundle idempotent.
+        2. ``UNIQUE(url_id, visited_at, source_type, source_name)``: if
+           a visit with the same semantic identity exists under a
+           different UUID, return ``(existing_id, False)``. This handles
+           re-importing a bundle after an intervening browser-direct
+           import.
+
+        Returns ``(None, False)`` when *url_unique_id* does not match any
+        ``history_urls`` row; the visit is silently dropped. This protects
+        against a malformed bundle where a visit references a URL that
+        was not exported.
+        """
+        from sqlalchemy.exc import IntegrityError
+
+        with self._session() as s:
+            url_row = s.execute(
+                select(HistoryUrl).where(HistoryUrl.unique_id == url_unique_id)
+            ).scalar_one_or_none()
+            if url_row is None:
+                return None, False
+
+            existing = s.execute(
+                select(HistoryVisit).where(HistoryVisit.unique_id == unique_id)
+            ).scalar_one_or_none()
+            if existing is not None:
+                return existing.id, False
+
+            from_visit_id: Optional[int] = None
+            if from_visit_unique_id:
+                fv = s.execute(
+                    select(HistoryVisit).where(
+                        HistoryVisit.unique_id == from_visit_unique_id
+                    )
+                ).scalar_one_or_none()
+                if fv is not None:
+                    from_visit_id = fv.id
+
+            row = HistoryVisit(
+                unique_id=unique_id,
+                url_id=url_row.id,
+                visited_at=visited_at,
+                duration_ms=duration_ms,
+                transition=transition,
+                from_visit_id=from_visit_id,
+                source_type=source_type,
+                source_name=source_name,
+                imported_at=_utcnow(),
+            )
+            s.add(row)
+            try:
+                s.flush()
+            except IntegrityError:
+                s.rollback()
+                dup = s.execute(
+                    select(HistoryVisit).where(
+                        HistoryVisit.url_id == url_row.id,
+                        HistoryVisit.visited_at == visited_at,
+                        HistoryVisit.source_type == source_type,
+                        HistoryVisit.source_name == source_name,
+                    )
+                ).scalar_one_or_none()
+                return (dup.id if dup is not None else None), False
+
+            s.refresh(row)
+            return row.id, True
 
     # ------------------------------------------------------------------
     # Events

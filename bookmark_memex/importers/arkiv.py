@@ -19,9 +19,11 @@ missing but ``records.jsonl`` is present, we still import. The bundle's
 are what we actually need.
 
 Record kinds handled:
-    - ``bookmark``   — canonical
-    - ``marginalia`` — canonical (post-2026-04 rename)
-    - ``annotation`` — legacy, transparently imported as marginalia
+    - ``bookmark``     canonical
+    - ``marginalia``   canonical (post-2026-04 rename)
+    - ``annotation``   legacy, transparently imported as marginalia
+    - ``history-url``  canonical (post-2026-04 history-capture spec)
+    - ``visit``        canonical
 
 Round-trip fidelity:
 
@@ -75,29 +77,34 @@ def _jsonl_peek_first_record(reader) -> Optional[Dict[str, Any]]:
 
 
 _MARGINALIA_KINDS = ("marginalia", "annotation")  # annotation = legacy alias
+_KNOWN_KINDS = ("bookmark", "history-url", "visit") + _MARGINALIA_KINDS
 
 
 def _is_bookmark_memex_arkiv_record(rec: Dict[str, Any]) -> bool:
     """Heuristic: is this record from bookmark-memex?
 
     A record from bookmark-memex arkiv export has ``kind`` in
-    {"bookmark", "marginalia"} — or the pre-rename alias "annotation"
-    for legacy bundles — and either a ``uri`` that starts with
-    ``bookmark-memex://`` (strict) or a recognisable shape.
+    {"bookmark", "marginalia", "history-url", "visit"}, or the pre-rename
+    alias "annotation" for legacy bundles, and either a ``uri`` that
+    starts with ``bookmark-memex://`` (strict) or a recognisable shape.
     """
     if not isinstance(rec, dict):
         return False
     kind = rec.get("kind")
-    if kind not in ("bookmark",) + _MARGINALIA_KINDS:
+    if kind not in _KNOWN_KINDS:
         return False
     uri = rec.get("uri", "")
     if isinstance(uri, str) and uri.startswith("bookmark-memex://"):
         return True
     # Permissive fallback: accept anything with a recognisable kind and
-    # a required identifier (URL for bookmarks, UUID for marginalia).
+    # a required identifier.
     if kind == "bookmark" and ("url" in rec or "unique_id" in rec):
         return True
     if kind in _MARGINALIA_KINDS and ("uuid" in rec or "text" in rec):
+        return True
+    if kind == "history-url" and ("url" in rec or "unique_id" in rec):
+        return True
+    if kind == "visit" and ("uuid" in rec or "visited_at" in rec):
         return True
     return False
 
@@ -236,20 +243,39 @@ def _parse_timestamp(ts: Optional[str]) -> Optional[datetime]:
         return None
 
 
-def _parse_bookmark_unique_id_from_uri(uri: Optional[str]) -> Optional[str]:
-    """Extract bookmark unique_id from a ``bookmark-memex://bookmark/<id>`` URI."""
+def _parse_id_from_uri(uri: Optional[str], kind: str) -> Optional[str]:
+    """Extract the identifier from a ``bookmark-memex://<kind>/<id>`` URI.
+
+    Returns None if *uri* is missing or does not match the expected kind.
+    Fragments (``#...``) and query strings (``?...``) are stripped so the
+    raw identifier survives.
+    """
     if not uri:
         return None
-    prefix = "bookmark-memex://bookmark/"
+    prefix = f"bookmark-memex://{kind}/"
     if not uri.startswith(prefix):
         return None
     tail = uri[len(prefix) :]
-    # Fragment-only portion up to the first separator
     for sep in ("?", "#"):
         idx = tail.find(sep)
         if idx >= 0:
             tail = tail[:idx]
     return tail or None
+
+
+def _parse_bookmark_unique_id_from_uri(uri: Optional[str]) -> Optional[str]:
+    """Extract bookmark unique_id from a ``bookmark-memex://bookmark/<id>`` URI."""
+    return _parse_id_from_uri(uri, "bookmark")
+
+
+def _parse_history_url_unique_id_from_uri(uri: Optional[str]) -> Optional[str]:
+    """Extract history-url unique_id from a ``bookmark-memex://history-url/<id>`` URI."""
+    return _parse_id_from_uri(uri, "history-url")
+
+
+def _parse_visit_uuid_from_uri(uri: Optional[str]) -> Optional[str]:
+    """Extract visit UUID from a ``bookmark-memex://visit/<uuid>`` URI."""
+    return _parse_id_from_uri(uri, "visit")
 
 
 # ---------------------------------------------------------------------------
@@ -300,12 +326,22 @@ def import_arkiv(
         "marginalia_added": 0,
         "marginalia_seen": 0,
         "marginalia_skipped_existing": 0,
+        "history_urls_added": 0,
+        "history_urls_seen": 0,
+        "history_urls_skipped_existing": 0,
+        "visits_added": 0,
+        "visits_seen": 0,
+        "visits_skipped_existing": 0,
+        "visits_dropped_unknown_parent": 0,
     }
     src_name = source_name or str(path)
 
-    # Two-pass: bookmarks first so marginalia can find their parent.
+    # Multi-pass: bookmarks and history-urls first (so dependent visits
+    # and marginalia can find their parents), then visits (so visit
+    # marginalia can find their parents too), then marginalia.
     records = list(_open_jsonl(path))
 
+    # Pass 1: bookmarks
     for rec in records:
         if not isinstance(rec, dict):
             continue
@@ -317,9 +353,11 @@ def import_arkiv(
         if not url:
             continue
 
-        # Track whether the bookmark existed before we called add().
-        # This gives us a meaningful "added" count distinct from "seen".
-        existing = db.get_by_unique_id(rec.get("unique_id") or "") if rec.get("unique_id") else None
+        existing = (
+            db.get_by_unique_id(rec.get("unique_id") or "")
+            if rec.get("unique_id")
+            else None
+        )
 
         db.add(
             url,
@@ -335,10 +373,75 @@ def import_arkiv(
         if existing is None:
             stats_core["bookmarks_added"] += 1
 
+    # Pass 2: history-urls
+    for rec in records:
+        if not isinstance(rec, dict) or rec.get("kind") != "history-url":
+            continue
+        stats_core["history_urls_seen"] += 1
+
+        uid = rec.get("unique_id")
+        url = rec.get("url")
+        if not uid or not url:
+            continue
+
+        _, inserted = db.merge_history_url(
+            unique_id=uid,
+            url=url,
+            title=rec.get("title"),
+            typed_count=int(rec.get("typed_count") or 0),
+            media=rec.get("media"),
+        )
+        if inserted:
+            stats_core["history_urls_added"] += 1
+        else:
+            stats_core["history_urls_skipped_existing"] += 1
+
+    # Pass 3: visits (in file order, which is visited_at ASC, so
+    # from_visit references are already-imported predecessors).
+    for rec in records:
+        if not isinstance(rec, dict) or rec.get("kind") != "visit":
+            continue
+        stats_core["visits_seen"] += 1
+
+        vuuid = rec.get("uuid")
+        visited_at_raw = rec.get("visited_at")
+        if not vuuid or not visited_at_raw:
+            continue
+
+        url_uid = _parse_history_url_unique_id_from_uri(rec.get("history_url_uri"))
+        from_uid = _parse_visit_uuid_from_uri(rec.get("from_visit_uri"))
+        visited_at = _parse_timestamp(visited_at_raw)
+        if url_uid is None or visited_at is None:
+            continue
+
+        source_type = rec.get("source_type")
+        source_name_rec = rec.get("source_name")
+        if not source_type or not source_name_rec:
+            continue
+
+        visit_id, inserted = db.merge_history_visit(
+            unique_id=vuuid,
+            url_unique_id=url_uid,
+            visited_at=visited_at,
+            transition=rec.get("transition"),
+            duration_ms=rec.get("duration_ms"),
+            source_type=str(source_type),
+            source_name=str(source_name_rec),
+            from_visit_unique_id=from_uid,
+        )
+        if visit_id is None and not inserted:
+            # Parent history-url missing from the bundle (or a second
+            # UNIQUE collision with non-resolvable data). Count it.
+            stats_core["visits_dropped_unknown_parent"] += 1
+        elif inserted:
+            stats_core["visits_added"] += 1
+        else:
+            stats_core["visits_skipped_existing"] += 1
+
+    # Pass 4: marginalia (every parent URI now resolvable).
     for rec in records:
         if not isinstance(rec, dict):
             continue
-        # Accept both canonical "marginalia" and legacy "annotation".
         if rec.get("kind") not in _MARGINALIA_KINDS:
             continue
         stats_core["marginalia_seen"] += 1
@@ -348,16 +451,22 @@ def import_arkiv(
         if not uuid or not text:
             continue
 
-        parent_uid = _parse_bookmark_unique_id_from_uri(rec.get("bookmark_uri"))
+        parent_bookmark = _parse_bookmark_unique_id_from_uri(rec.get("bookmark_uri"))
+        parent_history_url = _parse_history_url_unique_id_from_uri(
+            rec.get("history_url_uri")
+        )
+        parent_visit = _parse_visit_uuid_from_uri(rec.get("visit_uri"))
         created = _parse_timestamp(rec.get("created_at"))
         updated = _parse_timestamp(rec.get("updated_at"))
 
         inserted = db.merge_marginalia(
             uuid=uuid,
-            bookmark_unique_id=parent_uid,
+            bookmark_unique_id=parent_bookmark,
             text=text,
             created_at=created,
             updated_at=updated,
+            history_url_unique_id=parent_history_url,
+            history_visit_unique_id=parent_visit,
         )
         if inserted:
             stats_core["marginalia_added"] += 1

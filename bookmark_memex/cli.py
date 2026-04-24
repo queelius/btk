@@ -249,6 +249,44 @@ def cmd_import(args: Namespace) -> None:
     db_path = _resolve_db(args)
     db = Database(db_path)
     merge = bool(getattr(args, "merge", False))
+
+    # For arkiv bundles, call the importer directly so we can surface
+    # the full stats dict (history-url + visit counts). Other formats
+    # go through the generic dispatcher.
+    inferred_fmt = args.format
+    if inferred_fmt is None and str(args.file).lower().endswith(
+        (".jsonl", ".jsonl.gz", ".zip", ".tar.gz", ".tgz")
+    ):
+        from bookmark_memex.importers.arkiv import detect as _arkiv_detect
+
+        if _arkiv_detect(args.file):
+            inferred_fmt = "arkiv"
+
+    if inferred_fmt == "arkiv":
+        from bookmark_memex.importers.arkiv import import_arkiv
+
+        stats = import_arkiv(db, Path(args.file), merge=merge)
+        pieces = [f"bookmarks added {stats['bookmarks_added']}"]
+        if stats.get("marginalia_added"):
+            pieces.append(f"marginalia added {stats['marginalia_added']}")
+        if stats.get("history_urls_seen"):
+            pieces.append(
+                f"history-urls added {stats['history_urls_added']}, "
+                f"skipped {stats.get('history_urls_skipped_existing', 0)}"
+            )
+        if stats.get("visits_seen"):
+            pieces.append(
+                f"visits added {stats['visits_added']}, "
+                f"skipped {stats.get('visits_skipped_existing', 0)}"
+            )
+            if stats.get("visits_dropped_unknown_parent"):
+                pieces.append(
+                    f"visits dropped (missing parent) "
+                    f"{stats['visits_dropped_unknown_parent']}"
+                )
+        print(f"Imported from {args.file}: " + ", ".join(pieces))
+        return
+
     count = import_file(db, Path(args.file), format=args.format, merge=merge)
     print(f"Imported {count} bookmark(s) from {args.file}")
 
