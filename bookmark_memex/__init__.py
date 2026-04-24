@@ -4,9 +4,10 @@
 # configurations where `tests/bookmark_memex/` could shadow the real package
 # on sys.path — `from bookmark_memex import __version__` would resolve to
 # the shadow; importlib.metadata always consults dist-info.
-try:
-    from importlib.metadata import version as _pkg_version
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _pkg_version
 
+try:
     __version__ = _pkg_version("bookmark-memex")
-except Exception:
+except PackageNotFoundError:
     __version__ = "unknown"

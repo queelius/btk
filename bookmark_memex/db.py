@@ -18,7 +18,7 @@ from typing import Any, Generator, Optional
 from urllib.parse import urlencode, parse_qsl, urlparse, urlunparse
 
 from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session, selectinload, sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from bookmark_memex.models import (
     Marginalia,
