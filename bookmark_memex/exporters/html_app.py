@@ -57,12 +57,45 @@ _FTS5_TABLES = (
 _DB_GZIP_LEVEL = 6
 
 
-def _strip_fts5_and_vacuum(db_path: Path) -> None:
-    """Drop FTS5 virtual tables, set journal_mode=DELETE, and VACUUM."""
+# Tables the published SPA actually reads (templates/index.html queries
+# only these). Everything else is dropped before the DB is embedded in the
+# shareable bundle: the events audit log, bookmark_sources.raw_data (import
+# provenance), the browser history tables, content_cache, and FTS shadows.
+# Deny-by-default — treat the exported artifact as public.
+_EXPORT_TABLE_ALLOWLIST = ("bookmarks", "tags", "bookmark_tags", "marginalia")
+
+
+def _sanitize_for_export(db_path: Path) -> None:
+    """Reduce a snapshot DB to exactly the tables the SPA reads, drop
+    soft-deleted rows, set journal_mode=DELETE, and VACUUM.
+
+    The published HTML bundle embeds this SQLite file verbatim, so every row
+    left here is readable by anyone who opens the bundle — the SPA's
+    ``archived_at IS NULL`` query filters do NOT protect rows still sitting
+    in the file. We therefore (1) drop every non-allowlisted table (audit
+    log, import provenance, browser history, cached page content, FTS
+    shadows) and (2) hard-delete archived rows from the kept record tables.
+    """
     with sqlite3.connect(str(db_path)) as conn:
         conn.execute("PRAGMA journal_mode=DELETE")
-        for fts in _FTS5_TABLES:
-            conn.execute(f"DROP TABLE IF EXISTS {fts}")
+        # Drop triggers first so deleting archived rows can't fire an FTS
+        # sync trigger that references a table we are about to drop.
+        for (trig,) in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='trigger'"
+        ).fetchall():
+            conn.execute(f'DROP TRIGGER IF EXISTS "{trig}"')
+        for (name,) in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchall():
+            if name in _EXPORT_TABLE_ALLOWLIST or name.startswith("sqlite_"):
+                continue
+            conn.execute(f'DROP TABLE IF EXISTS "{name}"')
+        # Hard-delete soft-deleted rows from the kept record tables so a
+        # "deleted" bookmark or note never ships inside the bundle.
+        for tbl in ("bookmarks", "marginalia"):
+            cols = [r[1] for r in conn.execute(f'PRAGMA table_info("{tbl}")')]
+            if "archived_at" in cols:
+                conn.execute(f'DELETE FROM "{tbl}" WHERE archived_at IS NOT NULL')
         conn.commit()
     with sqlite3.connect(str(db_path)) as conn:
         conn.execute("VACUUM")
@@ -118,7 +151,7 @@ def _prepare_db_bytes(src_db_path: Path) -> bytes:
     with tempfile.TemporaryDirectory(prefix="bm_html_app_") as tmp:
         tmp_db = Path(tmp) / "copy.db"
         _snapshot_db(src_db_path, tmp_db)
-        _strip_fts5_and_vacuum(tmp_db)
+        _sanitize_for_export(tmp_db)
         return tmp_db.read_bytes()
 
 
@@ -257,11 +290,11 @@ def _export_directory(db, out_path, *, compress_db: bool) -> dict:
         if src.exists():
             shutil.copy2(src, out_dir / filename)
 
-    # 3) DB snapshot (WAL-aware, read-only against source) + strip +
-    #    optionally gzip.
+    # 3) DB snapshot (WAL-aware, read-only against source) + sanitize to
+    #    the SPA-readable table allowlist + optionally gzip.
     dest_db = out_dir / "bookmarks.db"
     _snapshot_db(src_db_path, dest_db)
-    _strip_fts5_and_vacuum(dest_db)
+    _sanitize_for_export(dest_db)
 
     if compress_db:
         gzipped = out_dir / "bookmarks.db.gz"

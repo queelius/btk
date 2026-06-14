@@ -21,10 +21,20 @@ import pytest
 
 from bookmark_memex.db import Database
 from bookmark_memex.exporters.html_app import (
+    _EXPORT_TABLE_ALLOWLIST,
     _FTS5_TABLES,
     _prepare_db_bytes,
-    _strip_fts5_and_vacuum,
+    _sanitize_for_export,
     export_html_app,
+)
+
+# Tables that must NEVER ship inside a published bundle.
+_SENSITIVE_TABLES = (
+    "events",          # audit log / activity pattern
+    "bookmark_sources",  # import provenance, raw_data
+    "history_urls",    # browser history
+    "history_visits",  # browser history
+    "content_cache",   # bulky cached page content
 )
 
 
@@ -52,31 +62,65 @@ def populated_db(tmp_db_path):
 # ════════════════════════════════════════════════════════════════════
 
 
-def test_strip_fts5_drops_known_virtual_tables(populated_db, tmp_path):
-    src = Path(populated_db.path)
-    copy = tmp_path / "copy.db"
-    copy.write_bytes(src.read_bytes())
+def _exported_db(src_path, tmp_path) -> Path:
+    """Run the real (WAL-aware) export-prep path and return a file with the
+    sanitized DB bytes, ready to inspect."""
+    data = _prepare_db_bytes(Path(src_path))
+    out = tmp_path / "exported.db"
+    out.write_bytes(data)
+    return out
 
-    _strip_fts5_and_vacuum(copy)
 
-    with sqlite3.connect(str(copy)) as conn:
-        names = {
-            r[0] for r in conn.execute(
+def _tables_in(db_path) -> set[str]:
+    with sqlite3.connect(str(db_path)) as conn:
+        return {
+            r[0]
+            for r in conn.execute(
                 "SELECT name FROM sqlite_master WHERE type='table'"
             ).fetchall()
         }
+
+
+def test_sanitize_keeps_only_the_allowlist(populated_db, tmp_path):
+    """Deny-by-default: the exported DB contains exactly the SPA-readable
+    tables and nothing else (no FTS shadows, no audit log, no provenance,
+    no browser history, no content cache)."""
+    names = _tables_in(_exported_db(populated_db.path, tmp_path))
+    # Allowlisted tables that existed in the source survive.
+    assert "bookmarks" in names
+    assert "marginalia" in names
+    # Nothing outside the allowlist (minus sqlite_ internals) remains.
+    leaked = {n for n in names if not n.startswith("sqlite_")} - set(_EXPORT_TABLE_ALLOWLIST)
+    assert not leaked, f"non-allowlisted tables shipped in the bundle: {leaked}"
     for fts in _FTS5_TABLES:
-        assert fts not in names, f"FTS5 table {fts!r} should have been dropped"
+        assert fts not in names
+    for sensitive in _SENSITIVE_TABLES:
+        assert sensitive not in names, f"sensitive table {sensitive!r} must not ship"
 
 
-def test_strip_fts5_sets_journal_mode_delete(populated_db, tmp_path):
-    src = Path(populated_db.path)
-    copy = tmp_path / "copy.db"
-    copy.write_bytes(src.read_bytes())
+def test_sanitize_drops_soft_deleted_rows(populated_db, tmp_path):
+    """A soft-deleted bookmark must not sit in the published DB file —
+    archived_at filtering in the SPA's queries does not protect rows that
+    are still extractable from the embedded sqlite file."""
+    # Soft-delete one bookmark (delete() is soft by default).
+    gh = populated_db.add("https://example.com/secret", title="SECRET-LEAK-MARKER")
+    populated_db.delete(gh.id)
 
-    _strip_fts5_and_vacuum(copy)
+    exported = _exported_db(populated_db.path, tmp_path)
+    with sqlite3.connect(str(exported)) as conn:
+        rows = conn.execute(
+            "SELECT COUNT(*) FROM bookmarks WHERE title = 'SECRET-LEAK-MARKER'"
+        ).fetchone()[0]
+        archived = conn.execute(
+            "SELECT COUNT(*) FROM bookmarks WHERE archived_at IS NOT NULL"
+        ).fetchone()[0]
+    assert rows == 0, "soft-deleted bookmark leaked into the export"
+    assert archived == 0
 
-    with sqlite3.connect(str(copy)) as conn:
+
+def test_sanitize_sets_journal_mode_delete(populated_db, tmp_path):
+    exported = _exported_db(populated_db.path, tmp_path)
+    with sqlite3.connect(str(exported)) as conn:
         mode = conn.execute("PRAGMA journal_mode").fetchone()[0]
     assert mode.lower() == "delete"
 
