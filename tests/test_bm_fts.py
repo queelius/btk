@@ -227,3 +227,69 @@ def test_search_with_tags(db, fts):
     fts.rebuild_bookmarks_index()
     results = fts.search("machine learning")
     assert len(results) >= 1
+
+
+# ---------------------------------------------------------------------------
+# B10 regression: Database must wire FTS creation + population
+# ---------------------------------------------------------------------------
+
+
+def _table_names(db_path):
+    import sqlite3
+    conn = sqlite3.connect(db_path)
+    try:
+        return {
+            r[0] for r in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            ).fetchall()
+        }
+    finally:
+        conn.close()
+
+
+def test_database_init_creates_fts_tables(tmp_db_path):
+    """Opening a Database must create the FTS5 virtual tables. Before B10,
+    nothing created them: the documented bookmarks_fts/content_fts/
+    marginalia_fts did not exist and any query against them failed."""
+    Database(tmp_db_path)  # init only
+    names = _table_names(tmp_db_path)
+    assert {"bookmarks_fts", "content_fts", "marginalia_fts"} <= names
+
+
+def test_reindex_fts_populates_and_search_works(db):
+    """reindex_fts() repopulates the indexes so FTS search returns matches."""
+    db.add("https://docs.python.org/3/", title="Python Documentation",
+           tags=["programming/python"])
+    db.add("https://example.com/vec", title="Vector databases compared",
+           tags=["vectors"])
+    counts = db.reindex_fts()
+    assert counts["bookmarks"] == 2
+
+    import sqlite3
+    conn = sqlite3.connect(db.path)
+    try:
+        hits = conn.execute(
+            "SELECT title FROM bookmarks_fts WHERE bookmarks_fts MATCH 'vector'"
+        ).fetchall()
+    finally:
+        conn.close()
+    assert any("Vector databases" in row[0] for row in hits)
+
+
+def test_reindex_excludes_archived_bookmarks(db):
+    """Soft-deleted bookmarks must not appear in the search index."""
+    keep = db.add("https://example.com/keep", title="keepme")
+    drop = db.add("https://example.com/drop", title="dropme")
+    db.delete(drop.id)  # soft delete
+    db.reindex_fts()
+
+    import sqlite3
+    conn = sqlite3.connect(db.path)
+    try:
+        titles = {
+            r[0] for r in conn.execute("SELECT title FROM bookmarks_fts").fetchall()
+        }
+    finally:
+        conn.close()
+    assert "keepme" in titles
+    assert "dropme" not in titles

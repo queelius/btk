@@ -372,7 +372,33 @@ class Database:
         # tables the metadata pass has just ensured exist).
         _apply_add_marginalia_history_cols(engine)
         _install_history_triggers(engine)
+        # Create the FTS5 search tables. Until now nothing created them, so
+        # the documented bookmarks_fts / content_fts / marginalia_fts simply
+        # did not exist and any query against them failed. CREATE ... IF NOT
+        # EXISTS is idempotent; population happens via reindex_fts() (run by
+        # imports, the mutate tool, and `bookmark-memex db reindex`).
+        from bookmark_memex.fts import FTSIndex
+
+        FTSIndex(self.path).create_indexes()
         self._Session = sessionmaker(bind=engine, expire_on_commit=False)
+
+    def reindex_fts(self) -> dict[str, int]:
+        """Rebuild every FTS5 index from current table contents.
+
+        Returns per-index row counts. Called after imports and mutate
+        batches (so search reflects new data) and exposed via
+        ``bookmark-memex db reindex``. A full rebuild is cheap at personal
+        scale and keeps the rebuild-based FTS design simple and always
+        consistent — there is no incremental-drift window to reason about.
+        """
+        from bookmark_memex.fts import FTSIndex
+
+        idx = FTSIndex(self.path)
+        return {
+            "bookmarks": idx.rebuild_bookmarks_index(),
+            "content": idx.rebuild_content_index(),
+            "marginalia": idx.rebuild_marginalia_index(),
+        }
 
     # ------------------------------------------------------------------
     # Session helper

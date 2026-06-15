@@ -189,9 +189,9 @@ def build_parser() -> ArgumentParser:
     p_db = sub.add_parser("db", help="Database maintenance commands")
     p_db.add_argument(
         "db_command",
-        choices=["info", "schema", "vacuum", "migrate"],
+        choices=["info", "schema", "vacuum", "reindex", "migrate"],
         metavar="COMMAND",
-        help="One of: info, schema, vacuum, migrate",
+        help="One of: info, schema, vacuum, reindex, migrate",
     )
 
     # ── serve ────────────────────────────────────────────────────────────────
@@ -266,6 +266,7 @@ def cmd_import(args: Namespace) -> None:
         from bookmark_memex.importers.arkiv import import_arkiv
 
         stats = import_arkiv(db, Path(args.file), merge=merge)
+        db.reindex_fts()
         pieces = [f"bookmarks added {stats['bookmarks_added']}"]
         if stats.get("marginalia_added"):
             pieces.append(f"marginalia added {stats['marginalia_added']}")
@@ -288,6 +289,7 @@ def cmd_import(args: Namespace) -> None:
         return
 
     count = import_file(db, Path(args.file), format=args.format, merge=merge)
+    db.reindex_fts()
     print(f"Imported {count} bookmark(s) from {args.file}")
 
 
@@ -311,6 +313,7 @@ def cmd_import_browser(args: Namespace) -> None:
     browser = getattr(args, "browser", None) or "chrome"
     profile = getattr(args, "profile", None)
     result = import_browser_bookmarks(db, browser=browser, profile=profile)
+    db.reindex_fts()
     print(
         f"Imported from {browser}: processed {result.processed}, "
         f"added {result.added}, merged {result.merged}"
@@ -415,6 +418,18 @@ def cmd_db(args: Namespace) -> None:
         elif args.db_command == "vacuum":
             conn.execute("VACUUM")
             print("VACUUM complete.")
+
+        elif args.db_command == "reindex":
+            # Rebuild the FTS5 search indexes from current table contents.
+            from bookmark_memex.db import Database
+
+            counts = Database(db_path).reindex_fts()
+            print(
+                "Reindexed FTS5: "
+                f"bookmarks {counts['bookmarks']}, "
+                f"content {counts['content']}, "
+                f"marginalia {counts['marginalia']}"
+            )
 
         elif args.db_command == "migrate":
             print("Command not yet implemented")

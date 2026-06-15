@@ -300,6 +300,12 @@ def _create_tools(db_path: str) -> dict[str, Any]:
             except Exception as exc:
                 results.append({"status": "error", "op": op_type, "error": str(exc)})
 
+        # Refresh the FTS5 search indexes if anything was written, so a
+        # subsequent execute_sql against bookmarks_fts/marginalia_fts sees
+        # the new rows. Full rebuild is cheap at personal scale.
+        if succeeded:
+            db.reindex_fts()
+
         return {
             "total": len(operations),
             "succeeded": succeeded,
@@ -494,6 +500,7 @@ def create_server(db_path: Optional[str] = None):
         def _run() -> dict:
             db = _Database(db_path)
             n = import_file(db, Path(file_path), format=format)
+            db.reindex_fts()
             return {"imported": n}
 
         result = await loop.run_in_executor(None, _run)
