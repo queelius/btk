@@ -225,6 +225,9 @@ def _build_records(
                     "pinned": bm.pinned,
                     "visit_count": bm.visit_count or 0,
                     "added": bm.added.isoformat() if bm.added else None,
+                    "last_visited": (
+                        bm.last_visited.isoformat() if bm.last_visited else None
+                    ),
                 }
             )
 

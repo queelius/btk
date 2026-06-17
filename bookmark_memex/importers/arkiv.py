@@ -55,6 +55,16 @@ from typing import Any, Dict, Iterable, List, Optional
 from bookmark_memex.db import Database
 
 
+def _parse_iso(value: Any) -> Optional[datetime]:
+    """Parse an ISO-8601 timestamp string from an arkiv record, or None."""
+    if not value or not isinstance(value, str):
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Detection
 # ---------------------------------------------------------------------------
@@ -359,6 +369,7 @@ def import_arkiv(
             else None
         )
 
+        vc_raw = rec.get("visit_count")
         db.add(
             url,
             title=rec.get("title") or "",
@@ -368,6 +379,12 @@ def import_arkiv(
             pinned=bool(rec.get("pinned", False)),
             source_type="arkiv",
             source_name=src_name,
+            # Preserve source-side history: a restore must not reset added to
+            # the import date or zero out visit_count (the values are right
+            # there in the bundle). Merged monotonically by db.add.
+            added=_parse_iso(rec.get("added")),
+            visit_count=int(vc_raw) if isinstance(vc_raw, (int, float)) else None,
+            last_visited=_parse_iso(rec.get("last_visited")),
         )
 
         if existing is None:

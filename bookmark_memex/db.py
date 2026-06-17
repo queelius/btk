@@ -210,8 +210,9 @@ def normalize_url(url: str) -> str:
     Normalisation steps:
     - Lowercase scheme and host.
     - Remove default ports (:80 for http, :443 for https).
-    - Sort query parameters.
+    - Sort query parameters (blank values kept).
     - Strip trailing slash from path (but keep "/" for root).
+    - Preserve the fragment (the anchor is often the point of a bookmark).
     """
     parsed = urlparse(url)
     scheme = parsed.scheme.lower()
@@ -223,13 +224,22 @@ def normalize_url(url: str) -> str:
     elif scheme == "https" and netloc.endswith(":443"):
         netloc = netloc[:-4]
 
-    # Sort query parameters for canonical representation.
-    query = urlencode(sorted(parse_qsl(parsed.query)))
+    # Sort query parameters for canonical representation. keep_blank_values
+    # so "?b=&c=1" stays faithful, and consistent with
+    # normalize_url_for_history (which already keeps blank values).
+    query = urlencode(sorted(parse_qsl(parsed.query, keep_blank_values=True)))
 
     # Strip trailing slash from path, but always keep root slash.
     path = parsed.path.rstrip("/") or "/"
 
-    return urlunparse((scheme, netloc, path, parsed.params, query, ""))
+    # Preserve the fragment. For a bookmark the anchor (#section) is often
+    # the whole point of the save; dropping it collided "page#section" with
+    # the bare "page" into one record, silently losing the anchor. Because
+    # unique_id is sha256 of this normalized form, the fragment now
+    # participates in the durable ID, so an anchor bookmark and the bare
+    # page get distinct IDs. (Bookmarks saved before this change were hashed
+    # without the fragment; re-saving such a URL creates a new record.)
+    return urlunparse((scheme, netloc, path, parsed.params, query, parsed.fragment))
 
 
 def generate_unique_id(url: str) -> str:
@@ -434,6 +444,9 @@ class Database:
         source_type: Optional[str] = None,
         source_name: Optional[str] = None,
         folder_path: Optional[str] = None,
+        added: Optional[datetime] = None,
+        visit_count: Optional[int] = None,
+        last_visited: Optional[datetime] = None,
     ) -> Bookmark:
         """Add a bookmark, returning the new or existing row.
 
@@ -442,6 +455,13 @@ class Database:
         - If the existing title is empty/None and *title* is provided, the
           title is updated.
         - A new :class:`BookmarkSource` is appended when *source_type* is set.
+        - ``added``/``visit_count``/``last_visited`` (when supplied, e.g. by
+          an arkiv restore) are merged monotonically: keep the earliest
+          ``added`` and the largest ``visit_count``/``last_visited`` so a
+          restore preserves source-side history instead of resetting it.
+
+        For a new row, ``added`` defaults to now and ``visit_count`` to 0
+        when not supplied.
         """
         unique_id = generate_unique_id(url)
         norm = normalize_url(url)
@@ -463,6 +483,18 @@ class Database:
                 # Fill in title if currently empty.
                 if title and not existing.title:
                     existing.title = title
+
+                # Monotonic merge of creation/visit metadata (arkiv restore).
+                if added is not None and (
+                    existing.added is None or added < existing.added
+                ):
+                    existing.added = added
+                if visit_count is not None and visit_count > (existing.visit_count or 0):
+                    existing.visit_count = visit_count
+                if last_visited is not None and (
+                    existing.last_visited is None or last_visited > existing.last_visited
+                ):
+                    existing.last_visited = last_visited
 
                 # Record additional source.
                 if source_type:
@@ -488,8 +520,9 @@ class Database:
                 bookmark_type=bookmark_type,
                 starred=starred,
                 pinned=pinned,
-                added=_utcnow(),
-                visit_count=0,
+                added=added or _utcnow(),
+                visit_count=visit_count or 0,
+                last_visited=last_visited,
             )
             s.add(bm)
             s.flush()  # populate bm.id
@@ -540,8 +573,37 @@ class Database:
             bm = s.execute(q).scalar_one_or_none()
             return _eager_load_bookmark(s, bm) if bm is not None else None
 
+    # Fields a caller may NOT set via update(): identity (id/unique_id/url
+    # define the durable sha256(normalize(url))[:16] cross-archive URI) and
+    # lifecycle/derived counters. Everything else on the model is editable.
+    # Derived from the ORM columns so a new column is covered automatically.
+    _PROTECTED_UPDATE_FIELDS = frozenset(
+        {"id", "unique_id", "url", "added", "visit_count", "last_visited", "archived_at"}
+    )
+
+    @classmethod
+    def _mutable_bookmark_fields(cls) -> frozenset:
+        return (
+            frozenset(Bookmark.__table__.columns.keys())
+            - cls._PROTECTED_UPDATE_FIELDS
+        )
+
     def update(self, bookmark_id: int, **kwargs: Any) -> Optional[Bookmark]:
-        """Update fields on bookmark *bookmark_id*.  Returns updated row or *None*."""
+        """Update fields on bookmark *bookmark_id*.  Returns updated row or *None*.
+
+        Only mutable columns may be set. A misspelled field (e.g. ``titel``)
+        or a protected identity/lifecycle field (``unique_id``, ``url``,
+        ``visit_count``, ...) raises ``ValueError`` rather than silently
+        no-op'ing (a transient setattr) or overwriting the durable ID and
+        orphaning every cross-archive URI to this bookmark.
+        """
+        allowed = self._mutable_bookmark_fields()
+        rejected = set(kwargs) - allowed
+        if rejected:
+            raise ValueError(
+                "cannot update protected or unknown bookmark field(s): "
+                f"{sorted(rejected)}. Updatable fields: {sorted(allowed)}"
+            )
         with self._session() as s:
             bm = s.get(Bookmark, bookmark_id)
             if bm is None:

@@ -189,6 +189,35 @@ def test_import_tar_gz_bundle(src_db, fresh_db, tmp_path):
     assert stats["bookmarks_added"] == 2
 
 
+def test_roundtrip_preserves_added_and_visit_count(tmp_path):
+    """BM-5: a restore must not reset 'added' to the import date or zero out
+    visit history; those values are in the bundle and must round-trip."""
+    from datetime import datetime
+
+    past = datetime(2020, 1, 2, 3, 4, 5)
+    last = datetime(2021, 6, 7, 8, 9, 10)
+    src = Database(str(tmp_path / "src.db"))
+    src.add(
+        "https://example.com/deep#anchor",
+        title="Deep link",
+        added=past,
+        visit_count=7,
+        last_visited=last,
+    )
+
+    out = tmp_path / "bundle"
+    export_arkiv(src, out)
+
+    fresh = Database(str(tmp_path / "fresh.db"))
+    import_arkiv(fresh, out)
+    bms = fresh.list()
+    assert len(bms) == 1
+    bm = bms[0]
+    assert bm.added == past, "added was reset on restore"
+    assert bm.visit_count == 7, "visit_count was zeroed on restore"
+    assert bm.last_visited == last
+
+
 def test_import_bare_jsonl_gz(src_db, fresh_db, tmp_path):
     """The SPA round-trip format: bare .jsonl.gz emitted by the browser bundle."""
     dir_out = tmp_path / "d"

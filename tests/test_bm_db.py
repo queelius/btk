@@ -195,6 +195,53 @@ def test_update_nonexistent_returns_none(db):
     assert result is None
 
 
+def test_update_rejects_unknown_field(db):
+    """BM-3: a misspelled field must error, not silently no-op (which the
+    old blind setattr did, losing the caller's intended write)."""
+    import pytest
+
+    bm = db.add("https://example.com", title="Example")
+    with pytest.raises(ValueError, match="titel"):
+        db.update(bm.id, titel="oops")
+
+
+def test_update_rejects_protected_identity_fields(db):
+    """BM-3: durable identity / lifecycle fields are not writable via update;
+    overwriting unique_id/url would orphan every cross-archive URI."""
+    import pytest
+
+    bm = db.add("https://example.com", title="Example")
+    for field, value in [
+        ("unique_id", "deadbeefdeadbeef"),
+        ("url", "https://evil.example/"),
+        ("id", 12345),
+        ("visit_count", 999),
+        ("added", "2000-01-01"),
+    ]:
+        with pytest.raises(ValueError):
+            db.update(bm.id, **{field: value})
+    # The durable id is unchanged.
+    assert db.get(bm.id).unique_id == bm.unique_id
+
+
+def test_normalize_url_preserves_fragment():
+    """BM-4: the anchor is often the point of a bookmark; it must survive
+    normalization (and participate in the durable id)."""
+    assert normalize_url("https://example.com/page#section3") == (
+        "https://example.com/page#section3"
+    )
+    bare = generate_unique_id("https://example.com/page")
+    anchored = generate_unique_id("https://example.com/page#section3")
+    assert bare != anchored, "fragment bookmark must not collide with bare page"
+
+
+def test_normalize_url_keeps_blank_query_values():
+    """BM-4: blank query params are kept (consistent with history norm)."""
+    result = normalize_url("https://example.com/?b=&c=1")
+    assert "b=" in result
+    assert "c=1" in result
+
+
 # ---------------------------------------------------------------------------
 # visit
 # ---------------------------------------------------------------------------
