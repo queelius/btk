@@ -439,3 +439,41 @@ def test_log_event_does_not_raise(db):
 
 def test_log_event_with_minimal_args(db):
     db.log_event("import", "bookmark")
+
+
+def test_reimport_does_not_duplicate_bookmark_source(db):
+    """BM-8: re-importing the same file is idempotent and must not append a
+    duplicate BookmarkSource provenance row each run."""
+    for _ in range(3):
+        db.add(
+            "https://example.com/x",
+            title="X",
+            source_type="file",
+            source_name="bookmarks.html",
+            folder_path="Toolbar",
+        )
+    bm = db.get_by_unique_id(generate_unique_id("https://example.com/x"))
+    assert len(bm.sources) == 1
+
+
+def test_mutate_delete_nonexistent_raises(db):
+    """BM-6: a delete/tag/restore op on a missing target must raise, not
+    silently no-op and report ok."""
+    import pytest
+
+    from bookmark_memex.mcp import _dispatch_op
+
+    with pytest.raises(ValueError):
+        _dispatch_op(db, "delete", {"op": "delete", "id": 999999})
+    with pytest.raises(ValueError):
+        _dispatch_op(db, "tag", {"op": "tag", "ids": [999999], "add": ["x"]})
+
+
+def test_mutate_delete_accepts_unique_id(db):
+    """BM-6: bookmark ops accept the durable unique_id, not just the int id."""
+    from bookmark_memex.mcp import _dispatch_op
+
+    bm = db.add("https://example.com/y", title="Y")
+    res = _dispatch_op(db, "delete", {"op": "delete", "unique_id": bm.unique_id})
+    assert res["id"] == bm.id
+    assert db.get(bm.id) is None  # soft-deleted -> hidden from default reads

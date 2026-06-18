@@ -325,6 +325,25 @@ def _create_tools(db_path: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+def _resolve_bookmark_id(db: Database, *, unique_id=None, bid=None) -> int:
+    """Resolve a bookmark op target to its integer id, preferring the durable
+    unique_id, and raise if the target does not exist (BM-6: delete/tag/
+    restore must honestly fail on a missing target rather than silently
+    no-op and report ok, matching the marginalia ops). Archived bookmarks
+    resolve too, since restore targets them."""
+    if unique_id is not None:
+        bm = db.get_by_unique_id(unique_id, include_archived=True)
+        if bm is None:
+            raise ValueError(f"bookmark unique_id={unique_id!r} not found")
+        return bm.id
+    if bid is not None:
+        bm = db.get(bid, include_archived=True)
+        if bm is None:
+            raise ValueError(f"bookmark id={bid} not found")
+        return bid
+    raise ValueError("bookmark op requires 'unique_id' or 'id'")
+
+
 def _dispatch_op(db: Database, op_type: str, op: dict) -> dict:
     """Execute a single mutation operation; return a result dict.
 
@@ -353,17 +372,25 @@ def _dispatch_op(db: Database, op_type: str, op: dict) -> dict:
         return {"id": bm.id}
 
     if op_type == "delete":
-        db.delete(op["id"], hard=op.get("hard", False))
-        return {"id": op["id"]}
+        bid = _resolve_bookmark_id(
+            db, unique_id=op.get("unique_id"), bid=op.get("id")
+        )
+        db.delete(bid, hard=op.get("hard", False))
+        return {"id": bid}
 
     if op_type == "tag":
-        for bm_id in op.get("ids", []):
+        uids = op.get("unique_ids")
+        if uids is not None:
+            ids = [_resolve_bookmark_id(db, unique_id=u) for u in uids]
+        else:
+            ids = [_resolve_bookmark_id(db, bid=b) for b in op.get("ids", [])]
+        for bid in ids:
             db.tag(
-                bm_id,
+                bid,
                 add=op.get("add"),
                 remove=op.get("remove"),
             )
-        return {"ids": op.get("ids", [])}
+        return {"ids": ids}
 
     if op_type in ("add_marginalia", "annotate"):
         note = db.add_marginalia(op["bookmark_unique_id"], op["text"])
@@ -390,9 +417,14 @@ def _dispatch_op(db: Database, op_type: str, op: dict) -> dict:
         return {"id": op["id"]}
 
     if op_type == "restore":
-        for bm_id in op.get("ids", []):
-            db.restore(bm_id)
-        return {"ids": op.get("ids", [])}
+        uids = op.get("unique_ids")
+        if uids is not None:
+            ids = [_resolve_bookmark_id(db, unique_id=u) for u in uids]
+        else:
+            ids = [_resolve_bookmark_id(db, bid=b) for b in op.get("ids", [])]
+        for bid in ids:
+            db.restore(bid)
+        return {"ids": ids}
 
     raise ValueError(f"Unknown op type: {op_type!r}")
 
@@ -450,10 +482,12 @@ def create_server(db_path: Optional[str] = None):
 
     @mcp.tool(annotations={"readOnlyHint": True})
     async def get_record(kind: str, id: str) -> str:
-        """Return a single bookmark or marginalia record as JSON.
+        """Return a single record as JSON, resolving a bookmark-memex URI.
 
-        kind: 'bookmark' or 'marginalia' (legacy alias: 'annotation')
-        id:   unique_id (bookmark) or note UUID
+        kind: 'bookmark', 'marginalia' (legacy alias: 'annotation'),
+              'history-url', or 'visit'
+        id:   unique_id (bookmark / history-url), note UUID (marginalia),
+              or visit id
         """
         loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(
@@ -469,8 +503,11 @@ def create_server(db_path: Optional[str] = None):
     async def mutate(operations: list) -> str:
         """Execute a batch of write operations.
 
-        Each item in *operations* must have an "op" key.  Supported ops:
-        add, update, delete, tag, annotate, restore.
+        Each item in *operations* must have an "op" key. Supported ops:
+        add, update, delete, tag, restore (bookmark ops accept unique_id or
+        id; delete takes hard=true for physical delete), and the marginalia
+        ops add_marginalia (alias annotate), update_marginalia,
+        delete_marginalia (hard=true to purge), restore_marginalia.
 
         Returns a JSON summary: {"total": N, "succeeded": N, "results": [...]}.
         """

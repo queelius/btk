@@ -496,8 +496,16 @@ class Database:
                 ):
                     existing.last_visited = last_visited
 
-                # Record additional source.
-                if source_type:
+                # Record additional source, but only if this exact provenance
+                # is not already recorded: re-importing the same file is
+                # idempotent, so it must not append a duplicate BookmarkSource
+                # row on every run (BM-8).
+                if source_type and not any(
+                    bs.source_type == source_type
+                    and bs.source_name == source_name
+                    and bs.folder_path == folder_path
+                    for bs in existing.sources
+                ):
                     src = BookmarkSource(
                         bookmark_id=existing.id,
                         source_type=source_type,

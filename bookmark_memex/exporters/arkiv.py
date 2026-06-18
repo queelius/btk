@@ -454,14 +454,14 @@ def _readme_bytes(
             f"{num_marginalia} note(s) (marginalia), "
             f"{num_history_urls} history URL(s), and {num_visits} visit(s) "
             "exported from bookmark-memex in "
-            "[arkiv](https://github.com/alonzo-church/arkiv) format."
+            "[arkiv](https://github.com/queelius/arkiv) format."
         )
     else:
         lines.append(
             f"This archive contains {num_bookmarks} bookmark(s) and "
             f"{num_marginalia} note(s) (marginalia) exported from "
             "bookmark-memex in "
-            "[arkiv](https://github.com/alonzo-church/arkiv) format."
+            "[arkiv](https://github.com/queelius/arkiv) format."
         )
 
     lines.extend([
