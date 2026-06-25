@@ -218,6 +218,61 @@ def test_roundtrip_preserves_added_and_visit_count(tmp_path):
     assert bm.last_visited == last
 
 
+def test_merge_tz_aware_timestamp_onto_existing_bookmark(tmp_path):
+    """R1: importing a bundle whose timestamps carry an offset onto an
+    already-present (naive-UTC) bookmark must not crash, and must store the
+    correct naive-UTC values after the monotonic merge.
+
+    The existing row stores naive-UTC datetimes (the codebase convention via
+    _utcnow). A bundle produced externally can carry tz-aware ISO strings
+    (with a +HH:MM offset). The monotonic merge in Database.add compares the
+    parsed value against the stored naive value; if the parsed value keeps its
+    tzinfo, the comparison raises TypeError. The importer must normalize parsed
+    timestamps to naive-UTC first.
+    """
+    db = Database(str(tmp_path / "tz.db"))
+    db.add(
+        "https://example.com/",
+        title="Existing",
+        added=datetime(2022, 1, 1, 0, 0, 0),
+        visit_count=3,
+        last_visited=datetime(2022, 1, 1, 0, 0, 0),
+    )
+    uid = db.list()[0].unique_id
+
+    # A bundle whose timestamps carry offsets. 'added' is earlier than the
+    # stored value (so the monotonic merge will adopt it), and 'last_visited'
+    # is later (so it will be adopted too), forcing both comparisons to run.
+    bundle = tmp_path / "offset.jsonl"
+    rec = {
+        "kind": "bookmark",
+        "uri": f"bookmark-memex://bookmark/{uid}",
+        "unique_id": uid,
+        "url": "https://example.com/",
+        "title": "Existing",
+        "added": "2020-05-06T07:08:09+00:00",
+        "visit_count": 9,
+        # 06:07:08 at +02:00 == 04:07:08 UTC
+        "last_visited": "2023-04-05T06:07:08+02:00",
+    }
+    bundle.write_text(json.dumps(rec) + "\n")
+
+    # Must not raise.
+    stats = import_arkiv(db, bundle)
+    assert stats["bookmarks_seen"] == 1
+
+    bm = db.get_by_unique_id(uid)
+    assert bm is not None
+    # Stored values are naive-UTC. 'added' adopted the earlier bundle value.
+    assert bm.added == datetime(2020, 5, 6, 7, 8, 9)
+    assert bm.added.tzinfo is None
+    # visit_count adopted the larger bundle value.
+    assert bm.visit_count == 9
+    # last_visited normalized to naive-UTC: 06:07:08+02:00 -> 04:07:08 UTC.
+    assert bm.last_visited == datetime(2023, 4, 5, 4, 7, 8)
+    assert bm.last_visited.tzinfo is None
+
+
 def test_import_bare_jsonl_gz(src_db, fresh_db, tmp_path):
     """The SPA round-trip format: bare .jsonl.gz emitted by the browser bundle."""
     dir_out = tmp_path / "d"

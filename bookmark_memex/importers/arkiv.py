@@ -48,7 +48,7 @@ import io
 import json
 import tarfile
 import zipfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -56,13 +56,24 @@ from bookmark_memex.db import Database
 
 
 def _parse_iso(value: Any) -> Optional[datetime]:
-    """Parse an ISO-8601 timestamp string from an arkiv record, or None."""
+    """Parse an ISO-8601 timestamp string from an arkiv record, or None.
+
+    The result is normalized to naive-UTC (tzinfo stripped after converting to
+    UTC) to match the storage convention used throughout the DB (see _utcnow in
+    db.py) and _parse_timestamp below. Without this, a tz-aware value parsed
+    from a bundle carrying an offset cannot be compared against the naive value
+    stored on an existing row (the monotonic merge in Database.add would raise
+    TypeError).
+    """
     if not value or not isinstance(value, str):
         return None
     try:
-        return datetime.fromisoformat(value)
+        dt = datetime.fromisoformat(value)
     except ValueError:
         return None
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
 
 
 # ---------------------------------------------------------------------------
