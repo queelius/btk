@@ -263,6 +263,54 @@ def test_mutate_update_title(tools, db_with_data):
     assert updated.title == "Updated Title"
 
 
+def test_mutate_update_by_unique_id(tools, db_with_data):
+    """R2: update must target a bookmark by durable unique_id, not only id."""
+    db, _ = db_with_data
+    bm = db.list()[0]
+
+    result = tools["mutate"](
+        [{"op": "update", "unique_id": bm.unique_id, "title": "Via Unique ID"}]
+    )
+    assert result["succeeded"] == 1, result
+
+    updated = db.get(bm.id)
+    assert updated.title == "Via Unique ID"
+
+
+def test_mutate_update_missing_id_errors_cleanly(tools):
+    """R2: updating a missing id reports a clean error, not a KeyError-style crash."""
+    result = tools["mutate"]([{"op": "update", "id": 999999, "title": "Nope"}])
+    assert result["total"] == 1
+    assert result["succeeded"] == 0
+    assert result["results"][0]["status"] == "error"
+    # The error must be a clean "not found", never a stray KeyError.
+    assert "KeyError" not in result["results"][0]["error"]
+
+
+def test_mutate_update_without_target_errors_cleanly(tools):
+    """R2: an update op with neither id nor unique_id must not KeyError."""
+    result = tools["mutate"]([{"op": "update", "title": "Orphan"}])
+    assert result["total"] == 1
+    assert result["succeeded"] == 0
+    assert result["results"][0]["status"] == "error"
+    assert "KeyError" not in result["results"][0]["error"]
+
+
+def test_mutate_update_by_unique_id_excludes_identity_fields(tools, db_with_data):
+    """R2: the resolver keys (op/id/unique_id) must not be forwarded to db.update
+    (which rejects unique_id as a protected identity field)."""
+    db, _ = db_with_data
+    bm = db.list()[0]
+
+    result = tools["mutate"](
+        [{"op": "update", "unique_id": bm.unique_id, "id": bm.id, "title": "Both Keys"}]
+    )
+    assert result["succeeded"] == 1, result
+
+    updated = db.get(bm.id)
+    assert updated.title == "Both Keys"
+
+
 # ---------------------------------------------------------------------------
 # mutate – tag
 # ---------------------------------------------------------------------------
@@ -422,6 +470,81 @@ def test_create_server_returns_fastmcp(tmp_db_path):
     import fastmcp
     server = create_server(tmp_db_path)
     assert isinstance(server, fastmcp.FastMCP)
+
+
+# ---------------------------------------------------------------------------
+# get_record read-only contract (R3)
+# ---------------------------------------------------------------------------
+
+
+def _dispose_engine(db) -> None:
+    """Drop the engine's connection pool so the underlying file is not held
+    open (otherwise read-only checkpointing sees 'database is locked')."""
+    db._Session.kw["bind"].dispose()
+
+
+def _make_readonly(path: str) -> None:
+    """Make a sqlite db file and its directory read-only, emulating read-only
+    media. WAL is checkpointed and switched off first so the read path does not
+    need to write a -wal/-shm sidecar. The caller must dispose any live engine
+    on *path* before calling this."""
+    import os
+    import sqlite3
+
+    conn = sqlite3.connect(path)
+    conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    conn.execute("PRAGMA journal_mode=DELETE")
+    conn.commit()
+    conn.close()
+
+    directory = os.path.dirname(path) or "."
+    os.chmod(path, 0o444)
+    os.chmod(directory, 0o555)
+
+
+def _restore_writable(path: str) -> None:
+    import os
+
+    directory = os.path.dirname(path) or "."
+    os.chmod(directory, 0o755)
+    os.chmod(path, 0o644)
+
+
+def test_get_record_bookmark_on_readonly_db(db_with_data):
+    """R3: get_record (a readOnlyHint tool) must succeed against a read-only DB
+    and must not perform any write side effects (migrations/FTS/WAL)."""
+    from bookmark_memex.mcp import _create_tools
+
+    db, db_path = db_with_data
+    uid = db.list()[1].unique_id  # the first-added bookmark (with a note)
+
+    _dispose_engine(db)
+    _make_readonly(db_path)
+    try:
+        ro_tools = _create_tools(db_path)
+        result = ro_tools["get_record"]("bookmark", uid)
+        assert result["unique_id"] == uid
+        assert "marginalia" in result
+    finally:
+        _restore_writable(db_path)
+
+
+def test_get_record_marginalia_on_readonly_db(db_with_data):
+    """R3: marginalia resolution must also work read-only."""
+    from bookmark_memex.mcp import _create_tools
+
+    db, db_path = db_with_data
+    bm = db.list()[1]
+    note_id = db.list_marginalia(bm.unique_id)[0].id
+
+    _dispose_engine(db)
+    _make_readonly(db_path)
+    try:
+        ro_tools = _create_tools(db_path)
+        result = ro_tools["get_record"]("marginalia", note_id)
+        assert result["id"] == note_id
+    finally:
+        _restore_writable(db_path)
 
 
 def test_create_server_has_required_tools(tmp_db_path):

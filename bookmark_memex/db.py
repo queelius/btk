@@ -392,6 +392,33 @@ class Database:
         FTSIndex(self.path).create_indexes()
         self._Session = sessionmaker(bind=engine, expire_on_commit=False)
 
+    @classmethod
+    def open_readonly(cls, path: str | Path) -> "Database":
+        """Open *path* for reads only, with no write side effects.
+
+        The normal :meth:`__init__` runs migrations, the FTS bootstrap, and a
+        ``journal_mode=WAL`` PRAGMA, all of which write to the database file.
+        That violates the ``readOnlyHint`` of read-only MCP tools and fails
+        outright on read-only media (a file/dir with no write permission, a
+        read-only mount, etc.).
+
+        This constructor builds an engine over a ``mode=ro`` SQLite URI and
+        skips every write step. The resulting object supports only the read
+        methods (get/list/lookup); the read methods commit empty transactions
+        via :meth:`_session`, which is a harmless no-op on a connection that
+        ran only SELECTs. Do not call write methods on a read-only instance.
+        """
+        self = cls.__new__(cls)
+        self.path = str(path)
+        engine = create_engine(
+            "sqlite://",
+            creator=lambda: __import__("sqlite3").connect(
+                f"file:{self.path}?mode=ro", uri=True, check_same_thread=False
+            ),
+        )
+        self._Session = sessionmaker(bind=engine, expire_on_commit=False)
+        return self
+
     def reindex_fts(self) -> dict[str, int]:
         """Rebuild every FTS5 index from current table contents.
 

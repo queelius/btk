@@ -121,7 +121,18 @@ def _create_tools(db_path: str) -> dict[str, Any]:
 
         Raises ValueError if the record is not found or kind is unknown.
         """
-        db = Database(db_path)
+        # A missing library file has no records. Treat any lookup as
+        # not-found rather than crashing (and never create the file, since
+        # get_record must not write); open_readonly cannot open a path that
+        # does not exist (mode=ro).
+        if not Path(db_path).exists():
+            raise ValueError(f"{kind} record {id!r} not found")
+
+        # get_record is a read-only tool (readOnlyHint). Open the DB without
+        # write side effects (migrations/FTS bootstrap/WAL) so it honours the
+        # hint and works against read-only media. See Database.open_readonly.
+        db = Database.open_readonly(db_path)
+        ro_uri = f"file:{db_path}?mode=ro"
 
         if kind == "bookmark":
             bm = db.get_by_unique_id(id)
@@ -157,7 +168,7 @@ def _create_tools(db_path: str) -> dict[str, Any]:
 
         if kind in ("marginalia", "annotation"):
             # Fetch via raw SQL to avoid needing a separate lookup method.
-            with sqlite3.connect(db_path) as conn:
+            with sqlite3.connect(ro_uri, uri=True) as conn:
                 conn.row_factory = sqlite3.Row
                 row = conn.execute(
                     "SELECT m.id, m.text, m.created_at, m.updated_at, "
@@ -197,7 +208,7 @@ def _create_tools(db_path: str) -> dict[str, Any]:
                     f"history-url with unique_id={id!r} not found"
                 )
             # Pull the 20 most recent visits inline for convenience.
-            with sqlite3.connect(db_path) as conn:
+            with sqlite3.connect(ro_uri, uri=True) as conn:
                 conn.row_factory = sqlite3.Row
                 visits = [
                     {
@@ -360,11 +371,13 @@ def _dispatch_op(db: Database, op_type: str, op: dict) -> dict:
         return {"unique_id": bm.unique_id, "id": bm.id}
 
     if op_type == "update":
-        bm_id = op["id"]
+        bm_id = _resolve_bookmark_id(
+            db, unique_id=op.get("unique_id"), bid=op.get("id")
+        )
         fields = {
             k: v
             for k, v in op.items()
-            if k not in ("op", "id")
+            if k not in ("op", "id", "unique_id")
         }
         bm = db.update(bm_id, **fields)
         if bm is None:
