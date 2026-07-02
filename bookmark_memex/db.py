@@ -865,6 +865,16 @@ class Database:
                 if hv is not None:
                     history_visit_id = hv.id
 
+            # Enforce the at-most-one-parent invariant: a note links to a
+            # single parent. If a malformed record supplies several, keep the
+            # highest-precedence link (bookmark > history_url > visit) and drop
+            # the rest so the stored note never carries multiple parent FKs.
+            if bookmark_id is not None:
+                history_url_id = None
+                history_visit_id = None
+            elif history_url_id is not None:
+                history_visit_id = None
+
             note = Marginalia(
                 id=uuid,
                 bookmark_id=bookmark_id,

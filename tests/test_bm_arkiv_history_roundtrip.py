@@ -507,3 +507,28 @@ class TestRoundTrip:
         assert stats["visits_seen"] == 3
         assert stats["visits_added"] == 0
         assert stats["visits_dropped_unknown_parent"] == 3
+
+
+def test_merge_marginalia_enforces_single_parent(tmp_db_path):
+    """R4: a note supplied several parent links keeps only the
+    highest-precedence FK (bookmark > history_url > visit); the rest are
+    dropped so the stored note never carries multiple parent FKs."""
+    db = Database(tmp_db_path)
+    bm = db.add(url="https://ex.com/a", title="A")
+    hu, _ = db.upsert_history_url("https://ex.com/h", title="H")
+
+    note_uuid = uuid.uuid4().hex
+    inserted = db.merge_marginalia(
+        uuid=note_uuid,
+        text="a note with two would-be parents",
+        bookmark_unique_id=bm.unique_id,
+        history_url_unique_id=hu.unique_id,
+    )
+    assert inserted is True
+
+    with db._session() as s:
+        note = s.get(Marginalia, note_uuid)
+        assert note is not None
+        assert note.bookmark_id is not None
+        assert note.history_url_id is None
+        assert note.history_visit_id is None

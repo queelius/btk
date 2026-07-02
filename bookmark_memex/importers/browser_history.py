@@ -169,6 +169,7 @@ def _read_chrome_history(
 
     base = BrowserImporter()
     temp_db: Optional[Path] = None
+    conn: Optional[sqlite3.Connection] = None
     try:
         temp_db = base._copy_database(history_db)
         conn = sqlite3.connect(str(temp_db))
@@ -210,9 +211,12 @@ def _read_chrome_history(
                 "title": title or None,
                 "typed_count": int(typed or 0),
             })
-        conn.close()
         return rows
     finally:
+        # Close the connection on every path (a raised query previously
+        # leaked it) before deleting the temp copy.
+        if conn is not None:
+            conn.close()
         if temp_db is not None and temp_db.exists():
             try:
                 temp_db.unlink()
@@ -232,6 +236,7 @@ def _read_firefox_history(
 
     base = BrowserImporter()
     temp_db: Optional[Path] = None
+    conn: Optional[sqlite3.Connection] = None
     try:
         temp_db = base._copy_database(places_db)
         conn = sqlite3.connect(str(temp_db))
@@ -273,9 +278,10 @@ def _read_firefox_history(
                 "title": title or None,
                 "typed_count": 1 if typed else 0,
             })
-        conn.close()
         return rows
     finally:
+        if conn is not None:
+            conn.close()
         if temp_db is not None and temp_db.exists():
             try:
                 temp_db.unlink()
